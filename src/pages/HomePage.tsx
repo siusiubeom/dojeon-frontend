@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import './HomePage.css'
 import homeIcon from '../assets/home.png'
 import editIcon from '../assets/edit.png'
 import fileIcon from '../assets/file.png'
 import bookOpenIcon from '../assets/book-open.png'
 import profileIcon from '../assets/user.png'
+import type {LastLesson} from "../types/home.types.ts";
+import {useHomeResume} from "../hooks/useHomeResume.ts";
 
 const tabs = [
   { icon: homeIcon, label: 'HOME' },
@@ -15,191 +17,246 @@ const tabs = [
 ]
 
 interface HomePageProps {
-  userName: string
+  userName?: string
   onOpenClass: () => void
   onOpenNotebook: () => void
   onOpenProfile: () => void
   onOpenPractice: () => void
   onOpenGrammarPractice: () => void
+  onStartLesson?: (lesson: LastLesson) => void
+}
+
+function getLessonPreview(lesson: LastLesson): string {
+  switch (lesson.sectionType) {
+    case 'GRAMMAR':
+      return lesson.grammarPreview ?? ''
+    case 'VOCAB':
+      return lesson.vocabPreview ?? ''
+    case 'LISTENING':
+      return lesson.listeningPreview ?? ''
+    case 'SPEAKING':
+      return lesson.speakingPreview ?? ''
+    case 'READING':
+      return lesson.readingPreview ?? ''
+    default:
+      return ''
+  }
 }
 
 function HomePage({
-  userName,
-  onOpenClass,
-  onOpenNotebook,
-  onOpenProfile,
-  onOpenPractice,
-  onOpenGrammarPractice,
-}: HomePageProps) {
+                    userName,
+                    onOpenClass,
+                    onOpenNotebook,
+                    onOpenProfile,
+                    onOpenPractice,
+                    onOpenGrammarPractice,
+                    onStartLesson,
+                  }: HomePageProps) {
   const [selectedGoalType, setSelectedGoalType] = useState<'today' | 'week'>('today')
-  const goalData = {
-    today: {
-      title: "Today's Goal",
-      current: 3,
-      total: 15,
-    },
-    week: {
-      title: 'Week Goal',
-      current: 3,
-      total: 15,
-    },
-  }
+  const { data, loading, error, refetch } = useHomeResume()
 
-  const activeGoal = goalData[selectedGoalType]
-  const progressPercent = Math.min(100, Math.max(0, (activeGoal.current / activeGoal.total) * 100))
-  const shortFillPercent = Math.min(100, Math.max(0, progressPercent))
+  const displayName = data?.userFirstName ?? userName ?? ''
+  const dailyStreak = data?.dailyStreak ?? 0
+  const lastLesson = data?.lastLesson ?? null
+
+  const activeGoal = useMemo(() => {
+    if (selectedGoalType === 'today') {
+      return {
+        title: "Today's Goal",
+        current: data?.todayGoal.studiedMin ?? 0,
+        total: data?.todayGoal.targetMin ?? 0,
+      }
+    }
+    return {
+      title: 'Week Goal',
+      current: data?.weekGoal.studiedMin ?? 0,
+      total: data?.weekGoal.targetMin ?? 0,
+    }
+  }, [data, selectedGoalType])
+
+  const progressPercent =
+      activeGoal.total > 0
+          ? Math.min(100, Math.max(0, (activeGoal.current / activeGoal.total) * 100))
+          : 0
+  const shortFillPercent = progressPercent
   const bubbleLeft = Math.min(98, Math.max(2, progressPercent))
 
+  // Loading state
+  if (loading && !data) {
+    return (
+        <main className="home-screen">
+          <section className="home-content">
+            <p className="home-loading">Loading…</p>
+          </section>
+        </main>
+    )
+  }
+
+  // Error state
+  if (error && !data) {
+    return (
+        <main className="home-screen">
+          <section className="home-content">
+            <p className="home-error">{error.message}</p>
+            <button type="button" onClick={() => void refetch()}>
+              Retry
+            </button>
+          </section>
+        </main>
+    )
+  }
+
   return (
-    <main className="home-screen">
-      <section className="home-content">
-        <header className="home-greeting">
-          <p className="home-greeting-hi">Hi, {userName}</p>
-          <p className="home-greeting-welcome">Welcome back</p>
-        </header>
+      <main className="home-screen">
+        <section className="home-content">
+          <header className="home-greeting">
+            <p className="home-greeting-hi">Hi, {displayName}</p>
+            <p className="home-greeting-welcome">Welcome back</p>
+          </header>
 
-        <section className="home-card goal-card">
-          <div className="goal-segmented" role="tablist" aria-label="Goal period">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={selectedGoalType === 'today'}
-              className={`goal-tab goal-tab-left ${selectedGoalType === 'today' ? 'selected' : ''}`}
-              onClick={() => setSelectedGoalType('today')}
-            >
-              Today&apos;s Goal
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={selectedGoalType === 'week'}
-              className={`goal-tab goal-tab-right ${selectedGoalType === 'week' ? 'selected' : ''}`}
-              onClick={() => setSelectedGoalType('week')}
-            >
-              Week Goal
-            </button>
-          </div>
+          <section className="home-card goal-card">
+            <div className="goal-segmented" role="tablist" aria-label="Goal period">
+              <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedGoalType === 'today'}
+                  className={`goal-tab goal-tab-left ${selectedGoalType === 'today' ? 'selected' : ''}`}
+                  onClick={() => setSelectedGoalType('today')}
+              >
+                Today&apos;s Goal
+              </button>
+              <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedGoalType === 'week'}
+                  className={`goal-tab goal-tab-right ${selectedGoalType === 'week' ? 'selected' : ''}`}
+                  onClick={() => setSelectedGoalType('week')}
+              >
+                Week Goal
+              </button>
+            </div>
 
-          <section className="goal-card-body">
-            <section className="goal-progress" aria-label={`${activeGoal.title} 진행 상태`}>
-              <div className="goal-progress-row">
-                <div className="goal-progress-track-wrap">
-                  <div
-                    className="goal-progress-bubble"
-                    style={{ left: `${bubbleLeft}%` }}
-                    aria-hidden="true"
-                  >
-                    3min
-                  </div>
-                  <div
-                    className="goal-progress-track"
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={Math.round(progressPercent)}
-                  >
+            <section className="goal-card-body">
+              <section className="goal-progress" aria-label={`${activeGoal.title} 진행 상태`}>
+                <div className="goal-progress-row">
+                  <div className="goal-progress-track-wrap">
                     <div
-                      className="goal-progress-fill"
-                      style={{ width: `${shortFillPercent}%` }}
-                    />
+                        className="goal-progress-bubble"
+                        style={{ left: `${bubbleLeft}%` }}
+                        aria-hidden="true"
+                    >
+                      {activeGoal.current}min
+                    </div>
+                    <div
+                        className="goal-progress-track"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.round(progressPercent)}
+                    >
+                      <div
+                          className="goal-progress-fill"
+                          style={{ width: `${shortFillPercent}%` }}
+                      />
+                    </div>
                   </div>
+                  <span className="goal-total">{activeGoal.total}min</span>
                 </div>
-                <span className="goal-total">15min</span>
-              </div>
+              </section>
             </section>
           </section>
-        </section>
 
-        <section className="home-card streak-card">
-          <h2 className="streak-title">5 days in a row !</h2>
-          <div className="streak-indicators" role="region" aria-label="연속 학습 진행 상태">
-            <div className="streak-track">
-              {Array.from({ length: 20 }).map((_, index) => (
-                <span key={index} className={`streak-dot ${index < 5 ? 'filled' : ''}`} />
-              ))}
+          <section className="home-card streak-card">
+            <h2 className="streak-title">{dailyStreak} days in a row !</h2>
+            <div className="streak-indicators" role="region" aria-label="연속 학습 진행 상태">
+              <div className="streak-track">
+                {Array.from({ length: 20 }).map((_, index) => (
+                    <span
+                        key={index}
+                        className={`streak-dot ${index < dailyStreak ? 'filled' : ''}`}
+                    />
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="home-card lesson-card">
-          <div className="lesson-head">
-            <h3 className="lesson-title">Today&apos;s lesson</h3>
-            <p className="lesson-subtitle">Course 1 lesson 5</p>
-          </div>
-          <div className="lesson-body">
-            <p className="lesson-sentence primary">-을까요?</p>
-            <p className="lesson-sentence secondary">
-              <span className="lesson-word">가다</span>
-              <span className="lesson-apply">갈까요?</span>
-            </p>
-            <p className="lesson-sentence secondary">
-              <span className="lesson-word">먹다</span>
-              <span className="lesson-apply">먹을까요?</span>
-            </p>
-          </div>
-          <button className="start-btn" type="button">
-            START
-          </button>
-        </section>
+          {lastLesson && (
+              <section className="home-card lesson-card">
+                <div className="lesson-head">
+                  <h3 className="lesson-title">Today&apos;s lesson</h3>
+                  <p className="lesson-subtitle">
+                    Course {lastLesson.courseId} lesson {lastLesson.lessonId}
+                  </p>
+                </div>
+                <div className="lesson-body">
+                  <p className="lesson-sentence primary">{lastLesson.lessonTitle}</p>
+                  <p className="lesson-sentence secondary">
+                    <span className="lesson-word">{lastLesson.sectionTitle}</span>
+                    <span className="lesson-apply">{getLessonPreview(lastLesson)}</span>
+                  </p>
+                  <p className="lesson-sentence secondary">
+                    <span className="lesson-word">Progress</span>
+                    <span className="lesson-apply">{lastLesson.overallProgressPercent}%</span>
+                  </p>
+                </div>
+                <button
+                    className="start-btn"
+                    type="button"
+                    onClick={() => onStartLesson?.(lastLesson)}
+                >
+                  START
+                </button>
+              </section>
+          )}
 
-        <button
-          type="button"
-          className="home-card practice-card practice-card-button"
-          onClick={onOpenGrammarPractice}
-        >
-          <h3 className="practice-title">Practice</h3>
-          <div className="practice-content" role="list">
-            <p className="practice-item" role="listitem">
-              Practice 1: Grammar basics
-            </p>
-            <p className="practice-item" role="listitem">
-              Practice 2: Sentence ending patterns
-            </p>
-            <p className="practice-item" role="listitem">
-              Practice 3: Q&amp;A with honorifics
-            </p>
-            <p className="practice-item" role="listitem">
-              Practice 4: Everyday conversation
-            </p>
-            <p className="practice-item" role="listitem">
-              Practice 5: Listening check
-            </p>
-            <p className="practice-item" role="listitem">
-              Practice 6: Speaking repeats
-            </p>
-          </div>
-        </button>
-      </section>
-      <nav className="home-bottom-nav">
-        {tabs.map((tab) => (
           <button
-            type="button"
-            className="home-tab"
-            key={tab.label}
-            onClick={() => {
-              if (tab.label === 'CLASS') {
-                onOpenClass()
-              }
-
-              if (tab.label === 'PRACTICE') {
-                onOpenPractice()
-              }
-
-              if (tab.label === 'NOTEBOOK') {
-                onOpenNotebook()
-              }
-
-              if (tab.label === 'PROFILE') {
-                onOpenProfile()
-              }
-            }}
+              type="button"
+              className="home-card practice-card practice-card-button"
+              onClick={onOpenGrammarPractice}
           >
-            <img className="home-tab-icon" src={tab.icon} alt="" aria-hidden="true" />
-            <span className="home-tab-label">{tab.label}</span>
+            <h3 className="practice-title">Practice</h3>
+            <div className="practice-content" role="list">
+              <p className="practice-item" role="listitem">
+                Practice 1: Grammar basics
+              </p>
+              <p className="practice-item" role="listitem">
+                Practice 2: Sentence ending patterns
+              </p>
+              <p className="practice-item" role="listitem">
+                Practice 3: Q&amp;A with honorifics
+              </p>
+              <p className="practice-item" role="listitem">
+                Practice 4: Everyday conversation
+              </p>
+              <p className="practice-item" role="listitem">
+                Practice 5: Listening check
+              </p>
+              <p className="practice-item" role="listitem">
+                Practice 6: Speaking repeats
+              </p>
+            </div>
           </button>
-        ))}
-      </nav>
-    </main>
+        </section>
+
+        <nav className="home-bottom-nav">
+          {tabs.map((tab) => (
+              <button
+                  type="button"
+                  className="home-tab"
+                  key={tab.label}
+                  onClick={() => {
+                    if (tab.label === 'CLASS') onOpenClass()
+                    if (tab.label === 'PRACTICE') onOpenPractice()
+                    if (tab.label === 'NOTEBOOK') onOpenNotebook()
+                    if (tab.label === 'PROFILE') onOpenProfile()
+                  }}
+              >
+                <img className="home-tab-icon" src={tab.icon} alt="" aria-hidden="true" />
+                <span className="home-tab-label">{tab.label}</span>
+              </button>
+          ))}
+        </nav>
+      </main>
   )
 }
 
