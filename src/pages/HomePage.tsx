@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import './HomePage.css'
-import homeIcon from '../assets/home.png'
-import editIcon from '../assets/edit.png'
-import fileIcon from '../assets/file.png'
-import bookOpenIcon from '../assets/book-open.png'
-import profileIcon from '../assets/user.png'
+import homeIcon from '../assets/home.svg'
+import editIcon from '../assets/edit.svg'
+import fileIcon from '../assets/file.svg'
+import bookOpenIcon from '../assets/book-open.svg'
+import profileIcon from '../assets/user.svg'
 
 const tabs = [
   { icon: homeIcon, label: 'HOME' },
@@ -174,7 +174,7 @@ function HomePage({
         {tabs.map((tab) => (
           <button
             type="button"
-            className="home-tab"
+            className={`home-tab ${tab.label === 'HOME' ? 'home-tab-active' : ''}`}
             key={tab.label}
             onClick={() => {
               if (tab.label === 'CLASS') {
