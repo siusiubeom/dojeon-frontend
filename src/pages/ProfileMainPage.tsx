@@ -1,9 +1,9 @@
 import './ProfileMainPage.css'
-import homeIcon from '../assets/home.png'
-import editIcon from '../assets/edit.png'
-import fileIcon from '../assets/file.png'
-import bookOpenIcon from '../assets/book-open.png'
-import profileIcon from '../assets/user.png'
+import homeIcon from '../assets/home.svg'
+import editIcon from '../assets/edit.svg'
+import fileIcon from '../assets/file.svg'
+import bookOpenIcon from '../assets/book-open.svg'
+import profileIcon from '../assets/user.svg'
 import settingIcon from '../assets/setting_icon.svg'
 
 const tabs = [
@@ -244,7 +244,7 @@ function ProfileMainPage({
               <h1 className="profile-main-greeting">
                 안녕하세요!
                 <br />
-                [{user.nickname}]님!
+                {user.nickname}님!
               </h1>
               <p className="profile-main-meta">
                 @{user.username} <span aria-hidden="true">·</span> joined {user.joinedYear}

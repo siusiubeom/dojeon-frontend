@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import './ClassPage.css'
-import homeIcon from '../assets/home.png'
-import editIcon from '../assets/edit.png'
-import fileIcon from '../assets/file.png'
-import bookOpenIcon from '../assets/book-open.png'
-import profileIcon from '../assets/user.png'
+import homeIcon from '../assets/home.svg'
+import editIcon from '../assets/edit.svg'
+import fileIcon from '../assets/file.svg'
+import bookOpenIcon from '../assets/book-open.svg'
+import profileIcon from '../assets/user.svg'
 import {
   courseItems,
   currentCourseId,
