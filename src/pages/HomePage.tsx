@@ -174,7 +174,7 @@ function HomePage({
         {tabs.map((tab) => (
           <button
             type="button"
-            className="home-tab"
+            className={`home-tab ${tab.label === 'HOME' ? 'home-tab-active' : ''}`}
             key={tab.label}
             onClick={() => {
               if (tab.label === 'CLASS') {
