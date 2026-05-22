@@ -145,11 +145,11 @@
 }
 
 .class-course-arrow-open {
-  transform: rotate(0deg);
+  transform: rotate(180deg);
 }
 
 .class-course-arrow-closed {
-  transform: rotate(180deg);
+  transform: rotate(0deg);
 }
 
 .class-course-lessons {
