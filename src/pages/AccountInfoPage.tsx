@@ -5,7 +5,6 @@ interface AccountInfoPageProps {
   email: string
   username: string
   nickname: string
-  password: string
   phoneNumber: string
   ageGroupOrBirthday: string
   onSave: (values: {
@@ -24,7 +23,6 @@ function AccountInfoPage({
   email,
   username,
   nickname,
-  password,
   phoneNumber,
   ageGroupOrBirthday,
   onSave,
@@ -58,7 +56,6 @@ function AccountInfoPage({
     setEditing((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const maskedPassword = password ? '*'.repeat(Math.max(password.length, 8)) : '********'
   const items = [
     { label: 'Email', value: email || '-' },
     { label: 'Username', value: username || '-' },
@@ -69,11 +66,12 @@ function AccountInfoPage({
       isEditing: editing.nickname,
       onEdit: () => toggleEditing('nickname'),
       onChange: (value: string) => setDraftNickname(value),
+      inputType: 'text',
       inputValue: draftNickname,
     },
     {
       label: 'Password',
-      value: maskedPassword,
+      value: 'Hidden for security',
       editable: true,
       isEditing: editing.password,
       onEdit: () => toggleEditing('password'),
@@ -86,6 +84,7 @@ function AccountInfoPage({
       isEditing: editing.phoneNumber,
       onEdit: () => toggleEditing('phoneNumber'),
       onChange: (value: string) => setDraftPhoneNumber(value),
+      inputType: 'text',
       inputValue: draftPhoneNumber,
     },
     {
@@ -95,6 +94,7 @@ function AccountInfoPage({
       isEditing: editing.ageGroupOrBirthday,
       onEdit: () => toggleEditing('ageGroupOrBirthday'),
       onChange: (value: string) => setDraftAgeGroupOrBirthday(value),
+      inputType: 'text',
       inputValue: draftAgeGroupOrBirthday,
     },
   ]
