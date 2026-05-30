@@ -1,4 +1,5 @@
 import type { HomeResumeData, HomeResumeResponse } from '../types/home.types.ts'
+import { getAuthToken } from './session.ts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -12,11 +13,6 @@ export class HomeApiError extends Error {
         this.code = code
         this.status = status
     }
-}
-
-function getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem('accessToken')
 }
 
 export async function fetchHomeResume(signal?: AbortSignal): Promise<HomeResumeData | null> {
@@ -41,6 +37,14 @@ export async function fetchHomeResume(signal?: AbortSignal): Promise<HomeResumeD
     try {
         body = (await res.json()) as HomeResumeResponse
     } catch {
+        if (!res.ok) {
+            throw new HomeApiError(
+                `Failed to fetch home resume (HTTP ${res.status})`,
+                undefined,
+                res.status,
+            )
+        }
+
         throw new HomeApiError(
             `Failed to parse home resume response (HTTP ${res.status})`,
             undefined,

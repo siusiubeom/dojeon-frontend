@@ -6,6 +6,7 @@ import type {
     LessonSectionsData,
     LessonSectionsResponse,
 } from '../types/lessons.types.ts'
+import { getAuthToken } from './session.ts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -21,11 +22,6 @@ export class LearningApiError extends Error {
         this.errorCode = errorCode
         this.status = status
     }
-}
-
-function getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem('accessToken')
 }
 
 function buildHeaders(): HeadersInit {
@@ -53,6 +49,15 @@ async function fetchLearningResponse<T extends { isSuccess: boolean; message?: s
     try {
         body = (await res.json()) as T
     } catch {
+        if (!res.ok) {
+            throw new LearningApiError(
+                `${fallbackMessage} (HTTP ${res.status})`,
+                undefined,
+                undefined,
+                res.status,
+            )
+        }
+
         throw new LearningApiError(
             `${fallbackMessage} (invalid JSON, HTTP ${res.status})`,
             undefined,

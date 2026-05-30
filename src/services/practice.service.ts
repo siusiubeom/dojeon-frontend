@@ -4,6 +4,7 @@ import type {
     CheckAnswerRequest,
     CheckAnswerData,
 } from '../types/practice.types.ts'
+import { getAuthToken } from './session.ts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -19,11 +20,6 @@ export class PracticeApiError extends Error {
         this.errorCode = errorCode
         this.status = status
     }
-}
-
-function getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem('accessToken')
 }
 
 function buildHeaders(): HeadersInit {
@@ -64,6 +60,15 @@ async function fetchPracticeResponse<T>(
     try {
         body = await res.json()
     } catch {
+        if (!res.ok) {
+            throw new PracticeApiError(
+                `${fallbackMessage} (HTTP ${res.status})`,
+                undefined,
+                undefined,
+                res.status,
+            )
+        }
+
         throw new PracticeApiError(
             `${fallbackMessage} (invalid JSON, HTTP ${res.status})`,
             undefined,

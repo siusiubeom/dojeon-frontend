@@ -7,6 +7,7 @@ import type {
     SaveProgressRequest,
     SaveProgressData,
 } from '../types/section,types.ts'
+import { getAuthToken } from './session.ts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -22,11 +23,6 @@ export class SectionApiError extends Error {
         this.errorCode = errorCode
         this.status = status
     }
-}
-
-function getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem('accessToken')
 }
 
 function buildHeaders(extra: HeadersInit = {}): HeadersInit {
@@ -68,6 +64,15 @@ async function fetchSectionResponse<T>(
     try {
         body = await res.json()
     } catch {
+        if (!res.ok) {
+            throw new SectionApiError(
+                `${fallbackMessage} (HTTP ${res.status})`,
+                undefined,
+                undefined,
+                res.status,
+            )
+        }
+
         throw new SectionApiError(
             `${fallbackMessage} (invalid JSON, HTTP ${res.status})`,
             undefined,
