@@ -45,7 +45,6 @@ import {
   type AuthTokenData,
 } from './services/auth'
 
-const ONBOARDING_COMPLETED_KEY = 'dojeon:onboarding.completed'
 const ONBOARDING_USERNAME_KEY = 'dojeon:onboarding.username'
 const ACCOUNT_OWNER_EMAIL_KEY = 'dojeon:account.ownerEmail'
 const LEGACY_ACCOUNT_EMAIL_KEY = 'dojeon:account.email'
@@ -80,10 +79,6 @@ const removeLocalStorageItem = (key: string) => {
   }
 }
 
-const markOnboardingComplete = () => {
-  writeLocalStorageItem(ONBOARDING_COMPLETED_KEY, 'true')
-}
-
 const getOnboardingUsername = () => {
   const stored = readLocalStorageItem(ONBOARDING_USERNAME_KEY)
   return stored && stored.trim().length > 0 ? stored : 'Jinri'
@@ -96,7 +91,6 @@ const saveOnboardingUsername = (name: string) => {
 const normalizeStoredEmail = (value: string) => value.trim().toLowerCase()
 
 const clearOnboardingStorage = () => {
-  removeLocalStorageItem(ONBOARDING_COMPLETED_KEY)
   removeLocalStorageItem(ONBOARDING_USERNAME_KEY)
   removeLocalStorageItem(ACCOUNT_OWNER_EMAIL_KEY)
   removeLocalStorageItem(LEGACY_ACCOUNT_EMAIL_KEY)
@@ -258,12 +252,10 @@ function App() {
     syncProfileStateFromUserMe(userMe)
 
     if (userMe.profile.isOnboarded) {
-      markOnboardingComplete()
       setScreen('home')
       return
     }
 
-    removeLocalStorageItem(ONBOARDING_COMPLETED_KEY)
     setScreen('onboarding')
   }, [syncProfileStateFromUserMe])
 
@@ -475,7 +467,6 @@ function App() {
             } catch {
               return
             }
-            markOnboardingComplete()
             setScreen('home')
           }}
         />

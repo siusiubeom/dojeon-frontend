@@ -8,6 +8,8 @@ export interface ProfileUser {
   profileImgUrl: string | null
   joinedYear: number
   subscriptionTier: string
+  subscriptionPlanId: string | null
+  subscriptionExpiresAt: string | null
 }
 
 export interface ProfileSettings {
@@ -68,6 +70,8 @@ export const profileMainMockData: ProfileMainData = {
     profileImgUrl: null,
     joinedYear: 2026,
     subscriptionTier: 'FREE',
+    subscriptionPlanId: null,
+    subscriptionExpiresAt: null,
   },
   settings: {
     motherLanguage: 'EN',

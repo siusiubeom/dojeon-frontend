@@ -4,58 +4,134 @@ import graduationCapIcon from '../assets/graduation-cap_icon.svg'
 import groupOutlineIcon from '../assets/group-outline_icon.svg'
 import bookLineIcon from '../assets/mingcute_book-6-line_icon.svg'
 import sparksIcon from '../assets/sparks_icon.svg'
+import closeRoundedIcon from '../assets/close-rounded_icon.svg'
+import checkIconGray from '../assets/check_icon_gray.svg'
+import { useSubscriptionPlans } from '../hooks/useSubscriptionPlans'
+import type { SubscriptionPlan } from '../types/subscription.types'
 
 interface SubscriptionBottomSheetProps {
+  currentSubscriptionPlanId: string | null
+  currentSubscriptionTier: string
   onClose: () => void
 }
 
-const subscriptionBenefits = [
-  {
-    label: 'Access to all courses classes',
-    icon: graduationCapIcon,
-  },
-  {
-    label: 'Full access to connectivity',
-    icon: groupOutlineIcon,
-  },
-  {
-    label: 'Full access to personal notebook',
-    icon: bookLineIcon,
-  },
-  {
-    label: 'more coming soon',
-    icon: sparksIcon,
-  },
+type SubscriptionSelectionMode = 'free' | 'trial' | 'pro'
+
+const benefitIcons = [graduationCapIcon, groupOutlineIcon, bookLineIcon, sparksIcon]
+const fallbackBenefits = [
+  'Access to all courses classes',
+  'Full access to connectivity',
+  'Full access to personal notebook',
+  'more coming soon',
 ]
 
-const proPlanOptions = [
-  { id: '1-month', label: '1 Month', price: '$15' },
-  { id: '3-months', label: '3 Months', price: '$39', note: '$13/mo' },
-  { id: '6-months', label: '6 Months', price: '$69', note: '$11.5/mo' },
-  { id: '1-year', label: '1 Year', price: '$99', note: '$8.25/mo' },
-]
+const formatPlanDuration = (billingCycleMonths: number) => {
+  if (billingCycleMonths === 1) return '1 Month'
+  if (billingCycleMonths === 12) return '1 Year'
+  return `${billingCycleMonths} Months`
+}
 
-function SubscriptionBottomSheet({ onClose }: SubscriptionBottomSheetProps) {
-  const [selectedSubscriptionPlan, setSelectedSubscriptionPlan] = useState<
-    'free' | 'trial' | 'pro'
-  >('trial')
-  const [selectedProOptionId, setSelectedProOptionId] = useState(proPlanOptions[0].id)
+const isFreeTier = (tier: string) => tier.trim().toUpperCase() === 'FREE'
+
+const getFocusableElements = (container: HTMLElement) =>
+  Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), [href], select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => !element.hasAttribute('aria-hidden'))
+
+const getInitialSelectedPlanId = (
+  plans: SubscriptionPlan[],
+  currentSubscriptionPlanId: string | null,
+  currentSubscriptionTier: string,
+) => {
+  const currentPlan = currentSubscriptionPlanId
+    ? plans.find((plan) => plan.planId === currentSubscriptionPlanId)
+    : undefined
+  const trialPlan = plans.find((plan) => plan.hasTrial)
+  const firstPlan = plans[0]
+
+  if (currentPlan) return currentPlan.planId
+  if (isFreeTier(currentSubscriptionTier)) return trialPlan?.planId ?? ''
+  return firstPlan?.planId ?? trialPlan?.planId ?? ''
+}
+
+function SubscriptionBottomSheet({
+  currentSubscriptionPlanId,
+  currentSubscriptionTier,
+  onClose,
+}: SubscriptionBottomSheetProps) {
+  const { data: subscriptionPlansData, isError, isLoading, refetch } = useSubscriptionPlans()
+  const [selectedPlanIdOverride, setSelectedPlanIdOverride] = useState('')
+  const [selectedModeOverride, setSelectedModeOverride] =
+    useState<SubscriptionSelectionMode | null>(null)
+  const sheetRef = useRef<HTMLElement | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
-  const selectedProOption =
-    proPlanOptions.find((option) => option.id === selectedProOptionId) ?? proPlanOptions[0]
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
+  const plans = subscriptionPlansData?.plans ?? []
+  const trialPlan = plans.find((plan) => plan.hasTrial)
+  const paidPlans = plans
+  const displayBenefits = subscriptionPlansData?.benefits?.length
+    ? subscriptionPlansData.benefits
+    : fallbackBenefits
+  const defaultPaidPlanId =
+    paidPlans.find((plan) => plan.planId === currentSubscriptionPlanId)?.planId ??
+    paidPlans[0]?.planId ??
+    ''
+  const selectedPlanId = plans.some((plan) => plan.planId === selectedPlanIdOverride)
+    ? selectedPlanIdOverride
+    : getInitialSelectedPlanId(plans, currentSubscriptionPlanId, currentSubscriptionTier)
+  const selectedBackendPlan = plans.find((plan) => plan.planId === selectedPlanId)
+  const defaultMode: SubscriptionSelectionMode =
+    selectedBackendPlan && !isFreeTier(currentSubscriptionTier)
+      ? 'pro'
+      : trialPlan
+        ? 'trial'
+        : 'free'
+  const selectedMode: SubscriptionSelectionMode =
+    selectedModeOverride ?? defaultMode
+  const isProOptionsVisible = selectedMode === 'pro'
   const subscriptionActionText =
-    selectedSubscriptionPlan === 'trial'
+    selectedMode === 'trial'
       ? 'Start 7-day trial'
-      : selectedSubscriptionPlan === 'pro'
-        ? `Subscribe ${selectedProOption.label}`
-        : 'Continue Free Plan'
+      : selectedMode === 'free'
+        ? 'Continue Free Plan'
+        : `Subscribe ${formatPlanDuration(selectedBackendPlan?.billingCycleMonths ?? 1)}`
 
   useEffect(() => {
+    previouslyFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
     closeButtonRef.current?.focus()
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose()
+        return
+      }
+
+      if (event.key !== 'Tab' || !sheetRef.current) {
+        return
+      }
+
+      const focusableElements = getFocusableElements(sheetRef.current)
+
+      if (focusableElements.length === 0) {
+        event.preventDefault()
+        return
+      }
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+        return
+      }
+
+      if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
       }
     }
 
@@ -63,6 +139,7 @@ function SubscriptionBottomSheet({ onClose }: SubscriptionBottomSheetProps) {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
+      previouslyFocusedElementRef.current?.focus()
     }
   }, [onClose])
 
@@ -73,6 +150,7 @@ function SubscriptionBottomSheet({ onClose }: SubscriptionBottomSheetProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="subscription-sheet-title"
+        ref={sheetRef}
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -82,9 +160,7 @@ function SubscriptionBottomSheet({ onClose }: SubscriptionBottomSheetProps) {
           onClick={onClose}
           aria-label="구독 옵션 닫기"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 6l12 12M18 6 6 18" />
-          </svg>
+          <img src={closeRoundedIcon} alt="" aria-hidden="true" />
         </button>
 
         <div className="subscription-sheet-body">
@@ -92,88 +168,154 @@ function SubscriptionBottomSheet({ onClose }: SubscriptionBottomSheetProps) {
             What subscription gives you
           </h2>
 
-          <ul className="subscription-benefit-list" aria-label="Subscription benefits">
-            {subscriptionBenefits.map((benefit) => (
-              <li key={benefit.label} className="subscription-benefit-item">
-                <img className="subscription-benefit-icon" src={benefit.icon} alt="" aria-hidden="true" />
-                <span>{benefit.label}</span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="subscription-plan-list" aria-label="Subscription plans">
-            <button
-              type="button"
-              className={`subscription-plan-row ${
-                selectedSubscriptionPlan === 'free' ? 'subscription-plan-row-selected' : ''
-              }`}
-              onClick={() => setSelectedSubscriptionPlan('free')}
-            >
-              <span>Free Plan</span>
-            </button>
-
-            <button
-              type="button"
-              className={`subscription-plan-row ${
-                selectedSubscriptionPlan === 'trial' ? 'subscription-plan-row-selected' : ''
-              }`}
-              onClick={() => setSelectedSubscriptionPlan('trial')}
-            >
-              <span>7-day Trial</span>
-              {selectedSubscriptionPlan === 'trial' && (
-                <svg className="subscription-check-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m5 12 4.2 4.2L19 6.5" />
-                </svg>
-              )}
-            </button>
-
-            <section
-              className={`subscription-pro-panel ${
-                selectedSubscriptionPlan === 'pro' ? 'subscription-pro-panel-open' : ''
-              }`}
-            >
+          {isLoading ? (
+            <p className="subscription-sheet-status">Loading plans...</p>
+          ) : isError ? (
+            <div className="subscription-sheet-status" role="status">
+              <p>Unable to load plans.</p>
               <button
                 type="button"
-                className="subscription-pro-header"
-                onClick={() => setSelectedSubscriptionPlan('pro')}
+                className="subscription-sheet-retry"
+                onClick={() => {
+                  void refetch()
+                }}
               >
-                <span>Pro Plan</span>
+                Retry
               </button>
+            </div>
+          ) : (
+            <>
+              <ul className="subscription-benefit-list" aria-label="Subscription benefits">
+                {displayBenefits.map((benefit, index) => (
+                  <li key={benefit} className="subscription-benefit-item">
+                    <img
+                      className="subscription-benefit-icon"
+                      src={benefitIcons[index % benefitIcons.length]}
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <span>{benefit}</span>
+                  </li>
+                ))}
+              </ul>
 
-              {selectedSubscriptionPlan === 'pro' && (
-                <div className="subscription-pro-options">
-                  {proPlanOptions.map((option) => (
-                    <label
-                      key={option.id}
-                      className={`subscription-pro-option ${
-                        selectedProOptionId === option.id ? 'subscription-pro-option-selected' : ''
-                      }`}
+              <fieldset className="subscription-plan-list">
+                <legend className="subscription-plan-legend">Subscription plans</legend>
+                <label
+                  className={`subscription-plan-row ${
+                    selectedMode === 'free' ? 'subscription-plan-row-selected' : ''
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="subscription-plan"
+                    value="free"
+                    checked={selectedMode === 'free'}
+                    onChange={() => {
+                      setSelectedPlanIdOverride('')
+                      setSelectedModeOverride('free')
+                    }}
+                  />
+                  <span>Free Plan</span>
+                  {selectedMode === 'free' && (
+                    <img className="subscription-check-icon" src={checkIconGray} alt="" aria-hidden="true" />
+                  )}
+                </label>
+
+                {trialPlan ? (
+                  <label
+                    className={`subscription-plan-row ${
+                      selectedMode === 'trial' ? 'subscription-plan-row-selected' : ''
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="subscription-plan"
+                      value={`${trialPlan.planId}:trial`}
+                      checked={selectedMode === 'trial'}
+                      onChange={() => {
+                        setSelectedPlanIdOverride(trialPlan.planId)
+                        setSelectedModeOverride('trial')
+                      }}
+                    />
+                    <span>7-day Trial</span>
+                    {selectedMode === 'trial' && (
+                      <img className="subscription-check-icon" src={checkIconGray} alt="" aria-hidden="true" />
+                    )}
+                  </label>
+                ) : null}
+
+                {paidPlans.length > 0 ? (
+                  <section
+                    className={`subscription-pro-panel ${
+                      selectedMode === 'pro' ? 'subscription-plan-row-selected' : ''
+                    } ${isProOptionsVisible ? 'subscription-pro-panel-open' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="subscription-pro-header"
+                      onClick={() => {
+                        setSelectedPlanIdOverride(defaultPaidPlanId)
+                        setSelectedModeOverride('pro')
+                      }}
+                      aria-expanded={isProOptionsVisible}
+                      aria-controls="subscription-pro-options"
                     >
-                      <input
-                        type="radio"
-                        name="subscription-pro-option"
-                        value={option.id}
-                        checked={selectedProOptionId === option.id}
-                        onChange={() => setSelectedProOptionId(option.id)}
-                      />
-                      <span className="subscription-radio" aria-hidden="true" />
-                      <span className="subscription-pro-option-label">{option.label}</span>
-                      <span className="subscription-pro-option-price">
-                        <span>{option.price}</span>
-                        {option.note ? (
-                          <span className="subscription-pro-option-note">({option.note})</span>
-                        ) : null}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
+                      <span>Pro Plan</span>
+                      {selectedMode === 'pro' && !isProOptionsVisible ? (
+                        <img className="subscription-check-icon" src={checkIconGray} alt="" aria-hidden="true" />
+                      ) : null}
+                    </button>
+
+                    {isProOptionsVisible ? (
+                      <div id="subscription-pro-options" className="subscription-pro-options">
+                        {paidPlans.map((option) => (
+                          <label
+                            key={option.planId}
+                            className={`subscription-pro-option ${
+                              selectedPlanId === option.planId ? 'subscription-pro-option-selected' : ''
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="subscription-plan"
+                              value={option.planId}
+                              checked={selectedPlanId === option.planId}
+                              onChange={() => {
+                                setSelectedPlanIdOverride(option.planId)
+                                setSelectedModeOverride('pro')
+                              }}
+                            />
+                            <span className="subscription-radio" aria-hidden="true" />
+                              <span className="subscription-pro-option-label">
+                              {option.title}
+                            </span>
+                            <span className="subscription-pro-option-price">
+                              <span>{option.priceText}</span>
+                              {option.subText ? (
+                                <span className="subscription-pro-option-note">
+                                  ({option.subText})
+                                </span>
+                              ) : null}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
+                  </section>
+                ) : null}
+              </fieldset>
+            </>
+          )}
         </div>
 
         <div className="subscription-sheet-footer">
-          <button type="button" className="subscription-sheet-action" onClick={onClose}>
+          <button
+            type="button"
+            className="subscription-sheet-action"
+            disabled={isLoading || isError || (selectedMode !== 'free' && !selectedBackendPlan)}
+            onClick={onClose}
+          >
             {subscriptionActionText}
           </button>
         </div>

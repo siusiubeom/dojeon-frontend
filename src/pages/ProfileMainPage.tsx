@@ -8,10 +8,7 @@ import profileIcon from '../assets/user.svg'
 import settingIcon from '../assets/setting_icon.svg'
 import { useUserMe } from '../hooks/useUserMe'
 import SubscriptionBottomSheet from '../components/SubscriptionBottomSheet'
-import {
-  formatAchievementDate,
-  type ProfileMainData,
-} from '../data/profile'
+import { formatAchievementDate, type ProfileMainData } from '../data/profile'
 
 const tabs = [
   { icon: homeIcon, label: 'HOME' },
@@ -171,6 +168,8 @@ function ProfileMainPage({
       profileImgUrl: userMe.profile.profileImgUrl,
       joinedYear: getJoinedYear(userMe.profile.createdAt),
       subscriptionTier: userMe.profile.subscriptionTier,
+      subscriptionPlanId: userMe.profile.subscriptionPlanId,
+      subscriptionExpiresAt: userMe.profile.subscriptionExpiresAt,
     },
     settings: {
       motherLanguage: userMe.profile.motherLanguage,
@@ -201,7 +200,9 @@ function ProfileMainPage({
   const subscriptionCopy =
     user.subscriptionTier === 'FREE'
       ? 'Upgrade your plan for more learning features.'
-      : `${user.subscriptionTier} plan is active.`
+      : `${user.subscriptionTier} plan is active${
+          user.subscriptionExpiresAt ? ` until ${formatAchievementDate(user.subscriptionExpiresAt)}` : ''
+        }.`
 
   return (
     <main className="profile-main-screen">
@@ -357,7 +358,11 @@ function ProfileMainPage({
 
       {bottomNav}
       {isSubscriptionSheetOpen && (
-        <SubscriptionBottomSheet onClose={() => setIsSubscriptionSheetOpen(false)} />
+        <SubscriptionBottomSheet
+          currentSubscriptionPlanId={user.subscriptionPlanId}
+          currentSubscriptionTier={user.subscriptionTier}
+          onClose={() => setIsSubscriptionSheetOpen(false)}
+        />
       )}
     </main>
   )
