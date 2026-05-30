@@ -23,7 +23,7 @@ export type PracticeStep =
 interface GrammarPracticePageProps {
   onBack: () => void
   language: string
-  sectionId: number
+  sectionId: number | null
   initialPracticeStep?: PracticeStep
 }
 
@@ -156,6 +156,7 @@ function GrammarPracticePage({
     isCorrectAnswer = currentAnswer === correctAnswer
     isWrongAnswer = isAnswered && !isCorrectAnswer
   }
+  const canMoveToNextPracticeStep = isCorrectAnswer && !checkAnswer.isPending
 
   const readingQuestions = [
     {
@@ -397,6 +398,8 @@ function GrammarPracticePage({
       return
     }
 
+    if (sectionId === null) return
+
     try {
       const result = await checkAnswer.mutateAsync({
         sectionId,
@@ -406,10 +409,17 @@ function GrammarPracticePage({
         ...prev,
         [option]: Boolean(result?.correct),
       }))
-    } catch { /* */ }
+    } catch {
+      setServerGradedAnswers((prev) => ({
+        ...prev,
+        [option]: false,
+      }))
+    }
   }
 
   const handleReviewSubmit = async (nextStep: 'next-grammar' | 'reading') => {
+    if (sectionId === null) return
+
     await saveProgress
       .mutateAsync({
         sectionId,
@@ -1334,8 +1344,9 @@ function GrammarPracticePage({
           <button
             type="button"
             className={`grammar-practice-next-button ${isFillStep || isMakeStep ? 'grammar-practice-next-button-fill' : ''}`}
+            disabled={!canMoveToNextPracticeStep}
             onClick={() => {
-              if (isWrongAnswer) return
+              if (!canMoveToNextPracticeStep) return
               if (practiceStep === 'choice') {
                 pushHistory()
                 setPracticeStep('fill')

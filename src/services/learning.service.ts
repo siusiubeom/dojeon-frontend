@@ -36,34 +36,59 @@ function buildHeaders(): HeadersInit {
     }
 }
 
-export async function fetchCoursesDashboard(
-    signal?: AbortSignal,
-): Promise<DashboardData | null> {
-    const res = await fetch(`${API_BASE_URL}/courses/dashboard`, {
-        method: 'GET',
-        headers: buildHeaders(),
-        signal,
-    })
+async function fetchLearningResponse<T extends { isSuccess: boolean; message?: string; code?: string; errorCode?: string; data: unknown }>(
+    input: RequestInfo | URL,
+    init: RequestInit,
+    fallbackMessage: string,
+): Promise<T> {
+    let res: Response
+    try {
+        res = await fetch(input, init)
+    } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') throw error
+        throw new LearningApiError(fallbackMessage)
+    }
 
-    if (!res.ok) {
-        let body: DashboardResponse | undefined
-        try {
-            body = (await res.json()) as DashboardResponse
-        } catch {
-            // ignore
-        }
+    let body: T
+    try {
+        body = (await res.json()) as T
+    } catch {
         throw new LearningApiError(
-            body?.message ?? `Failed to fetch courses dashboard (HTTP ${res.status})`,
-            body?.code,
+            `${fallbackMessage} (invalid JSON, HTTP ${res.status})`,
+            undefined,
             undefined,
             res.status,
         )
     }
 
-    const body = (await res.json()) as DashboardResponse
-    if (!body.isSuccess) {
-        throw new LearningApiError(body.message ?? 'Request failed', body.code)
+    if (!res.ok) {
+        throw new LearningApiError(
+            body.message ?? `${fallbackMessage} (HTTP ${res.status})`,
+            body.code,
+            body.errorCode,
+            res.status,
+        )
     }
+
+    if (!body.isSuccess) {
+        throw new LearningApiError(body.message ?? 'Request failed', body.code, body.errorCode, res.status)
+    }
+
+    return body
+}
+
+export async function fetchCoursesDashboard(
+    signal?: AbortSignal,
+): Promise<DashboardData | null> {
+    const body = await fetchLearningResponse<DashboardResponse>(
+        `${API_BASE_URL}/courses/dashboard`,
+        {
+            method: 'GET',
+            headers: buildHeaders(),
+            signal,
+        },
+        'Failed to fetch courses dashboard',
+    )
     return body.data
 }
 
@@ -71,30 +96,14 @@ export async function fetchLessonSections(
     lessonId: number,
     signal?: AbortSignal,
 ): Promise<LessonSectionsData | null> {
-    const res = await fetch(`${API_BASE_URL}/lessons/${lessonId}/sections`, {
-        method: 'GET',
-        headers: buildHeaders(),
-        signal,
-    })
-
-    if (!res.ok) {
-        let body: LessonSectionsResponse | undefined
-        try {
-            body = (await res.json()) as LessonSectionsResponse
-        } catch {
-            // ignore
-        }
-        throw new LearningApiError(
-            body?.message ?? `Failed to fetch lesson sections (HTTP ${res.status})`,
-            body?.code,
-            body?.errorCode,
-            res.status,
-        )
-    }
-
-    const body = (await res.json()) as LessonSectionsResponse
-    if (!body.isSuccess) {
-        throw new LearningApiError(body.message ?? 'Request failed', body.code, body.errorCode)
-    }
+    const body = await fetchLearningResponse<LessonSectionsResponse>(
+        `${API_BASE_URL}/lessons/${lessonId}/sections`,
+        {
+            method: 'GET',
+            headers: buildHeaders(),
+            signal,
+        },
+        'Failed to fetch lesson sections',
+    )
     return body.data
 }

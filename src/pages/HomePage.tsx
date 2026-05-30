@@ -200,6 +200,7 @@ function HomePage({
             <button
               className="start-btn"
               type="button"
+              disabled={!onStartLesson}
               onClick={() => onStartLesson?.(lastLesson)}
             >
               START

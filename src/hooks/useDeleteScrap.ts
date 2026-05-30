@@ -10,7 +10,7 @@ export function useDeleteScrap() {
         mutationFn: (scrapId: string) => deleteScrap(scrapId),
         onSuccess: () => {
             // Refresh both the paginated list and the dashboard preview.
-            void queryClient.invalidateQueries({ queryKey: ['scrap'] })
+            return queryClient.invalidateQueries({ queryKey: ['scrap'] })
         },
     })
 }

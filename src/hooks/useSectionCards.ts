@@ -15,7 +15,10 @@ export function useSectionCards(sectionId: number | null): UseSectionCardsState 
         SectionApiError
     >({
         queryKey: ['section', sectionId, 'cards'],
-        queryFn: ({ signal }) => fetchSectionCards(sectionId as number, signal),
+        queryFn: ({ signal }) => {
+            if (sectionId === null) return null
+            return fetchSectionCards(sectionId, signal)
+        },
         enabled: sectionId !== null,
     })
 
@@ -24,6 +27,7 @@ export function useSectionCards(sectionId: number | null): UseSectionCardsState 
         loading: sectionId !== null && (isPending || isFetching),
         error: error ?? null,
         refetch: async () => {
+            if (sectionId === null) return
             await refetch()
         },
     }

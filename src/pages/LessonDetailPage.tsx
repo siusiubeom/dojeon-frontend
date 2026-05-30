@@ -69,16 +69,20 @@ function LessonDetailPage({
     const section = sections.find((s) => s.sectionId === selectedModuleId)
     if (!section) return
 
-    await saveProgress.mutateAsync({
-      sectionId: selectedModuleId,
-      payload: {
-        currentPage: section.totalPages || 1,
-        stayTimeSeconds: 0,
-        forceComplete: true,
-        difficulty: 'NORMAL',
-      },
-    })
-    setSelectedModuleId(null)
+    try {
+      await saveProgress.mutateAsync({
+        sectionId: selectedModuleId,
+        payload: {
+          currentPage: section.totalPages || 1,
+          stayTimeSeconds: 0,
+          forceComplete: true,
+          difficulty: 'NORMAL',
+        },
+      })
+      setSelectedModuleId(null)
+    } catch {
+      // The mutation exposes the error state for the page to render.
+    }
   }
 
   if (loading) {

@@ -18,10 +18,12 @@ export function useSaveSectionProgress() {
     return useMutation<SaveProgressData | null, SectionApiError, SaveProgressVariables>({
         mutationFn: ({ sectionId, payload, idempotencyKey }) =>
             saveSectionProgress(sectionId, payload, idempotencyKey ?? generateIdempotencyKey()),
-        onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ['home'] })
-            void queryClient.invalidateQueries({ queryKey: ['learning'] })
-            void queryClient.invalidateQueries({ queryKey: ['section'] })
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['home'] }),
+                queryClient.invalidateQueries({ queryKey: ['learning'] }),
+                queryClient.invalidateQueries({ queryKey: ['section'] }),
+            ])
         },
     })
 }

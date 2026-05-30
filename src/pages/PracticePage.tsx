@@ -143,7 +143,7 @@ function QuestionRunner({ topic }: { topic: PracticeTopic }) {
       })
       setResult(data)
     } catch {
-
+      setResult(null)
     }
   }
 
