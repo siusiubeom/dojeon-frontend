@@ -81,7 +81,7 @@ function LessonDetailPage({
       })
       setSelectedModuleId(null)
     } catch {
-      // The mutation exposes the error state for the page to render.
+      // 사용자가 다시 시도할 수 있도록 선택한 모듈 상태를 유지한다.
     }
   }
 
@@ -346,6 +346,11 @@ function LessonDetailPage({
                     />
                   </svg>
                 </button>
+                {saveProgress.error ? (
+                  <p className="lesson-detail-complete-error" role="alert">
+                    {saveProgress.error.message}
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
