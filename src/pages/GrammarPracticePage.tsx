@@ -410,10 +410,7 @@ function GrammarPracticePage({
         [option]: Boolean(result?.correct),
       }))
     } catch {
-      setServerGradedAnswers((prev) => ({
-        ...prev,
-        [option]: false,
-      }))
+      // Keep network/server failures separate from graded wrong answers.
     }
   }
 
