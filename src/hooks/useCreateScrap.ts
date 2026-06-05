@@ -8,7 +8,7 @@ export function useCreateScrap() {
     return useMutation<CreateScrapData | null, ScrapApiError, CreateScrapRequest>({
         mutationFn: (payload) => createScrap(payload),
         onSuccess: () => {
-            void queryClient.invalidateQueries({ queryKey: ['scrap'] })
+            return queryClient.invalidateQueries({ queryKey: ['scrap'] })
         },
     })
 }

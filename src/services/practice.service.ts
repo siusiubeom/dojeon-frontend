@@ -1,12 +1,10 @@
 import type {
     PracticeTopicListData,
-    PracticeTopicListResponse,
     PracticeQuestionsData,
-    PracticeQuestionsResponse,
     CheckAnswerRequest,
     CheckAnswerData,
-    CheckAnswerResponse,
 } from '../types/practice.types.ts'
+import { getAuthToken } from './session.ts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -24,11 +22,6 @@ export class PracticeApiError extends Error {
     }
 }
 
-function getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem('accessToken')
-}
-
 function buildHeaders(): HeadersInit {
     const token = getAuthToken()
     return {
@@ -37,32 +30,88 @@ function buildHeaders(): HeadersInit {
     }
 }
 
-/**
- * GET /practice/topic — list of active practice topics.
- */
-export async function fetchPracticeTopics(
-    signal?: AbortSignal,
-): Promise<PracticeTopicListData | null> {
-    const res = await fetch(`${API_BASE_URL}/practice/topic`, {
-        method: 'GET',
-        headers: buildHeaders(),
-        signal,
-    })
+type PracticeApiResponse<T> = {
+    isSuccess: boolean
+    code: string
+    message: string
+    data: T | null
+    errorCode?: string
+    timestamp?: string
+}
 
-    if (!res.ok) {
+function isWrappedResponse<T>(body: unknown): body is PracticeApiResponse<T> {
+    return Boolean(body && typeof body === 'object' && 'isSuccess' in body)
+}
+
+async function fetchPracticeResponse<T>(
+    input: RequestInfo | URL,
+    init: RequestInit,
+    fallbackMessage: string,
+): Promise<T | null> {
+    let res: Response
+    try {
+        res = await fetch(input, init)
+    } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') throw error
+        throw new PracticeApiError(fallbackMessage)
+    }
+
+    let body: unknown
+    try {
+        body = await res.json()
+    } catch {
+        if (!res.ok) {
+            throw new PracticeApiError(
+                `${fallbackMessage} (HTTP ${res.status})`,
+                undefined,
+                undefined,
+                res.status,
+            )
+        }
+
         throw new PracticeApiError(
-            `Failed to fetch topics (HTTP ${res.status})`,
+            `${fallbackMessage} (invalid JSON, HTTP ${res.status})`,
             undefined,
             undefined,
             res.status,
         )
     }
 
-    const body = (await res.json()) as PracticeTopicListResponse
-    if (!body.isSuccess) {
-        throw new PracticeApiError(body.message ?? 'Request failed', body.code)
+    if (!res.ok) {
+        const wrapped = isWrappedResponse<T>(body) ? body : null
+        throw new PracticeApiError(
+            wrapped?.message ?? `${fallbackMessage} (HTTP ${res.status})`,
+            wrapped?.code,
+            wrapped?.errorCode,
+            res.status,
+        )
     }
-    return body.data
+
+    if (isWrappedResponse<T>(body)) {
+        if (!body.isSuccess) {
+            throw new PracticeApiError(body.message ?? 'Request failed', body.code, body.errorCode, res.status)
+        }
+        return body.data
+    }
+
+    return body as T
+}
+
+/**
+ * GET /practice/topic — list of active practice topics.
+ */
+export async function fetchPracticeTopics(
+    signal?: AbortSignal,
+): Promise<PracticeTopicListData | null> {
+    return fetchPracticeResponse<PracticeTopicListData>(
+        `${API_BASE_URL}/practice/topic`,
+        {
+            method: 'GET',
+            headers: buildHeaders(),
+            signal,
+        },
+        'Failed to fetch topics',
+    )
 }
 
 /**
@@ -72,33 +121,15 @@ export async function fetchPracticeQuestions(
     topicId: number,
     signal?: AbortSignal,
 ): Promise<PracticeQuestionsData | null> {
-    const res = await fetch(`${API_BASE_URL}/practice/topic/${topicId}/question`, {
-        method: 'GET',
-        headers: buildHeaders(),
-        signal,
-    })
-
-    if (!res.ok) {
-        // Try to read structured error for 404 with errorCode
-        let body: PracticeQuestionsResponse | undefined
-        try {
-            body = (await res.json()) as PracticeQuestionsResponse
-        } catch {
-            // ignore
-        }
-        throw new PracticeApiError(
-            body?.message ?? `Failed to fetch questions (HTTP ${res.status})`,
-            body?.code,
-            body?.errorCode,
-            res.status,
-        )
-    }
-
-    const body = (await res.json()) as PracticeQuestionsResponse
-    if (!body.isSuccess) {
-        throw new PracticeApiError(body.message ?? 'Request failed', body.code, body.errorCode)
-    }
-    return body.data
+    return fetchPracticeResponse<PracticeQuestionsData>(
+        `${API_BASE_URL}/practice/topic/${topicId}/question`,
+        {
+            method: 'GET',
+            headers: buildHeaders(),
+            signal,
+        },
+        'Failed to fetch questions',
+    )
 }
 
 /**
@@ -109,30 +140,13 @@ export async function checkPracticeAnswer(
     topicId: number,
     payload: CheckAnswerRequest,
 ): Promise<CheckAnswerData | null> {
-    const res = await fetch(`${API_BASE_URL}/practice/topic/${topicId}/questions/check`, {
-        method: 'POST',
-        headers: buildHeaders(),
-        body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-        let body: CheckAnswerResponse | undefined
-        try {
-            body = (await res.json()) as CheckAnswerResponse
-        } catch {
-            // ignore
-        }
-        throw new PracticeApiError(
-            body?.message ?? `Failed to check answer (HTTP ${res.status})`,
-            body?.code,
-            body?.errorCode,
-            res.status,
-        )
-    }
-
-    const body = (await res.json()) as CheckAnswerResponse
-    if (!body.isSuccess) {
-        throw new PracticeApiError(body.message ?? 'Request failed', body.code, body.errorCode)
-    }
-    return body.data
+    return fetchPracticeResponse<CheckAnswerData>(
+        `${API_BASE_URL}/practice/topic/${topicId}/questions/check`,
+        {
+            method: 'POST',
+            headers: buildHeaders(),
+            body: JSON.stringify(payload),
+        },
+        'Failed to check answer',
+    )
 }

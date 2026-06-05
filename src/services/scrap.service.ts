@@ -11,6 +11,7 @@ import type {
     DeleteScrapResponse,
     DeleteScrapData,
 } from '../types/scraps.types.ts'
+import { getAuthToken } from './session.ts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -26,11 +27,6 @@ export class ScrapApiError extends Error {
         this.errorCode = errorCode
         this.status = status
     }
-}
-
-function getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem('accessToken')
 }
 
 function buildHeaders(): HeadersInit {

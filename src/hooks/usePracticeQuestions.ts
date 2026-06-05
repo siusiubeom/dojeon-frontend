@@ -15,7 +15,10 @@ export function usePracticeQuestions(topicId: number | null): UsePracticeQuestio
         PracticeApiError
     >({
         queryKey: ['practice', 'questions', topicId],
-        queryFn: ({ signal }) => fetchPracticeQuestions(topicId as number, signal),
+        queryFn: ({ signal }) => {
+            if (topicId === null) return null
+            return fetchPracticeQuestions(topicId, signal)
+        },
         enabled: topicId !== null,
     })
 
@@ -25,6 +28,7 @@ export function usePracticeQuestions(topicId: number | null): UsePracticeQuestio
         loading: topicId !== null && (isPending || isFetching),
         error: error ?? null,
         refetch: async () => {
+            if (topicId === null) return
             await refetch()
         },
     }

@@ -1,17 +1,13 @@
 import type {
     SectionMaterialData,
-    SectionMaterialResponse,
     SectionCardData,
-    SectionCardResponse,
     SectionQuestionData,
-    SectionQuestionResponse,
     SectionCheckAnswerRequest,
     SectionCheckAnswerData,
-    SectionCheckAnswerResponse,
     SaveProgressRequest,
     SaveProgressData,
-    SaveProgressResponse,
 } from '../types/section,types.ts'
+import { getAuthToken } from './session.ts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -29,11 +25,6 @@ export class SectionApiError extends Error {
     }
 }
 
-function getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem('accessToken')
-}
-
 function buildHeaders(extra: HeadersInit = {}): HeadersInit {
     const token = getAuthToken()
     return {
@@ -43,114 +34,131 @@ function buildHeaders(extra: HeadersInit = {}): HeadersInit {
     }
 }
 
-async function readErrorBody<T extends { message?: string; code?: string; errorCode?: string }>(
-    res: Response,
-): Promise<T | undefined> {
+type SectionApiResponse<T> = {
+    isSuccess: boolean
+    code: string
+    message: string
+    data: T | null
+    errorCode?: string
+    timestamp?: string
+}
+
+function isWrappedResponse<T>(body: unknown): body is SectionApiResponse<T> {
+    return Boolean(body && typeof body === 'object' && 'isSuccess' in body)
+}
+
+async function fetchSectionResponse<T>(
+    input: RequestInfo | URL,
+    init: RequestInit,
+    fallbackMessage: string,
+): Promise<T | null> {
+    let res: Response
     try {
-        return (await res.json()) as T
-    } catch {
-        return undefined
+        res = await fetch(input, init)
+    } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') throw error
+        throw new SectionApiError(fallbackMessage)
     }
+
+    let body: unknown
+    try {
+        body = await res.json()
+    } catch {
+        if (!res.ok) {
+            throw new SectionApiError(
+                `${fallbackMessage} (HTTP ${res.status})`,
+                undefined,
+                undefined,
+                res.status,
+            )
+        }
+
+        throw new SectionApiError(
+            `${fallbackMessage} (invalid JSON, HTTP ${res.status})`,
+            undefined,
+            undefined,
+            res.status,
+        )
+    }
+
+    if (!res.ok) {
+        const wrapped = isWrappedResponse<T>(body) ? body : null
+        throw new SectionApiError(
+            wrapped?.message ?? `${fallbackMessage} (HTTP ${res.status})`,
+            wrapped?.code,
+            wrapped?.errorCode,
+            res.status,
+        )
+    }
+
+    if (isWrappedResponse<T>(body)) {
+        if (!body.isSuccess) {
+            throw new SectionApiError(body.message ?? 'Request failed', body.code, body.errorCode, res.status)
+        }
+        return body.data
+    }
+
+    return body as T
 }
 
 export async function fetchSectionMaterials(
     sectionId: number,
     signal?: AbortSignal,
 ): Promise<SectionMaterialData | null> {
-    const res = await fetch(`${API_BASE_URL}/section/${sectionId}/material`, {
-        method: 'GET',
-        headers: buildHeaders(),
-        signal,
-    })
-    if (!res.ok) {
-        const body = await readErrorBody<SectionMaterialResponse>(res)
-        throw new SectionApiError(
-            body?.message ?? `Failed to fetch materials (HTTP ${res.status})`,
-            body?.code,
-            body?.errorCode,
-            res.status,
-        )
-    }
-    const body = (await res.json()) as SectionMaterialResponse
-    if (!body.isSuccess) {
-        throw new SectionApiError(body.message ?? 'Request failed', body.code, body.errorCode)
-    }
-    return body.data
+    return fetchSectionResponse<SectionMaterialData>(
+        `${API_BASE_URL}/section/${sectionId}/material`,
+        {
+            method: 'GET',
+            headers: buildHeaders(),
+            signal,
+        },
+        'Failed to fetch materials',
+    )
 }
 
 export async function fetchSectionCards(
     sectionId: number,
     signal?: AbortSignal,
 ): Promise<SectionCardData | null> {
-    const res = await fetch(`${API_BASE_URL}/section/${sectionId}/card`, {
-        method: 'GET',
-        headers: buildHeaders(),
-        signal,
-    })
-    if (!res.ok) {
-        const body = await readErrorBody<SectionCardResponse>(res)
-        throw new SectionApiError(
-            body?.message ?? `Failed to fetch cards (HTTP ${res.status})`,
-            body?.code,
-            undefined,
-            res.status,
-        )
-    }
-    const body = (await res.json()) as SectionCardResponse
-    if (!body.isSuccess) {
-        throw new SectionApiError(body.message ?? 'Request failed', body.code)
-    }
-    return body.data
+    return fetchSectionResponse<SectionCardData>(
+        `${API_BASE_URL}/section/${sectionId}/card`,
+        {
+            method: 'GET',
+            headers: buildHeaders(),
+            signal,
+        },
+        'Failed to fetch cards',
+    )
 }
 
 export async function fetchSectionQuestions(
     sectionId: number,
     signal?: AbortSignal,
 ): Promise<SectionQuestionData | null> {
-    const res = await fetch(`${API_BASE_URL}/section/${sectionId}/question`, {
-        method: 'GET',
-        headers: buildHeaders(),
-        signal,
-    })
-    if (!res.ok) {
-        const body = await readErrorBody<SectionQuestionResponse>(res)
-        throw new SectionApiError(
-            body?.message ?? `Failed to fetch questions (HTTP ${res.status})`,
-            body?.code,
-            undefined,
-            res.status,
-        )
-    }
-    const body = (await res.json()) as SectionQuestionResponse
-    if (!body.isSuccess) {
-        throw new SectionApiError(body.message ?? 'Request failed', body.code)
-    }
-    return body.data
+    return fetchSectionResponse<SectionQuestionData>(
+        `${API_BASE_URL}/section/${sectionId}/question`,
+        {
+            method: 'GET',
+            headers: buildHeaders(),
+            signal,
+        },
+        'Failed to fetch questions',
+    )
 }
 
 export async function checkSectionAnswer(
     sectionId: number,
     payload: SectionCheckAnswerRequest,
 ): Promise<SectionCheckAnswerData | null> {
-    const res = await fetch(`${API_BASE_URL}/section/${sectionId}/questions/check`, {
-        method: 'POST',
-        headers: buildHeaders(),
-        body: JSON.stringify(payload),
-    })
-    if (!res.ok) {
-        const body = await readErrorBody<SectionCheckAnswerResponse>(res)
-        throw new SectionApiError(
-            body?.message ?? `Failed to check answer (HTTP ${res.status})`,
-            body?.code,
-            body?.errorCode,
-            res.status,
-        )
-    }
-    const body = (await res.json()) as SectionCheckAnswerResponse
-    if (!body.isSuccess) {
-        throw new SectionApiError(body.message ?? 'Request failed', body.code, body.errorCode)
-    }
-    return body.data
+    return fetchSectionResponse<SectionCheckAnswerData>(
+        `${API_BASE_URL}/section/${sectionId}/questions/check`,
+        {
+            method: 'POST',
+            headers: buildHeaders(),
+            body: JSON.stringify(payload),
+        },
+        'Failed to check answer',
+    )
 }
 
 export async function saveSectionProgress(
@@ -158,27 +166,17 @@ export async function saveSectionProgress(
     payload: SaveProgressRequest,
     idempotencyKey?: string,
 ): Promise<SaveProgressData | null> {
-    const res = await fetch(`${API_BASE_URL}/section/${sectionId}/progress`, {
-        method: 'POST',
-        headers: buildHeaders(
-            idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
-        ),
-        body: JSON.stringify(payload),
-    })
-    if (!res.ok) {
-        const body = await readErrorBody<SaveProgressResponse>(res)
-        throw new SectionApiError(
-            body?.message ?? `Failed to save progress (HTTP ${res.status})`,
-            body?.code,
-            body?.errorCode,
-            res.status,
-        )
-    }
-    const body = (await res.json()) as SaveProgressResponse
-    if (!body.isSuccess) {
-        throw new SectionApiError(body.message ?? 'Request failed', body.code, body.errorCode)
-    }
-    return body.data
+    return fetchSectionResponse<SaveProgressData>(
+        `${API_BASE_URL}/section/${sectionId}/progress`,
+        {
+            method: 'POST',
+            headers: buildHeaders(
+                idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
+            ),
+            body: JSON.stringify(payload),
+        },
+        'Failed to save progress',
+    )
 }
 
 export function generateIdempotencyKey(): string {

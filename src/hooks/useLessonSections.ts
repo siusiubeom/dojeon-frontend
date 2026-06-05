@@ -15,7 +15,10 @@ export function useLessonSections(lessonId: number | null): UseLessonSectionsSta
         LearningApiError
     >({
         queryKey: ['learning', 'lessons', lessonId, 'sections'],
-        queryFn: ({ signal }) => fetchLessonSections(lessonId as number, signal),
+        queryFn: ({ signal }) => {
+            if (lessonId === null) return null
+            return fetchLessonSections(lessonId, signal)
+        },
         enabled: lessonId !== null,
     })
 
@@ -24,6 +27,7 @@ export function useLessonSections(lessonId: number | null): UseLessonSectionsSta
         loading: lessonId !== null && (isPending || isFetching),
         error: error ?? null,
         refetch: async () => {
+            if (lessonId === null) return
             await refetch()
         },
     }
