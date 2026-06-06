@@ -230,7 +230,7 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                   type="button"
                   className="onboarding-back"
                   onClick={handleBack}
-                  aria-label="뒤로 가기"
+                  aria-label="Go back"
                 >
                   <svg
                     className="onboarding-back-icon"
@@ -265,7 +265,7 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                         : ''
               }`}
               role="list"
-              aria-label="온보딩 진행 단계"
+              aria-label="Onboarding progress"
             >
               <span className="progress-track" aria-hidden="true" />
               <span

@@ -18,7 +18,7 @@ function VocabularyPage({ onBack }: VocabularyPageProps) {
             type="button"
             className="vocabulary-back"
             onClick={onBack}
-            aria-label="뒤로 가기"
+            aria-label="Go back"
           >
             <svg
               className="vocabulary-back-icon"

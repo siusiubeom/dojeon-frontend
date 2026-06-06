@@ -194,12 +194,46 @@ const parseJsonSafely = async <T>(response: Response): Promise<T | null> => {
   }
 }
 
-const getErrorMessage = (payload: ApiResponse<null> | null, response: Response) => {
-  if (payload?.message) {
-    return payload.message
+const translateAuthErrorMessage = (message: string) => {
+  const normalized = message.trim()
+
+  if (!/[가-힣]/.test(normalized)) {
+    return normalized
   }
 
-  return `요청 실패: ${response.status} ${response.statusText}`
+  if (normalized.includes('이미') && normalized.includes('가입')) {
+    return 'This email is already registered.'
+  }
+
+  if (normalized.includes('이메일') && normalized.includes('비밀번호')) {
+    return 'The email or password is incorrect.'
+  }
+
+  if (normalized.includes('인증') && normalized.includes('만료')) {
+    return 'The verification code is invalid or has expired.'
+  }
+
+  if (normalized.includes('인증') && normalized.includes('올바르지')) {
+    return 'The verification code is incorrect.'
+  }
+
+  if (normalized.includes('이메일')) {
+    return 'Please enter your email address.'
+  }
+
+  if (normalized.includes('닉네임')) {
+    return 'Please enter a nickname.'
+  }
+
+  return 'The request could not be completed. Please try again.'
+}
+
+const getErrorMessage = (payload: ApiResponse<null> | null, response: Response) => {
+  if (payload?.message) {
+    return translateAuthErrorMessage(payload.message)
+  }
+
+  return `Request failed: ${response.status} ${response.statusText}`
 }
 
 const unwrapApiResponse = async <T>(response: Response): Promise<T> => {
@@ -233,7 +267,7 @@ const fetchJson = async <T>(
       },
     })
   } catch {
-    throw new AuthApiError('네트워크 요청에 실패했습니다. 서버 연결을 확인해 주세요.', 0)
+    throw new AuthApiError('Network request failed. Please check the server connection.', 0)
   }
 
   return unwrapApiResponse<T>(response)
@@ -296,7 +330,7 @@ export async function requestEmailVerificationCode(email: string): Promise<SendE
   const normalizedEmail = normalizeEmail(email)
 
   if (!normalizedEmail) {
-    throw new AuthApiError('이메일을 입력해 주세요.', 400)
+    throw new AuthApiError('Please enter your email address.', 400)
   }
 
   if (isMockMode) {
@@ -315,17 +349,17 @@ export async function verifyEmailCode(email: string, code: string): Promise<Veri
   const trimmedCode = code.trim()
 
   if (!trimmedCode) {
-    throw new AuthApiError('인증번호를 입력해 주세요.', 400)
+    throw new AuthApiError('Please enter the verification code.', 400)
   }
 
   if (trimmedCode.length !== 6) {
-    throw new AuthApiError('인증번호 6자리를 모두 입력해 주세요.', 400)
+    throw new AuthApiError('Please enter all 6 digits of the verification code.', 400)
   }
 
   if (isMockMode) {
     await wait(mockDelayMs)
     if (trimmedCode !== mockVerificationCode) {
-      throw new AuthApiError('인증 코드가 올바르지 않거나 만료되었습니다.', 400, 'INVALID_CODE')
+      throw new AuthApiError('The verification code is invalid or has expired.', 400, 'INVALID_CODE')
     }
 
     return {
@@ -370,7 +404,7 @@ export async function login(payload: LoginRequest): Promise<AuthTokenData> {
 
     if (!normalizedEmail || !payload.password) {
       throw new AuthApiError(
-        '이메일 또는 비밀번호가 올바르지 않습니다.',
+        'The email or password is incorrect.',
         401,
         'INVALID_CREDENTIALS',
       )
@@ -434,7 +468,7 @@ export async function requestPasswordReset(email: string): Promise<SendEmailCode
   const normalizedEmail = normalizeEmail(email)
 
   if (!normalizedEmail) {
-    throw new AuthApiError('이메일을 입력해 주세요.', 400)
+    throw new AuthApiError('Please enter your email address.', 400)
   }
 
   if (isMockMode) {
@@ -455,7 +489,7 @@ export async function confirmPasswordReset(
     await wait(mockDelayMs)
 
     if (payload.code.trim() !== mockVerificationCode) {
-      throw new AuthApiError('인증 코드가 올바르지 않거나 만료되었습니다.', 400, 'INVALID_CODE')
+      throw new AuthApiError('The verification code is invalid or has expired.', 400, 'INVALID_CODE')
     }
 
     return { reset: true }
@@ -477,7 +511,7 @@ export async function checkNicknameAvailability(
   const trimmedNickname = nickname.trim()
 
   if (!trimmedNickname) {
-    throw new AuthApiError('닉네임을 입력해 주세요.', 400)
+    throw new AuthApiError('Please enter a nickname.', 400)
   }
 
   if (isMockMode) {

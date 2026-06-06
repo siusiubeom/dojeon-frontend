@@ -264,7 +264,7 @@ function VocabularyLessonPage({
             type="button"
             className="vocabulary-lesson-back"
             onClick={handleBackPress}
-            aria-label="뒤로 가기"
+            aria-label="Go back"
           >
             <svg
               className="vocabulary-lesson-back-icon"
@@ -397,7 +397,7 @@ function VocabularyLessonPage({
                                             event.stopPropagation()
                                             handleSpeakCurrentWord()
                                           }}
-                                          aria-label={`${entry.item.word} 발음 듣기`}
+                                          aria-label={`Listen to ${entry.item.word} pronunciation`}
                                         >
                                           <svg
                                             className="vocabulary-lesson-speaker-icon"
@@ -459,8 +459,8 @@ function VocabularyLessonPage({
                                   }}
                                   aria-label={
                                     isSaved
-                                      ? `${entry.item.word} personal list에서 제거`
-                                      : `${entry.item.word} personal list에 추가`
+                                      ? `Remove ${entry.item.word} from personal list`
+                                      : `Add ${entry.item.word} to personal list`
                                   }
                                 >
                                   {renderPersonalListIcon(isSaved)}
@@ -519,8 +519,8 @@ function VocabularyLessonPage({
                           onClick={() => setPersonalListPromptWordId(item.id)}
                           aria-label={
                             isSaved
-                              ? `${item.word} personal list에서 제거`
-                              : `${item.word} personal list에 추가`
+                              ? `Remove ${item.word} from personal list`
+                              : `Add ${item.word} to personal list`
                           }
                         >
                           {renderPersonalListIcon(isSaved)}
@@ -599,8 +599,8 @@ function VocabularyLessonPage({
             aria-modal="true"
             aria-label={
               promptWordSaved
-                ? 'Remove from personal list 확인'
-                : 'Add to personal list 확인'
+                ? 'Confirm removal from personal list'
+                : 'Confirm addition to personal list'
             }
           >
             <p className="vocabulary-lesson-modal-copy">

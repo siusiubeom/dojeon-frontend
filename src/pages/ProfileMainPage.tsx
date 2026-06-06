@@ -229,7 +229,7 @@ function ProfileMainPage({
             type="button"
             className="profile-main-setting-button"
             onClick={onOpenSetting}
-            aria-label="설정 열기"
+            aria-label="Open settings"
           >
             <img src={settingIcon} alt="" aria-hidden="true" />
           </button>
@@ -242,9 +242,9 @@ function ProfileMainPage({
             </div>
             <div className="profile-main-copy">
               <h1 className="profile-main-greeting">
-                안녕하세요!
+                Hello!
                 <br />
-                {user.nickname}님!
+                {user.nickname}!
               </h1>
               <p className="profile-main-meta">
                 @{user.username} <span aria-hidden="true">·</span> joined {user.joinedYear}

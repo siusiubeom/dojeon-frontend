@@ -53,7 +53,7 @@ function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
                 type="button"
                 className="grammar-notebook-back"
                 onClick={onBack}
-                aria-label="뒤로 가기"
+                aria-label="Go back"
             >
               <svg
                   className="grammar-notebook-back-icon"
@@ -144,7 +144,7 @@ function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
                             disabled={isDeleting}
                             aria-label={isArmed ? 'Confirm delete' : 'Delete scrap'}
                         >
-                          {isDeleting ? '…' : isArmed ? '확인' : '×'}
+                          {isDeleting ? '…' : isArmed ? 'Confirm' : '×'}
                         </button>
                       </article>
                   )

@@ -135,7 +135,7 @@ function HomePage({
           </div>
 
           <section className="goal-card-body">
-            <section className="goal-progress" aria-label={`${activeGoal.title} 진행 상태`}>
+            <section className="goal-progress" aria-label={`${activeGoal.title} progress`}>
               <div className="goal-progress-row">
                 <div className="goal-progress-track-wrap">
                   <div
@@ -166,7 +166,7 @@ function HomePage({
 
         <section className="home-card streak-card">
           <h2 className="streak-title">{dailyStreak} days in a row !</h2>
-          <div className="streak-indicators" role="region" aria-label="연속 학습 진행 상태">
+          <div className="streak-indicators" role="region" aria-label="Daily streak progress">
             <div className="streak-track">
               {Array.from({ length: 20 }).map((_, index) => (
                 <span

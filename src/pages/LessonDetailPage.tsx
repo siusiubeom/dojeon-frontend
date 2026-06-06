@@ -91,7 +91,7 @@ function LessonDetailPage({
         <section className="lesson-detail-content">
           <div className="lesson-detail-header-area">
             <header className="lesson-detail-header">
-              <button type="button" className="lesson-detail-back" onClick={onBack} aria-label="뒤로 가기">
+              <button type="button" className="lesson-detail-back" onClick={onBack} aria-label="Go back">
                 <svg className="lesson-detail-back-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -110,7 +110,7 @@ function LessonDetailPage({
         <section className="lesson-detail-content">
           <div className="lesson-detail-header-area">
             <header className="lesson-detail-header">
-              <button type="button" className="lesson-detail-back" onClick={onBack} aria-label="뒤로 가기">
+              <button type="button" className="lesson-detail-back" onClick={onBack} aria-label="Go back">
                 <svg className="lesson-detail-back-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -132,7 +132,7 @@ function LessonDetailPage({
               type="button"
               className="lesson-detail-back"
               onClick={onBack}
-              aria-label="뒤로 가기"
+              aria-label="Go back"
             >
               <svg
                 className="lesson-detail-back-icon"

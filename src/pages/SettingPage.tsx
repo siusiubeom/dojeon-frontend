@@ -29,7 +29,7 @@ function SettingPage({
             type="button"
             className="setting-back"
             onClick={onBack}
-            aria-label="뒤로 가기"
+            aria-label="Go back"
           >
             <svg
               className="setting-back-icon"

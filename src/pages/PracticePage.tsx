@@ -28,7 +28,7 @@ function PracticePage({ onBack }: PracticePageProps) {
                 type="button"
                 className="practice-screen-back"
                 onClick={handleBack}
-                aria-label="뒤로 가기"
+                aria-label="Go back"
             >
               <svg
                   className="practice-screen-back-icon"

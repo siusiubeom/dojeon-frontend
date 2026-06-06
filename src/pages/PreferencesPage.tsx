@@ -82,7 +82,7 @@ function PreferencesPage({
             type="button"
             className="preferences-back"
             onClick={onBack}
-            aria-label="뒤로 가기"
+            aria-label="Go back"
           >
             <svg
               className="preferences-back-icon"

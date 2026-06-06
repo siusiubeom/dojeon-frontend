@@ -17,6 +17,7 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
   const [resendError, setResendError] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState('')
+  const [completionError, setCompletionError] = useState('')
   const lastSubmittedCode = useRef('')
 
   const codeText = code.join('')
@@ -27,6 +28,7 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
     const next = [...code]
     next[index] = digit
     setVerifyError('')
+    setCompletionError('')
     lastSubmittedCode.current = ''
     setCode(next)
 
@@ -54,6 +56,7 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
     })
     setCode(next)
     setVerifyError('')
+    setCompletionError('')
     lastSubmittedCode.current = ''
     if (pasted.length < code.length) {
       inputRefs.current[pasted.length]?.focus()
@@ -76,14 +79,27 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
     lastSubmittedCode.current = nextCode
     setIsVerifying(true)
     setVerifyError('')
+    setCompletionError('')
 
+    let verifyToken = ''
     try {
       const result = await verifyEmailCode(email, nextCode)
-      await onVerifySuccess(result.verifyToken)
+      verifyToken = result.verifyToken
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : '인증 코드 확인에 실패했습니다.'
+        error instanceof Error ? error.message : 'Unable to verify the code.'
       setVerifyError(message)
+      lastSubmittedCode.current = ''
+      setIsVerifying(false)
+      return
+    }
+
+    try {
+      await onVerifySuccess(verifyToken)
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unable to complete sign up.'
+      setCompletionError(message)
       lastSubmittedCode.current = ''
       setIsVerifying(false)
       return
@@ -124,6 +140,7 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
   const seconds = remainingSeconds % 60
   const timerText = `${String(minutes)}:${String(seconds).padStart(2, '0')}`
   const isWrongCode = Boolean(verifyError)
+  const hasCompletionError = Boolean(completionError)
 
   const handleResendCode = async () => {
     setIsResending(true)
@@ -133,11 +150,12 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
       await requestEmailVerificationCode(email)
       setCode(Array.from({ length: code.length }, () => ''))
       setVerifyError('')
+      setCompletionError('')
       lastSubmittedCode.current = ''
       setRemainingSeconds(120)
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : '재전송에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+        error instanceof Error ? error.message : 'Unable to resend the code. Please try again later.'
       setResendError(message)
     } finally {
       setIsResending(false)
@@ -147,7 +165,7 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
   return (
     <main className="verify-email-screen signup-screen">
       <header className="signup-header">
-        <button type="button" className="back-btn" onClick={onBack} aria-label="뒤로 가기">
+        <button type="button" className="back-btn" onClick={onBack} aria-label="Go back">
           <svg
             className="back-icon"
             width="24"
@@ -188,7 +206,7 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
                 onChange={(e) => handleCodeChange(index, e.target.value)}
                 onKeyDown={(e) => handleCodeKeyDown(index, digit, e)}
                 className="verify-code-input"
-                aria-label={`인증번호 ${index + 1}번째`}
+                aria-label={`Verification code digit ${index + 1}`}
                 autoComplete="one-time-code"
                 disabled={isVerifying || isResending}
               />
@@ -200,11 +218,19 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
         </p>
         <div className="verify-email-resend">
           {isVerifying && (
-            <p className="field-error verify-email-resend-error">인증 번호를 확인하고 있습니다...</p>
+            <p className="field-error verify-email-resend-error">Verifying code...</p>
           )}
           <p className="verify-email-resend-title">
-            {isWrongCode ? 'Wrong code, please try again' : "Don't receive code?"}
+            {isWrongCode
+              ? 'Wrong code, please try again'
+              : hasCompletionError
+                ? 'Unable to complete sign up'
+                : "Don't receive code?"}
           </p>
+          {verifyError && <p className="field-error verify-email-resend-error">{verifyError}</p>}
+          {completionError && (
+            <p className="field-error verify-email-resend-error">{completionError}</p>
+          )}
           {resendError && <p className="field-error verify-email-resend-error">{resendError}</p>}
           <button
             type="button"

@@ -343,7 +343,7 @@ function App() {
           onBack={() => setScreen('signup')}
           onVerifySuccess={async (verifyToken) => {
             if (!pendingSignup) {
-              throw new Error('회원가입 정보가 없습니다. 다시 시도해 주세요.')
+              throw new Error('Sign-up information is missing. Please try again.')
             }
 
             const tokenData = await signup({

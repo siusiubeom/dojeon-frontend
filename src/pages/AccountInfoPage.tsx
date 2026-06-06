@@ -89,7 +89,7 @@ function AccountInfoPage({
             type="button"
             className="account-info-back"
             onClick={onBack}
-            aria-label="뒤로 가기"
+            aria-label="Go back"
           >
             <svg
               className="account-info-back-icon"
