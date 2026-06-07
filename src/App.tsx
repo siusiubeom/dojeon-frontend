@@ -24,16 +24,6 @@ import { useUpdateUserMe } from './hooks/useUpdateUserMe'
 import { useChangeUserPassword } from './hooks/useChangeUserPassword'
 import { fetchUserMe } from './services/user.service'
 import {
-  courseItems,
-  currentCourseId,
-  currentLessonId,
-  findCourseById,
-  findLessonById,
-  getLessonPathId,
-  type LessonStage,
-  type LessonPathId,
-} from './data/classLessons'
-import {
   buildAuthSession,
   clearStoredAuthSession,
   getStoredAuthSession,
@@ -146,10 +136,6 @@ const getStoredKoreanGoal = () => {
   return readLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY) ?? ''
 }
 
-const initialSelectedCourse = findCourseById(currentCourseId) ?? courseItems[0]
-const initialSelectedLesson =
-  findLessonById(initialSelectedCourse, currentLessonId) ?? initialSelectedCourse.lessons[0]
-
 const parseDailyGoalMin = (value: string) => {
   const [minutes] = value.match(/\d+/) ?? []
   return minutes ? Number(minutes) : undefined
@@ -175,11 +161,8 @@ function App() {
   const [koreanGoal, setKoreanGoal] = useState(getStoredKoreanGoal)
   const [hasPassword, setHasPassword] = useState(true)
   const [isSigningOut, setIsSigningOut] = useState(false)
-  const [selectedCourseId, setSelectedCourseId] = useState(currentCourseId)
-  const [selectedLessonId, setSelectedLessonId] = useState(currentLessonId)
-  const [selectedLessonPathId, setSelectedLessonPathId] = useState<LessonPathId>(
-    getLessonPathId(initialSelectedLesson.stage),
-  )
+  const [selectedLessonNumericId, setSelectedLessonNumericId] = useState<number | null>(null)
+  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null)
   const [grammarPracticeInitialStep, setGrammarPracticeInitialStep] = useState<PracticeStep>(
     'choice',
   )
@@ -193,9 +176,6 @@ function App() {
   )
   const [settingBackScreen, setSettingBackScreen] = useState<'home' | 'profile-main'>('home')
 
-  const selectedCourse = findCourseById(selectedCourseId) ?? courseItems[0]
-  const selectedLesson =
-    findLessonById(selectedCourse, selectedLessonId) ?? selectedCourse.lessons[0]
   const currentEmail = authSession?.email ?? pendingSignup?.email ?? ''
   const currentUsername = currentEmail ? currentEmail.split('@')[0] : userName
 
@@ -302,7 +282,13 @@ function App() {
     const didSwitchAccount = syncLocalAccountOwner(authSession.email)
 
     if (didSwitchAccount) {
-      resetLocalProfileState()
+      const timer = window.setTimeout(() => {
+        resetLocalProfileState()
+      }, 0)
+
+      return () => {
+        window.clearTimeout(timer)
+      }
     }
   }, [authSession?.email, resetLocalProfileState])
 
@@ -325,36 +311,32 @@ function App() {
     }
   }
 
-  const handleOpenLessonPath = (
-    pathId: LessonPathId,
+  const handleOpenSection = (
+    sectionId: number,
+    sectionType: string,
     backScreen: 'class' | 'lesson-detail',
   ) => {
-    if (pathId === 'vocab') {
+    if (sectionType === 'VOCAB') {
+      setSelectedSectionId(sectionId)
       setVocabularyLessonBackScreen(backScreen)
       setScreen('vocabulary-lesson')
       return
     }
 
-    setGrammarPracticeBackScreen(backScreen)
-
-    if (pathId === 'grammar') {
+    if (sectionType === 'GRAMMAR') {
       setGrammarPracticeInitialStep('next-grammar')
-      setScreen('grammar-practice')
-      return
-    }
-
-    if (pathId === 'reading') {
+    } else if (sectionType === 'READING') {
       setGrammarPracticeInitialStep('reading')
-      setScreen('grammar-practice')
+    } else if (sectionType === 'LISTENING') {
+      setGrammarPracticeInitialStep('listening')
+    } else {
+      console.warn(`Unsupported section type: ${sectionType}`)
       return
     }
 
-    setGrammarPracticeInitialStep('listening')
+    setSelectedSectionId(sectionId)
+    setGrammarPracticeBackScreen(backScreen)
     setScreen('grammar-practice')
-  }
-
-  const handleOpenCurrentLesson = (stage: LessonStage) => {
-    handleOpenLessonPath(getLessonPathId(stage), 'class')
   }
 
   return (
@@ -490,14 +472,9 @@ function App() {
             setGrammarPracticeBackScreen('home')
             setScreen('grammar-practice')
           }}
-          onOpenTodaysLesson={() => {
-            const nextCourse = findCourseById(currentCourseId) ?? courseItems[0]
-            const nextLesson = findLessonById(nextCourse, currentLessonId) ?? nextCourse.lessons[0]
-
-            setSelectedCourseId(nextCourse.id)
-            setSelectedLessonId(nextLesson.id)
-            setSelectedLessonPathId('grammar')
-            setScreen('lesson-detail')
+          onStartLesson={(lesson) => {
+            setSelectedLessonNumericId(lesson.lessonId)
+            handleOpenSection(lesson.sectionId, lesson.sectionType, 'class')
           }}
         />
       ) : screen === 'class' ? (
@@ -511,31 +488,23 @@ function App() {
           onOpenProfile={() => {
             setScreen('profile-main')
           }}
-          onOpenCurrentLesson={handleOpenCurrentLesson}
-          onOpenLesson={(courseId, lessonId, initialPathId) => {
-            const nextCourse = findCourseById(courseId) ?? courseItems[0]
-            const nextLesson = findLessonById(nextCourse, lessonId) ?? nextCourse.lessons[0]
-
-            setSelectedCourseId(nextCourse.id)
-            setSelectedLessonId(nextLesson.id)
-            setSelectedLessonPathId(initialPathId ?? getLessonPathId(nextLesson.stage))
+          onOpenCurrentLesson={(sectionId, sectionType) => {
+            handleOpenSection(sectionId, sectionType, 'class')
+          }}
+          onOpenLesson={(_courseId, lessonId) => {
+            setSelectedLessonNumericId(lessonId)
             setScreen('lesson-detail')
           }}
         />
       ) : screen === 'lesson-detail' ? (
         <LessonDetailPage
-          key={`${selectedCourse.id}:${selectedLesson.id}:${selectedLessonPathId}`}
-          course={selectedCourse}
-          selectedLessonId={selectedLesson.id}
-          initialPathId={selectedLessonPathId}
+          key={selectedLessonNumericId ?? 'none'}
+          lessonId={selectedLessonNumericId}
           onSelectLesson={(lessonId) => {
-            const nextLesson = findLessonById(selectedCourse, lessonId) ?? selectedCourse.lessons[0]
-
-            setSelectedLessonId(nextLesson.id)
-            setSelectedLessonPathId(getLessonPathId(nextLesson.stage))
+            setSelectedLessonNumericId(lessonId)
           }}
-          onStartLesson={(pathId) => {
-            handleOpenLessonPath(pathId, 'lesson-detail')
+          onStartLesson={(sectionId, sectionType) => {
+            handleOpenSection(sectionId, sectionType, 'lesson-detail')
           }}
           onBack={() => {
             setScreen('class')
@@ -649,6 +618,7 @@ function App() {
         />
       ) : screen === 'vocabulary-lesson' ? (
         <VocabularyLessonPage
+          sectionId={selectedSectionId}
           onBack={() => {
             setScreen(vocabularyLessonBackScreen)
           }}
@@ -713,6 +683,7 @@ function App() {
         <GrammarPracticePage
           initialPracticeStep={grammarPracticeInitialStep}
           language={language}
+          sectionId={selectedSectionId}
           onBack={() => {
             setScreen(grammarPracticeBackScreen)
           }}
