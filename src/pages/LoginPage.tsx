@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import './LoginPage.css'
+import loginCharacter from '../assets/9.png'
+import { LOGIN_CREDENTIALS_ERROR_MESSAGE } from '../services/auth'
 
 interface LoginPageProps {
   onSignUp: () => void
@@ -30,11 +32,21 @@ function LoginPage({ onSignUp, onLogin }: LoginPageProps) {
     <main className="login-screen">
       {loginError ? (
         <div className="login-error-box" role="alert" aria-live="assertive">
-          {loginError}
+          {loginError === LOGIN_CREDENTIALS_ERROR_MESSAGE ? (
+            <>
+              <span className="login-error-line">Your ID or password is incorrect.</span>
+              <span className="login-error-line">Please enter the correct ID or password.</span>
+            </>
+          ) : (
+            loginError
+          )}
         </div>
       ) : null}
 
-      <div className="login-profile" />
+      <section className="login-brand" aria-label="Dojeon">
+        <img className="login-character" src={loginCharacter} alt="" aria-hidden="true" />
+        <h1 className="login-brand-title">Dojeon</h1>
+      </section>
 
       <form
         className="login-form"
@@ -57,7 +69,7 @@ function LoginPage({ onSignUp, onLogin }: LoginPageProps) {
             setLoginError(
               error instanceof Error
                 ? error.message
-                : 'The email or password is incorrect.',
+                : LOGIN_CREDENTIALS_ERROR_MESSAGE,
             )
           } finally {
             setIsSubmitting(false)
@@ -65,10 +77,11 @@ function LoginPage({ onSignUp, onLogin }: LoginPageProps) {
         }}
       >
         <label className="field-wrap">
-          <span className="field-label">Email</span>
+          <span className="sr-only">Email</span>
           <input
             type="email"
             className="field"
+            placeholder="Email"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value)
@@ -79,10 +92,11 @@ function LoginPage({ onSignUp, onLogin }: LoginPageProps) {
         </label>
 
         <label className="field-wrap field-wrap-large-gap">
-          <span className="field-label">Password</span>
+          <span className="sr-only">Password</span>
           <input
             type="password"
             className="field"
+            placeholder="Password"
             value={password}
             onChange={(e) => {
               setPassword(e.target.value)
@@ -95,7 +109,7 @@ function LoginPage({ onSignUp, onLogin }: LoginPageProps) {
         <p className="forgot-password">Forget password?</p>
 
         <button type="submit" className="btn btn-primary login-btn" disabled={isSubmitting}>
-          {isSubmitting ? 'Signing in...' : 'Login'}
+          {isSubmitting ? 'LOGGING IN...' : 'LOG IN'}
         </button>
 
         <button type="button" className="btn btn-ghost google-btn" disabled={isSubmitting}>

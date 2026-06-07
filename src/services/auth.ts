@@ -100,6 +100,8 @@ export class AuthApiError extends Error {
 }
 
 const AUTH_SESSION_KEY = 'dojeon:auth.session'
+export const LOGIN_CREDENTIALS_ERROR_MESSAGE =
+  'Your ID or password is incorrect. Please enter the correct ID or password.'
 const baseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') ?? ''
 const isMockMode =
   ((import.meta.env.VITE_MOCK_AUTH_API as string | undefined) ||
@@ -206,7 +208,11 @@ const translateAuthErrorMessage = (message: string) => {
   }
 
   if (normalized.includes('이메일') && normalized.includes('비밀번호')) {
-    return 'The email or password is incorrect.'
+    return LOGIN_CREDENTIALS_ERROR_MESSAGE
+  }
+
+  if (normalized.includes('아이디') && normalized.includes('비밀번호')) {
+    return LOGIN_CREDENTIALS_ERROR_MESSAGE
   }
 
   if (normalized.includes('인증') && normalized.includes('만료')) {
@@ -229,6 +235,10 @@ const translateAuthErrorMessage = (message: string) => {
 }
 
 const getErrorMessage = (payload: ApiResponse<null> | null, response: Response) => {
+  if (payload?.errorCode === 'INVALID_CREDENTIALS' || payload?.code === 'INVALID_CREDENTIALS') {
+    return LOGIN_CREDENTIALS_ERROR_MESSAGE
+  }
+
   if (payload?.message) {
     return translateAuthErrorMessage(payload.message)
   }
@@ -404,7 +414,7 @@ export async function login(payload: LoginRequest): Promise<AuthTokenData> {
 
     if (!normalizedEmail || !payload.password) {
       throw new AuthApiError(
-        'The email or password is incorrect.',
+        LOGIN_CREDENTIALS_ERROR_MESSAGE,
         401,
         'INVALID_CREDENTIALS',
       )

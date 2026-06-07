@@ -50,6 +50,7 @@
   --dojeon-color-gray-800: #292929;
   --dojeon-color-gray-900: #242424;
   --dojeon-color-white: #ffffff;
+  --dojeon-color-screen-background: #fbf8fc;
   --dojeon-color-text-strong: var(--dojeon-color-gray-900);
   --dojeon-color-text-muted: var(--dojeon-color-gray-600);
   --dojeon-color-text-subtle: var(--dojeon-color-gray-300);
