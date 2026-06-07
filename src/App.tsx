@@ -138,13 +138,25 @@ const getStoredKoreanGoal = () => {
   return readLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY) ?? ''
 }
 
+type Screen =
+  | 'splash' | 'login' | 'signup' | 'verify-email' | 'verify-success'
+  | 'onboarding' | 'home' | 'class' | 'practice' | 'grammar-practice' | 'setting'
+  | 'account-info' | 'preferences' | 'notebook' | 'vocabulary' | 'notebook-grammar'
+  | 'lesson-detail' | 'vocabulary-lesson' | 'profile-main'
+
+const devPreviewScreens = new Set<Screen>(['verify-success'])
+
+const getInitialScreen = (): Screen => {
+  if (!import.meta.env.DEV) {
+    return 'splash'
+  }
+
+  const previewScreen = new URLSearchParams(window.location.search).get('screen') as Screen | null
+  return previewScreen && devPreviewScreens.has(previewScreen) ? previewScreen : 'splash'
+}
+
 function App() {
-  const [screen, setScreen] = useState<
-    'splash' | 'login' | 'signup' | 'verify-email' | 'verify-success'
-    | 'onboarding' | 'home' | 'class' | 'practice' | 'grammar-practice' | 'setting'
-    | 'account-info' | 'preferences' | 'notebook' | 'vocabulary' | 'notebook-grammar'
-    | 'lesson-detail' | 'vocabulary-lesson' | 'profile-main'
-  >('splash')
+  const [screen, setScreen] = useState<Screen>(getInitialScreen)
   const [authSession, setAuthSession] = useState<AuthSession | null>(getStoredAuthSession)
   const [pendingSignup, setPendingSignup] = useState<SignupSubmission | null>(null)
   const [userName, setUserName] = useState(getOnboardingUsername)

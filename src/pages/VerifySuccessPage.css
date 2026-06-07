@@ -47,7 +47,7 @@
 }
 
 .verify-success-button {
-  margin-top: auto;
+  margin-top: clamp(48px, 8svh, 86px);
   margin-bottom: 8px;
   width: 350px;
   min-height: 54px;
