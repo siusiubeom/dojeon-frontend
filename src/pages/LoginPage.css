@@ -19,7 +19,7 @@
   width: min(380px, calc(100% - 24px));
   padding: 16px 18px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--dojeon-color-error-surface);
   color: var(--dojeon-color-error);
   font: var(--dojeon-type-subtitle-medium);
   text-align: center;
@@ -113,15 +113,15 @@
 .field:-webkit-autofill:focus,
 .field:-webkit-autofill:active {
   -webkit-text-fill-color: var(--dojeon-color-text-strong);
-  -webkit-box-shadow: inset 0 0 0 1000px #ffffff;
-  box-shadow: inset 0 0 0 1000px #ffffff;
+  -webkit-box-shadow: inset 0 0 0 1000px var(--dojeon-color-white);
+  box-shadow: inset 0 0 0 1000px var(--dojeon-color-white);
   caret-color: var(--dojeon-color-text-strong);
   transition: background-color 99999s ease-in-out 0s;
 }
 
 .field:focus-visible {
-  border-color: #94a3b8;
-  box-shadow: 0 0 0 3px #dbeafe;
+  border-color: var(--dojeon-color-primary-border);
+  box-shadow: 0 0 0 3px var(--dojeon-color-primary-focus-ring);
 }
 
 .forgot-password {
@@ -177,7 +177,7 @@
 }
 
 .signup-copy a {
-  color: #0ea5e9;
+  color: var(--dojeon-color-primary);
   text-decoration: none;
   font-weight: 700;
   margin-left: 4px;
