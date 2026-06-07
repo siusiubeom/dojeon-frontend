@@ -157,6 +157,20 @@ function ProfileMainPage({
     )
   }
 
+  const now = new Date()
+  const safeStats = userMe.stats ?? {
+    totalCompletedLessons: 0,
+    totalStudyMin: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+  }
+  const safeAttendance = userMe.attendance ?? {
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    activeDays: [],
+  }
+  const safeRecentAchievements = userMe.recentAchievements ?? []
+
   const profileData: ProfileMainData = {
     user: {
       userId: Number(userMe.profile.userId),
@@ -187,11 +201,14 @@ function ProfileMainPage({
           courseTitle: userMe.recentCourse.courseTitle,
           lessonTitle: userMe.recentCourse.lessonTitle,
           sectionSubtitle: userMe.recentCourse.sectionTitle,
-        }
+      }
       : null,
-    stats: userMe.stats,
-    attendance: userMe.attendance,
-    recentAchievements: userMe.recentAchievements,
+    stats: safeStats,
+    attendance: {
+      ...safeAttendance,
+      activeDays: safeAttendance.activeDays ?? [],
+    },
+    recentAchievements: safeRecentAchievements,
   }
   const { user, recentCourse, stats, attendance, recentAchievements } = profileData
   const calendarDays = getCalendarDays(attendance.year, attendance.month)

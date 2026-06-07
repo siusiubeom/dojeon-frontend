@@ -23,6 +23,7 @@ import ProfileAchievementsPage from './pages/ProfileAchievementsPage'
 import { useUpdateUserMe } from './hooks/useUpdateUserMe'
 import { useChangeUserPassword } from './hooks/useChangeUserPassword'
 import { fetchUserMe } from './services/user.service'
+import type { PatchUserPayload } from './types/user.types'
 import {
   buildAuthSession,
   clearStoredAuthSession,
@@ -140,6 +141,10 @@ const parseDailyGoalMin = (value: string) => {
   const [minutes] = value.match(/\d+/) ?? []
   return minutes ? Number(minutes) : undefined
 }
+
+const validAgeGroups = new Set(['0-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65-'])
+
+const isBirthdayValue = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
 
 function App() {
   const updateUserMeMutation = useUpdateUserMe()
@@ -552,11 +557,21 @@ function App() {
             saveOnboardingUsername(nextNickname)
             writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
             writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, nextAgeGroupOrBirthday)
-            updateUserMeMutation.mutate({
+            const payload: PatchUserPayload = {
               nickname: nextNickname,
-              phoneNumber: nextPhoneNumber,
-              ageGroup: nextAgeGroupOrBirthday,
-            })
+            }
+
+            if (nextPhoneNumber) {
+              payload.phoneNumber = nextPhoneNumber
+            }
+
+            if (validAgeGroups.has(nextAgeGroupOrBirthday)) {
+              payload.ageGroup = nextAgeGroupOrBirthday
+            } else if (isBirthdayValue(nextAgeGroupOrBirthday)) {
+              payload.birthday = nextAgeGroupOrBirthday
+            }
+
+            updateUserMeMutation.mutate(payload)
             if (values.passwordChange) {
               changeUserPasswordMutation.mutate(values.passwordChange)
             }
