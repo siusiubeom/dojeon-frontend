@@ -132,7 +132,7 @@ function getAuthToken(): string | null {
 
   return (
     window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ||
-    (import.meta.env.VITE_DEV_ACCESS_TOKEN as string | undefined) ||
+    (import.meta.env.DEV ? (import.meta.env.VITE_DEV_ACCESS_TOKEN as string | undefined) : undefined) ||
     null
   )
 }
@@ -146,7 +146,16 @@ async function parseUserResponse<T>(
   fallbackMessage: string,
 ): Promise<T | null> {
   if (!response.ok) {
-    throw new UserApiError(fallbackMessage, undefined, response.status)
+    try {
+      const body = (await response.json()) as ApiResponse<T>
+      throw new UserApiError(body.message ?? fallbackMessage, body.code, response.status)
+    } catch (error) {
+      if (error instanceof UserApiError) {
+        throw error
+      }
+
+      throw new UserApiError(fallbackMessage, undefined, response.status)
+    }
   }
 
   const body = (await response.json()) as ApiResponse<T>

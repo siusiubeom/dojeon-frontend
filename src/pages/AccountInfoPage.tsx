@@ -15,7 +15,7 @@ interface AccountInfoPageProps {
     passwordChange?: {
       newPassword: string
     }
-  }) => void
+  }) => void | Promise<void>
   onBack: () => void
 }
 
@@ -34,6 +34,7 @@ function AccountInfoPage({
   const [draftPhoneNumber, setDraftPhoneNumber] = useState(phoneNumber)
   const [draftAgeGroupOrBirthday, setDraftAgeGroupOrBirthday] = useState(ageGroupOrBirthday)
   const [passwordMessage, setPasswordMessage] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const [editing, setEditing] = useState({
     nickname: false,
     password: false,
@@ -44,7 +45,7 @@ function AccountInfoPage({
   const passwordRules = [
     {
       id: 'length',
-      message: '8 charaters required.',
+      message: '8 characters required.',
       isSatisfied: newPassword.length >= 8,
     },
     {
@@ -54,7 +55,7 @@ function AccountInfoPage({
     },
     {
       id: 'uppercase',
-      message: '1 uppercase required',
+      message: '1 uppercase required.',
       isSatisfied: /[A-Z]/.test(newPassword),
     },
     {
@@ -216,6 +217,7 @@ function AccountInfoPage({
                   <button
                     type="button"
                     className="account-info-edit-button"
+                    disabled={isSaving}
                     onClick={item.onEdit}
                   >
                     EDIT
@@ -233,7 +235,12 @@ function AccountInfoPage({
           <button
             type="button"
             className="account-info-save-button"
-            onClick={() => {
+            disabled={isSaving}
+            onClick={async () => {
+              if (isSaving) {
+                return
+              }
+
               if (editing.password && !isPasswordChangeReady) {
                 setPasswordMessage('Enter a new password.')
                 return
@@ -244,16 +251,23 @@ function AccountInfoPage({
                 return
               }
 
-              onSave({
-                nickname: draftNickname,
-                phoneNumber: draftPhoneNumber,
-                ageGroupOrBirthday: draftAgeGroupOrBirthday,
-                passwordChange: isPasswordChangeReady
-                  ? {
-                      newPassword: newPassword.trim(),
-                    }
-                  : undefined,
-              })
+              setIsSaving(true)
+              try {
+                await onSave({
+                  nickname: draftNickname,
+                  phoneNumber: draftPhoneNumber,
+                  ageGroupOrBirthday: draftAgeGroupOrBirthday,
+                  passwordChange: isPasswordChangeReady
+                    ? {
+                        newPassword: newPassword.trim(),
+                      }
+                    : undefined,
+                })
+              } catch {
+                return
+              } finally {
+                setIsSaving(false)
+              }
               setNewPassword('')
               setPasswordMessage('')
               setEditing({
@@ -264,7 +278,7 @@ function AccountInfoPage({
               })
             }}
           >
-            Save
+            {isSaving ? 'Saving...' : 'Save'}
           </button>
         ) : null}
       </section>

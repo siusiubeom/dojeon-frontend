@@ -121,7 +121,14 @@ export const formatAchievementDate = (date: string | null) => {
     return 'Not earned yet'
   }
 
-  const parsedDate = new Date(date)
+  const dateOnlyMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  const parsedDate = dateOnlyMatch
+    ? new Date(
+        Number(dateOnlyMatch[1]),
+        Number(dateOnlyMatch[2]) - 1,
+        Number(dateOnlyMatch[3]),
+      )
+    : new Date(date)
 
   if (Number.isNaN(parsedDate.getTime())) {
     return date

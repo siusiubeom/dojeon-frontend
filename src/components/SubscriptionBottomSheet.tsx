@@ -96,7 +96,8 @@ function SubscriptionBottomSheet({
     selectedModeOverride ?? defaultMode
   const isProOptionsVisible = selectedMode === 'pro'
   const benefitsPlan = selectedBackendPlan ?? trialPlan ?? freePlan
-  const displayBenefits = benefitsPlan ? benefitsPlan.benefits : fallbackBenefits
+  const displayBenefits =
+    (benefitsPlan?.benefits?.length ?? 0) > 0 ? benefitsPlan?.benefits ?? [] : fallbackBenefits
   const subscriptionActionText =
     selectedMode === 'trial'
       ? 'Start 7-day trial'

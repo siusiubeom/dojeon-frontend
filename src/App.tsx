@@ -366,13 +366,7 @@ function App() {
             clearStoredAuthSession()
             setAuthSession(null)
             setPendingSignup(null)
-            setUserName('Jinri')
-            setAgeRange('')
-            setPhoneNumber('')
-            setLanguage('')
-            setKoreanLevel('')
-            setDailyGoal('')
-            setKoreanGoal('')
+            resetLocalProfileState()
             setScreen('login')
           }}
         >
@@ -429,6 +423,21 @@ function App() {
             const savedKoreanLevel = values.koreanLevel ?? ''
             const savedDailyGoal = values.dailyStudyTime ?? ''
             const savedKoreanGoal = values.goal ?? ''
+            try {
+              await updateUserMeMutation.mutateAsync({
+                nickname: savedName,
+                ageGroup: savedAgeRange,
+                motherLanguage: savedLanguage,
+                proficiencyLevel: savedKoreanLevel,
+                dailyGoalMin: parseDailyGoalMin(savedDailyGoal),
+                learningGoal: savedKoreanGoal,
+                isOnboarded: true,
+              })
+            } catch (error) {
+              console.error('Failed to complete onboarding', error)
+              window.alert('Could not save your onboarding information. Please try again.')
+              return
+            }
             setUserName(savedName)
             setAgeRange(savedAgeRange)
             setLanguage(savedLanguage)
@@ -441,19 +450,6 @@ function App() {
             writeLocalStorageItem(ACCOUNT_KOREAN_LEVEL_KEY, savedKoreanLevel)
             writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, savedDailyGoal)
             writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, savedKoreanGoal)
-            try {
-              await updateUserMeMutation.mutateAsync({
-                nickname: savedName,
-                ageGroup: savedAgeRange,
-                motherLanguage: savedLanguage,
-                proficiencyLevel: savedKoreanLevel,
-                dailyGoalMin: parseDailyGoalMin(savedDailyGoal),
-                learningGoal: savedKoreanGoal,
-                isOnboarded: true,
-              })
-            } catch {
-              return
-            }
             setScreen('home')
           }}
         />
@@ -545,18 +541,10 @@ function App() {
           hasPassword={hasPassword}
           phoneNumber={phoneNumber}
           ageGroupOrBirthday={ageRange}
-          onSave={(values) => {
+          onSave={async (values) => {
             const nextNickname = values.nickname.trim() || 'Jinri'
             const nextPhoneNumber = values.phoneNumber.trim()
             const nextAgeGroupOrBirthday = values.ageGroupOrBirthday.trim()
-
-            setUserName(nextNickname)
-            setPhoneNumber(nextPhoneNumber)
-            setAgeRange(nextAgeGroupOrBirthday)
-
-            saveOnboardingUsername(nextNickname)
-            writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
-            writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, nextAgeGroupOrBirthday)
             const payload: PatchUserPayload = {
               nickname: nextNickname,
             }
@@ -571,10 +559,37 @@ function App() {
               payload.birthday = nextAgeGroupOrBirthday
             }
 
-            updateUserMeMutation.mutate(payload)
-            if (values.passwordChange) {
-              changeUserPasswordMutation.mutate(values.passwordChange)
+            try {
+              await updateUserMeMutation.mutateAsync(payload)
+            } catch (error) {
+              console.error('Failed to update account info', error)
+              window.alert('Could not save your account information. Please try again.')
+              throw error
             }
+
+            setUserName(nextNickname)
+            setPhoneNumber(nextPhoneNumber)
+            setAgeRange(nextAgeGroupOrBirthday)
+            saveOnboardingUsername(nextNickname)
+            writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
+            writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, nextAgeGroupOrBirthday)
+
+            if (!values.passwordChange) {
+              window.alert('Your account information has been saved.')
+              return
+            }
+
+            try {
+              await changeUserPasswordMutation.mutateAsync(values.passwordChange)
+            } catch (error) {
+              console.error('Failed to change password', error)
+              window.alert(
+                'Your account information was saved, but your password could not be changed. Please try again.',
+              )
+              throw error
+            }
+
+            window.alert('Your account information and password have been saved.')
           }}
           onBack={() => {
             setScreen('setting')
@@ -587,17 +602,28 @@ function App() {
           dailyGoal={dailyGoal}
           koreanGoal={koreanGoal}
           onSave={(values) => {
-            setLanguage(values.language)
-            setDailyGoal(values.dailyGoal)
-            setKoreanGoal(values.koreanGoal)
-            writeLocalStorageItem(ACCOUNT_LANGUAGE_KEY, values.language)
-            writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, values.dailyGoal)
-            writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, values.koreanGoal)
-            updateUserMeMutation.mutate({
-              motherLanguage: values.language,
-              dailyGoalMin: parseDailyGoalMin(values.dailyGoal),
-              learningGoal: values.koreanGoal,
-            })
+            updateUserMeMutation.mutate(
+              {
+                motherLanguage: values.language,
+                dailyGoalMin: parseDailyGoalMin(values.dailyGoal),
+                learningGoal: values.koreanGoal,
+              },
+              {
+                onSuccess: () => {
+                  setLanguage(values.language)
+                  setDailyGoal(values.dailyGoal)
+                  setKoreanGoal(values.koreanGoal)
+                  writeLocalStorageItem(ACCOUNT_LANGUAGE_KEY, values.language)
+                  writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, values.dailyGoal)
+                  writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, values.koreanGoal)
+                  window.alert('Your preferences have been saved.')
+                },
+                onError: (error) => {
+                  console.error('Failed to update preferences', error)
+                  window.alert('Could not save your preferences. Please try again.')
+                },
+              },
+            )
           }}
           onBack={() => {
             setScreen('setting')
