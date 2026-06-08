@@ -3,7 +3,7 @@
   min-height: 100svh;
   width: min(390px, 100%);
   margin: 0 auto;
-  background: #ffffff;
+  background: var(--dojeon-color-background);
   display: flex;
   justify-content: center;
 }
@@ -41,7 +41,7 @@
   padding: 0;
   border-radius: 50%;
   background: transparent;
-  color: #111111;
+  color: var(--dojeon-color-gray-800);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -55,7 +55,7 @@
 
 .vocabulary-lesson-title {
   margin: 0;
-  color: #000000;
+  color: var(--dojeon-color-gray-900);
   font-size: 20px;
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -78,7 +78,7 @@
   position: relative;
   max-width: 272px;
   border-radius: 10px;
-  background: #d9d9d9;
+  background: var(--dojeon-color-primary-container);
   padding: 16px 20px;
 }
 
@@ -89,13 +89,13 @@
   top: calc(100% - 1px);
   width: 22px;
   height: 18px;
-  background: #d9d9d9;
+  background: var(--dojeon-color-primary-container);
   clip-path: polygon(100% 0, 0 0, 0 100%);
 }
 
 .vocabulary-lesson-bubble-copy {
   margin: 0;
-  color: #000000;
+  color: var(--dojeon-color-gray-900);
   font-size: 20px;
   font-weight: 500;
   line-height: 1.3;
@@ -126,8 +126,8 @@
   height: 50px;
   border: 0;
   border-radius: 10px;
-  background: #b3b3b3;
-  color: #000000;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
   font-size: 16px;
   font-weight: 500;
   line-height: 1.2;

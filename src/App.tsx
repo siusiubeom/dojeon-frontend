@@ -415,11 +415,6 @@ function App() {
           onOpenPractice={() => {
             setScreen('practice')
           }}
-          onOpenGrammarPractice={() => {
-            setGrammarPracticeInitialStep('choice')
-            setGrammarPracticeBackScreen('home')
-            setScreen('grammar-practice')
-          }}
           onStartLesson={(lesson) => {
             setSelectedLessonNumericId(lesson.lessonId)
             handleOpenSection(lesson.sectionId, lesson.sectionType, 'class')
@@ -462,6 +457,18 @@ function App() {
         <PracticePage
           onBack={() => {
             setScreen('home')
+          }}
+          onOpenHome={() => {
+            setScreen('home')
+          }}
+          onOpenClass={() => {
+            setScreen('class')
+          }}
+          onOpenNotebook={() => {
+            setScreen('notebook')
+          }}
+          onOpenProfile={() => {
+            setScreen('profile-main')
           }}
         />
       ) : screen === 'setting' ? (

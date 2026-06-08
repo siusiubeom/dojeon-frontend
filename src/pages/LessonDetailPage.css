@@ -2,7 +2,7 @@
   min-height: 100svh;
   width: min(390px, 100%);
   margin: 0 auto;
-  background: #ffffff;
+  background: var(--dojeon-color-background);
   display: flex;
   justify-content: center;
 }
@@ -38,7 +38,7 @@
   padding: 0;
   border-radius: 50%;
   background: transparent;
-  color: #111111;
+  color: var(--dojeon-color-gray-800);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -404,8 +404,8 @@
   height: 50px;
   border: 0;
   border-radius: 10px;
-  background: #b3b3b3;
-  color: #000000;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
   font-size: 16px;
   font-weight: 500;
   line-height: 1.2;
