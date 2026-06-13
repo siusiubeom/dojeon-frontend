@@ -36,8 +36,22 @@ export async function fetchHomeResume(signal?: AbortSignal): Promise<HomeResumeD
     }
 
     let body: HomeResumeResponse | null = null
+    const bodyText = await res.text()
+
+    if (!bodyText.trim()) {
+        if (!res.ok) {
+            throw new HomeApiError(
+                `Failed to fetch home resume (HTTP ${res.status})`,
+                undefined,
+                res.status,
+            )
+        }
+
+        return null
+    }
+
     try {
-        body = (await res.json()) as HomeResumeResponse
+        body = JSON.parse(bodyText) as HomeResumeResponse
     } catch {
         if (!res.ok) {
             throw new HomeApiError(

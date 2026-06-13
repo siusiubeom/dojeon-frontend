@@ -336,7 +336,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: var(--dojeon-color-gray-700);
+  color: var(--dojeon-color-primary-action);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -345,8 +345,8 @@
 }
 
 .vocabulary-lesson-main-card-note-icon {
-  width: 22.5px;
-  height: 25px;
+  width: 32px;
+  height: 32px;
   display: block;
   object-fit: contain;
 }
@@ -565,7 +565,7 @@
 
 .vocabulary-lesson-table-notes {
   border-top: 1px solid var(--dojeon-color-primary-50);
-  padding: 12px 20px 15px 31px;
+  padding: 12px 20px 15px;
   box-sizing: border-box;
   background: var(--dojeon-color-vocabulary-row);
 }

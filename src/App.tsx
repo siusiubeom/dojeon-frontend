@@ -168,15 +168,85 @@ type Screen =
   | 'account-info' | 'preferences' | 'notebook' | 'vocabulary' | 'notebook-grammar'
   | 'lesson-detail' | 'vocabulary-lesson' | 'profile-main'
 
-const devPreviewScreens = new Set<Screen>(['verify-success'])
+const devPreviewScreens = new Set<Screen>([
+  'splash',
+  'login',
+  'signup',
+  'verify-email',
+  'verify-success',
+  'onboarding',
+  'home',
+  'class',
+  'practice',
+  'grammar-practice',
+  'setting',
+  'account-info',
+  'preferences',
+  'notebook',
+  'vocabulary',
+  'notebook-grammar',
+  'lesson-detail',
+  'vocabulary-lesson',
+  'profile-main',
+])
 
-const getInitialScreen = (): Screen => {
+const devPreviewPracticeSteps = new Set<PracticeStep>([
+  'choice',
+  'fill',
+  'make',
+  'review',
+  'reading',
+  'listening',
+  'next-grammar',
+  'next-grammar-rules',
+])
+
+const devPreviewVocabularyViews = new Set(['intro', 'card', 'table', 'flashcards'])
+
+const getDevSearchParams = () => new URLSearchParams(window.location.search)
+
+const getDevPreviewScreen = (): Screen | null => {
   if (!import.meta.env.DEV) {
-    return 'splash'
+    return null
   }
 
-  const previewScreen = new URLSearchParams(window.location.search).get('screen') as Screen | null
-  return previewScreen && devPreviewScreens.has(previewScreen) ? previewScreen : 'splash'
+  const previewScreen = getDevSearchParams().get('screen') as Screen | null
+  return previewScreen && devPreviewScreens.has(previewScreen) ? previewScreen : null
+}
+
+const getInitialScreen = (): Screen => {
+  return getDevPreviewScreen() ?? 'splash'
+}
+
+const getInitialLessonId = () => {
+  return getDevPreviewScreen() === 'lesson-detail' ? -105 : null
+}
+
+const getInitialPracticeStep = (): PracticeStep => {
+  if (getDevPreviewScreen() !== 'grammar-practice') {
+    return 'choice'
+  }
+
+  const step = getDevSearchParams().get('step') as PracticeStep | null
+  return step && devPreviewPracticeSteps.has(step) ? step : 'choice'
+}
+
+const getInitialVocabularyLessonView = () => {
+  if (getDevPreviewScreen() !== 'vocabulary-lesson') {
+    return undefined
+  }
+
+  const view = getDevSearchParams().get('view')
+  return view && devPreviewVocabularyViews.has(view) ? view as 'intro' | 'card' | 'table' | 'flashcards' : undefined
+}
+
+const getInitialVocabularyCardIndex = () => {
+  if (getDevPreviewScreen() !== 'vocabulary-lesson') {
+    return undefined
+  }
+
+  const card = Number.parseInt(getDevSearchParams().get('card') ?? '', 10)
+  return Number.isFinite(card) ? Math.max(0, card - 1) : undefined
 }
 
 function App() {
@@ -193,10 +263,12 @@ function App() {
   const [dailyGoal, setDailyGoal] = useState(getStoredDailyGoal)
   const [koreanGoal, setKoreanGoal] = useState(getStoredKoreanGoal)
   const [isSigningOut, setIsSigningOut] = useState(false)
-  const [selectedLessonNumericId, setSelectedLessonNumericId] = useState<number | null>(null)
+  const [selectedLessonNumericId, setSelectedLessonNumericId] = useState<number | null>(
+    getInitialLessonId,
+  )
   const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null)
   const [grammarPracticeInitialStep, setGrammarPracticeInitialStep] = useState<PracticeStep>(
-    'choice',
+    getInitialPracticeStep,
   )
   const [grammarPracticeBackScreen, setGrammarPracticeBackScreen] = useState<
     'home' | 'class' | 'lesson-detail'
@@ -212,6 +284,7 @@ function App() {
   const currentEmail = authSession?.email ?? pendingSignup?.email ?? ''
   const currentUsername = currentEmail ? currentEmail.split('@')[0] : userName
   const isPushNotificationOn = userMeData?.profile.isPushNotificationOn ?? true
+  const isDevPreview = getDevPreviewScreen() !== null
 
   const resetLocalProfileState = () => {
     setUserName('Jinri')
@@ -381,7 +454,7 @@ function App() {
 
   return (
     <div className="app-root">
-      {import.meta.env.DEV ? (
+      {import.meta.env.DEV && !isDevPreview ? (
         <button
           type="button"
           className="app-dev-reset-button"
@@ -652,6 +725,8 @@ function App() {
       ) : screen === 'vocabulary-lesson' ? (
         <VocabularyLessonPage
           sectionId={selectedSectionId}
+          initialView={getInitialVocabularyLessonView()}
+          initialCardIndex={getInitialVocabularyCardIndex()}
           onBack={() => {
             setScreen(vocabularyLessonBackScreen)
           }}

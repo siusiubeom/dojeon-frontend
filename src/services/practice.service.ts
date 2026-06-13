@@ -56,9 +56,24 @@ async function fetchPracticeResponse<T>(
         throw new PracticeApiError(fallbackMessage)
     }
 
-    let body: unknown
+    const bodyText = await res.text()
+    let body: unknown = null
+
+    if (!bodyText.trim()) {
+        if (!res.ok) {
+            throw new PracticeApiError(
+                `${fallbackMessage} (HTTP ${res.status})`,
+                undefined,
+                undefined,
+                res.status,
+            )
+        }
+
+        return null
+    }
+
     try {
-        body = await res.json()
+        body = JSON.parse(bodyText)
     } catch {
         if (!res.ok) {
             throw new PracticeApiError(

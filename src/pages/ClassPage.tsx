@@ -16,7 +16,6 @@ const tabs = [
   { icon: profileIcon, label: 'PROFILE' },
 ]
 
-const progressDotCount = 5
 const progressDotInset = 10
 const progressDotStopGap = 8
 const minimumCourseCount = 5
@@ -24,13 +23,13 @@ const fallbackProgressPercent = 18
 const trialTargetDays = 7
 const trialLabel = `${trialTargetDays}-day Trial available`
 
-function getClassProgressFillWidth(activeCourseIndex: number): string {
+function getClassProgressFillWidth(activeCourseIndex: number, dotCount: number): string {
   if (activeCourseIndex < 0) return '0%'
   const targetDotIndex = activeCourseIndex + 1
-  if (targetDotIndex >= progressDotCount - 1) return '100%'
+  if (targetDotIndex >= dotCount - 1) return '100%'
 
   return `calc(${progressDotInset}px + ((100% - ${progressDotInset * 2}px) / ${
-    progressDotCount - 1
+    dotCount - 1
   }) * ${targetDotIndex} - ${progressDotStopGap}px)`
 }
 
@@ -111,7 +110,8 @@ function ClassPage({
     const index = courses.findIndex((course) => course.courseId === resumeBanner.courseId)
     return index >= 0 ? index : 0
   })()
-  const progressFillWidth = getClassProgressFillWidth(activeCourseIndex)
+  const classProgressDotCount = Math.max(1, courses.length)
+  const progressFillWidth = getClassProgressFillWidth(activeCourseIndex, classProgressDotCount)
 
   const openCourseIds = useMemo(() => {
     const open = new Set<number>()
@@ -167,15 +167,17 @@ function ClassPage({
               style={{ width: progressFillWidth }}
               aria-hidden="true"
             />
-            {Array.from({ length: progressDotCount }).map((_, index) => (
+            {Array.from({ length: classProgressDotCount }).map((_, index) => (
               <span
                 key={index}
                 className={`class-progress-dot ${
-                  index === 0 ? 'class-progress-dot-past' : 'class-progress-dot-upcoming'
+                  index <= activeCourseIndex
+                    ? 'class-progress-dot-past'
+                    : 'class-progress-dot-upcoming'
                 }`}
                 style={{
                   left: `calc(${progressDotInset}px + ((100% - ${progressDotInset * 2}px) / ${
-                    progressDotCount - 1
+                    classProgressDotCount - 1
                   }) * ${index})`,
                 }}
                 role="listitem"

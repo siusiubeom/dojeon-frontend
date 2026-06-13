@@ -76,7 +76,7 @@ function HomePage({
   const activeGoal = useMemo(() => {
     if (selectedGoalType === 'today') {
       return {
-        title: "Today's Goal",
+        title: 'Today’s Goal',
         current: data?.todayGoal.studiedMin ?? 0,
         total: data?.todayGoal.targetMin ?? 0,
       }
@@ -121,7 +121,7 @@ function HomePage({
 
         <section className="home-card lesson-card">
           <div className="lesson-head">
-            <h3 className="lesson-title">Today&apos;s lesson</h3>
+            <h3 className="lesson-title">Today’s lesson</h3>
             <p className="lesson-subtitle">{lessonPreview.course}</p>
           </div>
           <div className="lesson-main">
@@ -177,7 +177,7 @@ function HomePage({
               className={`goal-tab goal-tab-left ${selectedGoalType === 'today' ? 'selected' : ''}`}
               onClick={() => setSelectedGoalType('today')}
             >
-              Today&apos;s Goal
+              Today’s Goal
             </button>
             <button
               type="button"

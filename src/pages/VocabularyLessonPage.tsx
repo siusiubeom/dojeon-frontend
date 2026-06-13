@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
 import characterImage from '../assets/character.png'
-import noteAddIcon from '../assets/hugeicons_note-add.png'
 import './VocabularyLessonPage.css'
 import { useSectionCards } from '../hooks/useSectionCards.ts'
 import { useCreateScrap } from '../hooks/useCreateScrap.ts'
@@ -9,6 +8,8 @@ import { useSaveSectionProgress } from '../hooks/useSaveSectionProgress.ts'
 
 interface VocabularyLessonPageProps {
   sectionId: number | null
+  initialView?: VocabularyLessonView
+  initialCardIndex?: number
   onBack: () => void
   onOpenNextGrammar: (sectionId?: number | null) => void
 }
@@ -44,6 +45,8 @@ const fallbackVocabularyItems = [
 
 function VocabularyLessonPage({
   sectionId,
+  initialView = 'intro',
+  initialCardIndex = 0,
   onBack,
   onOpenNextGrammar,
 }: VocabularyLessonPageProps) {
@@ -52,8 +55,8 @@ function VocabularyLessonPage({
   const deleteScrapMutation = useDeleteScrap()
   const saveProgress = useSaveSectionProgress()
 
-  const [view, setView] = useState<VocabularyLessonView>('intro')
-  const [currentCardIndex, setCurrentCardIndex] = useState(0)
+  const [view, setView] = useState<VocabularyLessonView>(initialView)
+  const [currentCardIndex, setCurrentCardIndex] = useState(Math.max(0, initialCardIndex))
   const [flippedWordIds, setFlippedWordIds] = useState<number[]>([])
   const [optimisticAdded, setOptimisticAdded] = useState<number[]>([])
   const [optimisticRemoved, setOptimisticRemoved] = useState<number[]>([])
@@ -252,7 +255,7 @@ function VocabularyLessonPage({
       ? 'Vocabulary lesson'
       : view === 'flashcards'
         ? 'Flashcards game'
-        : "This lesson's words"
+        : 'This lesson’s words'
 
   const promptWord =
     personalListPromptWordId === null
@@ -295,12 +298,28 @@ function VocabularyLessonPage({
     }
 
     return (
-      <img
+      <svg
         className="vocabulary-lesson-main-card-note-icon"
-        src={noteAddIcon}
-        alt=""
+        width="32"
+        height="32"
+        viewBox="0 0 32 32"
+        fill="none"
         aria-hidden="true"
-      />
+      >
+        <circle cx="16" cy="16" r="16" fill="currentColor" opacity="0.22" />
+        <path
+          d="M16 9.5V22.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M9.5 16H22.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
     )
   }
 
@@ -342,7 +361,7 @@ function VocabularyLessonPage({
           <section className="vocabulary-lesson-intro">
             <div className="vocabulary-lesson-bubble" aria-live="polite">
               <p className="vocabulary-lesson-bubble-copy">
-                You&apos;re gonna learn
+                You’re gonna learn
                 <br />
                 {cardsLoading ? (
                   '...'
@@ -434,7 +453,7 @@ function VocabularyLessonPage({
                           {isCurrent ? (
                             <>
                               <span className="vocabulary-lesson-main-card-count">
-                                {entry.index + 1}/{vocabularyItems.length}
+                                {entry.index + 1} /{vocabularyItems.length}
                               </span>
 
                               <div

@@ -188,7 +188,7 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
 
       <section className="verify-email-content">
         <p className="verify-email-message">
-          We've sent a verification code to <span className="verify-email-address">{email}</span>
+          We’ve sent a verification code to <span className="verify-email-address">{email}</span>
         </p>
         <div className="verify-code-fields" onPaste={handleCodePaste}>
           {code.map((digit, index) => (
@@ -225,7 +225,7 @@ function VerifyEmailPage({ onBack, email, onVerifySuccess }: VerifyEmailPageProp
               ? 'Wrong code, please try again'
               : hasCompletionError
                 ? 'Unable to complete sign up'
-                : "Don't receive code?"}
+                : 'Don’t receive code?'}
           </p>
           {verifyError && <p className="field-error verify-email-resend-error">{verifyError}</p>}
           {completionError && (

@@ -192,19 +192,19 @@ function GrammarPracticePage({
         ]
       : [
           { text: '같이 점심을 먹을까요?', translation: 'Shall we eat lunch together?', side: 'left' as const },
-          { text: '네, 같이 먹어요.', translation: "Yes, let's eat together.", side: 'right' as const },
+          { text: '네, 같이 먹어요.', translation: 'Yes, let’s eat together.', side: 'right' as const },
         ]
   const nextGrammarGridItems = ['', 'V -ㄹ까요?', '가다', '갈까요?', '', 'V-을까요?', '먹다', '먹을까요?']
   const nextGrammarNotes: Record<NextGrammarNoteId, { title: string; description: string }> = {
     'future-proposal': {
       title: '-(으)ㄹ까요?',
       description:
-        "-(으)ㄹ까요? is used to suggest doing something together or to ask someone's opinion in a polite way. Use -ㄹ까요? after a vowel or ㄹ, and -을까요? after other final consonants.",
+        '-(으)ㄹ까요? is used to suggest doing something together or to ask someone’s opinion in a polite way. Use -ㄹ까요? after a vowel or ㄹ, and -을까요? after other final consonants.',
     },
     'polite-ending': {
       title: '-아/어/해요',
       description:
-        "아요/어요/해요 is a polite informal sentence ending used in everyday conversations with people you're not very close to, but in casual settings. Use -아요 after ㅏ/ㅗ vowels, -어요 after other vowels, and -해요 with 하다 verbs.",
+        '아요/어요/해요 is a polite informal sentence ending used in everyday conversations with people you’re not very close to, but in casual settings. Use -아요 after ㅏ/ㅗ vowels, -어요 after other vowels, and -해요 with 하다 verbs.',
     },
   }
   const nextGrammarVocabNotes: Record<NextGrammarVocabId, { title: string; description: string }> = {

@@ -74,7 +74,7 @@ function NotebookPage({
   return (
     <main className="notebook-screen">
       <section className="notebook-content">
-        <h1 className="notebook-title">{`${displayName}'s personal notebook`}</h1>
+        <h1 className="notebook-title">{`${displayName}’s personal notebook`}</h1>
 
         <section className="notebook-section">
           <div className="notebook-section-header">

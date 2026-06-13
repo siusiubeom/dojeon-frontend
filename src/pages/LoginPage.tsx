@@ -118,7 +118,7 @@ function LoginPage({ onSignUp, onLogin }: LoginPageProps) {
       </form>
 
       <p className="signup-copy">
-        Don't have account?
+        Don’t have account?
         <button type="button" onClick={onSignUp} className="signup-link-btn">
           Sign up
         </button>

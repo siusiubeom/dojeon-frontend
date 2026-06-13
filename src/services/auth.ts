@@ -196,6 +196,14 @@ const parseJsonSafely = async <T>(response: Response): Promise<T | null> => {
   }
 }
 
+const isEmptyObject = (value: unknown) =>
+  Boolean(
+    value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      Object.keys(value).length === 0,
+  )
+
 const translateAuthErrorMessage = (message: string) => {
   const normalized = message.trim()
 
@@ -246,8 +254,12 @@ const getErrorMessage = (payload: ApiResponse<null> | null, response: Response) 
   return `Request failed: ${response.status} ${response.statusText}`
 }
 
-const unwrapApiResponse = async <T>(response: Response): Promise<T> => {
+const unwrapApiResponse = async <T>(response: Response, emptySuccessData?: T): Promise<T> => {
   const payload = await parseJsonSafely<ApiResponse<T | null>>(response)
+
+  if (response.ok && emptySuccessData !== undefined && (!payload || isEmptyObject(payload))) {
+    return emptySuccessData
+  }
 
   if (!response.ok || !payload?.isSuccess) {
     throw new AuthApiError(
@@ -264,6 +276,7 @@ const unwrapApiResponse = async <T>(response: Response): Promise<T> => {
 const fetchJson = async <T>(
   input: RequestInfo | URL,
   init?: RequestInit,
+  emptySuccessData?: T,
 ): Promise<T> => {
   let response: Response
 
@@ -280,7 +293,7 @@ const fetchJson = async <T>(
     throw new AuthApiError('Network request failed. Please check the server connection.', 0)
   }
 
-  return unwrapApiResponse<T>(response)
+  return unwrapApiResponse<T>(response, emptySuccessData)
 }
 
 export const getStoredAuthSession = (): AuthSession | null => {
@@ -348,10 +361,14 @@ export async function requestEmailVerificationCode(email: string): Promise<SendE
     return { sent: true }
   }
 
-  return fetchJson<SendEmailCodeData>(endpoints.sendEmailCode, {
-    method: 'POST',
-    body: JSON.stringify({ email: normalizedEmail } as SendEmailCodeRequest),
-  })
+  return fetchJson<SendEmailCodeData>(
+    endpoints.sendEmailCode,
+    {
+      method: 'POST',
+      body: JSON.stringify({ email: normalizedEmail } as SendEmailCodeRequest),
+    },
+    { sent: true },
+  )
 }
 
 export async function verifyEmailCode(email: string, code: string): Promise<VerifyEmailCodeData> {
@@ -468,10 +485,14 @@ export async function logout(payload: LogoutRequest): Promise<LogoutData> {
     return { loggedOut: true }
   }
 
-  return fetchJson<LogoutData>(endpoints.logout, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
+  return fetchJson<LogoutData>(
+    endpoints.logout,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+    { loggedOut: true },
+  )
 }
 
 export async function requestPasswordReset(email: string): Promise<SendEmailCodeData> {
@@ -486,10 +507,14 @@ export async function requestPasswordReset(email: string): Promise<SendEmailCode
     return { sent: true }
   }
 
-  return fetchJson<SendEmailCodeData>(endpoints.requestPasswordReset, {
-    method: 'POST',
-    body: JSON.stringify({ email: normalizedEmail } as SendEmailCodeRequest),
-  })
+  return fetchJson<SendEmailCodeData>(
+    endpoints.requestPasswordReset,
+    {
+      method: 'POST',
+      body: JSON.stringify({ email: normalizedEmail } as SendEmailCodeRequest),
+    },
+    { sent: true },
+  )
 }
 
 export async function confirmPasswordReset(

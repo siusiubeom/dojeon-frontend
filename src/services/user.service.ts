@@ -32,6 +32,34 @@ function buildHeaders(extraHeaders: HeadersInit = {}): HeadersInit {
   }
 }
 
+async function readPatchUserResponse(res: Response): Promise<PatchUserResponse | null> {
+  const bodyText = await res.text()
+
+  if (!bodyText.trim()) {
+    if (!res.ok) {
+      throw new UserApiError(
+        `Failed to update profile (HTTP ${res.status})`,
+        undefined,
+        undefined,
+        res.status,
+      )
+    }
+
+    return null
+  }
+
+  try {
+    return JSON.parse(bodyText) as PatchUserResponse
+  } catch {
+    throw new UserApiError(
+      `Failed to update profile (HTTP ${res.status})`,
+      undefined,
+      undefined,
+      res.status,
+    )
+  }
+}
+
 export async function fetchUserMe(signal?: AbortSignal): Promise<UserMeData | null> {
   let res: Response
 
@@ -83,25 +111,20 @@ export async function patchUserMe(payload: PatchUserRequest): Promise<PatchUserD
     throw new UserApiError('Failed to update profile')
   }
 
-  let body: PatchUserResponse
-  try {
-    body = (await res.json()) as PatchUserResponse
-  } catch {
-    throw new UserApiError(`Failed to update profile (HTTP ${res.status})`, undefined, undefined, res.status)
-  }
+  const body = await readPatchUserResponse(res)
 
   if (!res.ok) {
     throw new UserApiError(
-      body.message ?? `Failed to update profile (HTTP ${res.status})`,
-      body.code,
-      body.errorCode,
+      body?.message ?? `Failed to update profile (HTTP ${res.status})`,
+      body?.code,
+      body?.errorCode,
       res.status,
     )
   }
 
-  if (!body.isSuccess) {
+  if (body && !body.isSuccess) {
     throw new UserApiError(body.message ?? 'Request failed', body.code, body.errorCode, res.status)
   }
 
-  return body.data
+  return body?.data ?? null
 }
