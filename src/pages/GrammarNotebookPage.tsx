@@ -1,19 +1,47 @@
 import { useEffect, useRef, useState } from 'react'
 import './GrammarNotebookPage.css'
-import rightArrowIcon from '../assets/icon-park-outline_right-c.png'
 import { useGrammarScraps } from '../hooks/useGrammarScraps.ts'
-import { useDeleteScrap } from '../hooks/useDeleteScrap.ts'
+import type { GrammarScrapItem } from '../types/scraps.types.ts'
 
 interface GrammarNotebookPageProps {
   onBack: () => void
 }
 
+const previewGrammarScraps: GrammarScrapItem[] = [
+  {
+    scrapId: 'preview-grammar-1',
+    sectionId: 5,
+    targetType: 'GRAMMAR',
+    courseTitle: 'Course 1',
+    lessonTitle: 'lesson 5',
+    grammarPoint: '-을까요?',
+    createdAt: '2026-06-08T00:00:00.000Z',
+  },
+  {
+    scrapId: 'preview-grammar-2',
+    sectionId: 6,
+    targetType: 'GRAMMAR',
+    courseTitle: 'Course 1',
+    lessonTitle: 'lesson 6',
+    grammarPoint: '-고 싶어요',
+    createdAt: '2026-06-08T00:00:00.000Z',
+  },
+  {
+    scrapId: 'preview-grammar-3',
+    sectionId: 7,
+    targetType: 'GRAMMAR',
+    courseTitle: 'Course 2',
+    lessonTitle: 'lesson 1',
+    grammarPoint: '-아/어요',
+    createdAt: '2026-06-08T00:00:00.000Z',
+  },
+]
+
 function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
   const [isRecentSort, setIsRecentSort] = useState(true)
   const { items, loading, loadingMore, hasMore, error, fetchNextPage, refetch } =
       useGrammarScraps()
-  const deleteMutation = useDeleteScrap()
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const visibleItems = import.meta.env.DEV && items.length === 0 ? previewGrammarScraps : items
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -35,14 +63,8 @@ function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
     return () => observer.disconnect()
   }, [hasMore, loadingMore, fetchNextPage])
 
-  const handleDelete = (scrapId: string) => {
-    if (pendingDeleteId === scrapId) {
-      deleteMutation.mutate(scrapId, {
-        onSettled: () => setPendingDeleteId(null),
-      })
-    } else {
-      setPendingDeleteId(scrapId)
-    }
+  const handleOpenGrammarDetail = () => {
+    // Detail navigation can be wired here when a grammar detail route is available.
   }
 
   return (
@@ -104,23 +126,38 @@ function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
 
           {loading ? (
               <p className="grammar-notebook-status">Loading…</p>
-          ) : error ? (
-              <div className="grammar-notebook-status">
-                <p>{error.message}</p>
+          ) : error && visibleItems.length === 0 ? (
+              <div className="notebook-empty-state">
+                <p>Grammar sync unavailable.</p>
                 <button type="button" onClick={() => void refetch()}>
-                  Retry
+                  Retry sync
                 </button>
               </div>
-          ) : items.length === 0 ? (
-              <p className="grammar-notebook-status">No grammar scraps yet.</p>
+          ) : visibleItems.length === 0 ? (
+              <div className="notebook-empty-state">
+                <p>No grammar scraps yet.</p>
+                {error ? (
+                  <button type="button" onClick={() => void refetch()}>
+                    Retry sync
+                  </button>
+                ) : null}
+              </div>
           ) : (
               <section className="grammar-notebook-card-list">
-                {items.map((scrap) => {
-                  const isArmed = pendingDeleteId === scrap.scrapId
-                  const isDeleting = deleteMutation.isPending && isArmed
-
-                  return (
-                      <article key={scrap.scrapId} className="grammar-notebook-card">
+                {visibleItems.map((scrap) => (
+                      <article
+                        key={scrap.scrapId}
+                        className="grammar-notebook-card"
+                        role="button"
+                        tabIndex={0}
+                        onClick={handleOpenGrammarDetail}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            handleOpenGrammarDetail()
+                          }
+                        }}
+                      >
                         <div className="grammar-notebook-card-top">
                           <p className="grammar-notebook-course">{scrap.courseTitle}</p>
                           <span className="grammar-notebook-badge">{scrap.lessonTitle}</span>
@@ -128,27 +165,24 @@ function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
                         <div className="grammar-notebook-card-bottom">
                           <p className="grammar-notebook-topic">{scrap.grammarPoint}</p>
                         </div>
-                        <img
-                            src={rightArrowIcon}
-                            alt=""
-                            aria-hidden="true"
+                        <svg
                             className="grammar-notebook-arrow"
-                        />
-                        <button
-                            type="button"
-                            className={`grammar-notebook-delete ${isArmed ? 'is-armed' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDelete(scrap.scrapId)
-                            }}
-                            disabled={isDeleting}
-                            aria-label={isArmed ? 'Confirm delete' : 'Delete scrap'}
+                            width="18"
+                            height="18"
+                            viewBox="0 0 18 18"
+                            fill="none"
+                            aria-hidden="true"
                         >
-                          {isDeleting ? '…' : isArmed ? 'Confirm' : '×'}
-                        </button>
+                          <path
+                              d="M6.75 4.5L11.25 9L6.75 13.5"
+                              stroke="currentColor"
+                              strokeWidth="1.6"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                          />
+                        </svg>
                       </article>
-                  )
-                })}
+                ))}
 
                 {hasMore && <div ref={sentinelRef} className="grammar-notebook-sentinel" />}
 
@@ -156,9 +190,6 @@ function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
               </section>
           )}
 
-          {deleteMutation.error && (
-              <p className="grammar-notebook-error">{deleteMutation.error.message}</p>
-          )}
         </section>
       </main>
   )

@@ -17,6 +17,7 @@ const tabs = [
 interface ProfileUser {
   userId: number
   email: string
+  hasPassword: boolean
   username: string
   nickname: string
   phoneNumber: string | null
@@ -24,6 +25,9 @@ interface ProfileUser {
   profileImgUrl: string | null
   joinedYear: number
   subscriptionTier: string
+  subscriptionPlanId: string | null
+  subscriptionExpiresAt: string | null
+  isOnboarded: boolean
 }
 
 interface ProfileSettings {
@@ -77,6 +81,7 @@ const profileMainMockData: ProfileMainData = {
   user: {
     userId: 100,
     email: 'example@email.com',
+    hasPassword: true,
     username: 'username',
     nickname: 'nickname',
     phoneNumber: '010-0000-0000',
@@ -84,6 +89,9 @@ const profileMainMockData: ProfileMainData = {
     profileImgUrl: null,
     joinedYear: 2026,
     subscriptionTier: 'FREE',
+    subscriptionPlanId: null,
+    subscriptionExpiresAt: null,
+    isOnboarded: true,
   },
   settings: {
     motherLanguage: 'EN',
