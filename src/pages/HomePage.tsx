@@ -99,7 +99,7 @@ function HomePage({
     return (
       <main className="home-screen">
         <section className="home-content">
-          <p className="home-loading">Loading…</p>
+          <p className="home-loading">Loading...</p>
         </section>
       </main>
     )

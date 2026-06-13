@@ -135,7 +135,7 @@ function ClassPage({
     return (
       <main className="class-screen">
         <section className="class-content">
-          <p className="class-status">Loading…</p>
+          <p className="class-status">Loading...</p>
         </section>
       </main>
     )

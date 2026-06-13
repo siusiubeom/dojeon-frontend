@@ -10,16 +10,22 @@ interface SettingPageProps {
   onBack: () => void
   onOpenAccountInfo: () => void
   onOpenPreferences: () => void
+  isPushNotificationOn: boolean
+  onTogglePushNotifications: () => void | Promise<void>
   onSignOut: () => void
   isSigningOut?: boolean
+  isSavingNotification?: boolean
 }
 
 function SettingPage({
   onBack,
   onOpenAccountInfo,
   onOpenPreferences,
+  isPushNotificationOn,
+  onTogglePushNotifications,
   onSignOut,
   isSigningOut = false,
+  isSavingNotification = false,
 }: SettingPageProps) {
   return (
     <main className="setting-screen">
@@ -82,7 +88,14 @@ function SettingPage({
               />
               <span className="setting-account-label">Preferences</span>
             </button>
-            <button type="button" className="setting-account-item" role="listitem">
+            <button
+              type="button"
+              className="setting-account-item"
+              role="listitem"
+              aria-pressed={isPushNotificationOn}
+              disabled={isSavingNotification}
+              onClick={() => void onTogglePushNotifications()}
+            >
               <img
                 src={notificationIcon}
                 alt=""
@@ -90,6 +103,14 @@ function SettingPage({
                 aria-hidden="true"
               />
               <span className="setting-account-label">Notifications</span>
+              <span
+                className={`setting-notification-toggle ${
+                  isPushNotificationOn ? 'setting-notification-toggle-on' : ''
+                }`}
+                aria-hidden="true"
+              >
+                <span className="setting-notification-toggle-thumb" />
+              </span>
             </button>
           </div>
         </section>

@@ -156,6 +156,19 @@ function VocabularyPage({ onBack }: VocabularyPageProps) {
   const selectedFlashcardItems = selectedGroup
     ? selectedGroup.items.filter((item) => flashcardScrapIds.has(item.scrapId))
     : []
+  const selectedWordFlashcardIndex = selectedWord
+    ? selectedFlashcardItems.findIndex((item) => item.scrapId === selectedWord.scrapId)
+    : -1
+  const selectedWordGroupIndex =
+    selectedWord && selectedGroup
+      ? selectedGroup.items.findIndex((item) => item.scrapId === selectedWord.scrapId)
+      : -1
+  const selectedWordDisplayIndex =
+    selectedWordFlashcardIndex >= 0
+      ? selectedWordFlashcardIndex + 1
+      : selectedWordGroupIndex >= 0
+        ? selectedWordGroupIndex + 1
+        : (selectedWord?.card?.sequence ?? 1)
 
   const toggleFlashcardItem = (scrapId: string) => {
     setFlashcardScrapIds((current) => {
@@ -255,7 +268,7 @@ function VocabularyPage({ onBack }: VocabularyPageProps) {
         {selectedWord ? (
           <WordDetail
             item={selectedWord}
-            index={(selectedWord.card?.sequence ?? 0) || 1}
+            index={selectedWordDisplayIndex}
             onRemove={() => removeFlashcardItem(selectedWord.scrapId)}
           />
         ) : selectedGroup ? (
@@ -436,7 +449,7 @@ function WordList({
                       className="vocabulary-detail-link"
                       onClick={() => onOpenDetail(item)}
                     >
-                      view details
+                      see more
                     </button>
                   </div>
                 ) : null}

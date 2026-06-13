@@ -415,28 +415,28 @@ function GrammarPracticePage({
   }
 
   const handleReviewSubmit = async (nextStep: 'next-grammar' | 'reading') => {
-    if (sectionId === null) return
-
-    await saveProgress
-      .mutateAsync({
-        sectionId,
-        payload: {
-          currentPage: 1,
-          stayTimeSeconds: 0,
-          forceComplete: reviewMarkComplete === true,
-          difficulty: reviewDifficulty ?? 'NORMAL',
-        },
-      })
-      .catch(() => {})
-
-    if (reviewSaveScrap === true && grammarMaterialId !== null) {
-      await createScrap
+    if (sectionId !== null) {
+      await saveProgress
         .mutateAsync({
-          type: 'GRAMMAR',
-          materialId: grammarMaterialId,
           sectionId,
-        } as never)
+          payload: {
+            currentPage: 1,
+            stayTimeSeconds: 0,
+            forceComplete: reviewMarkComplete === true,
+            difficulty: reviewDifficulty ?? 'NORMAL',
+          },
+        })
         .catch(() => {})
+
+      if (reviewSaveScrap === true && grammarMaterialId !== null) {
+        await createScrap
+          .mutateAsync({
+            type: 'GRAMMAR',
+            materialId: grammarMaterialId,
+            sectionId,
+          } as never)
+          .catch(() => {})
+      }
     }
 
     pushHistory()
@@ -494,7 +494,7 @@ function GrammarPracticePage({
 
         {isReviewStep || isReadingStep || isListeningStep || isNextGrammarStep || isNextGrammarRulesStep ? null : (
           <p className="grammar-practice-guide">
-            {isMakeStep ? 'Make your own sentance.' : isFillStep ? 'Fill in the blanks.' : 'Choose the correct answer.'}
+            {isMakeStep ? 'Make your own sentence.' : isFillStep ? 'Fill in the blanks.' : 'Choose the correct answer.'}
           </p>
         )}
 
@@ -536,7 +536,7 @@ function GrammarPracticePage({
             </section>
 
             <section className="grammar-practice-review-section grammar-practice-review-section-complete">
-              <h2 className="grammar-practice-review-subtitle">Mark has complete?</h2>
+              <h2 className="grammar-practice-review-subtitle">Mark as complete?</h2>
               <div className="grammar-practice-review-choice-row grammar-practice-review-choice-row-binary" role="list" aria-label="mark complete">
                 <button
                   type="button"
@@ -562,7 +562,7 @@ function GrammarPracticePage({
             </section>
 
             <section className="grammar-practice-review-section grammar-practice-review-section-notebook">
-              <h2 className="grammar-practice-review-question">Save grammer to personal notebook?</h2>
+              <h2 className="grammar-practice-review-question">Save grammar to personal notebook?</h2>
               <div className="grammar-practice-review-choice-row grammar-practice-review-choice-row-binary" role="list" aria-label="save grammar to personal notebook">
                 <button
                   type="button"
@@ -601,7 +601,7 @@ function GrammarPracticePage({
                 disabled={saveProgress.isPending || createScrap.isPending}
                 onClick={() => void handleReviewSubmit('next-grammar')}
               >
-                {saveProgress.isPending || createScrap.isPending ? 'Saving…' : 'Next grammer'}
+                {saveProgress.isPending || createScrap.isPending ? 'Saving...' : 'Next grammar'}
               </button>
               <button
                 type="button"
@@ -645,7 +645,7 @@ function GrammarPracticePage({
             </div>
 
             <section className="grammar-practice-next-grammar-section" ref={nextGrammarLessonRef}>
-              <h2 className="grammar-practice-next-grammar-heading">Grammar explation</h2>
+              <h2 className="grammar-practice-next-grammar-heading">Grammar explanation</h2>
               <div className="grammar-practice-next-grammar-description" dir="rtl">
                 <p className="grammar-practice-next-grammar-description-line">הזמנה לפעולה.</p>
                 <p className="grammar-practice-next-grammar-description-line">"שנעשה (משהו)?"</p>
@@ -806,7 +806,7 @@ function GrammarPracticePage({
               <p className="grammar-practice-next-grammar-rules-point">* מצורפת לפעלים בלבד (לעשות משהו ביחד)</p>
               <p className="grammar-practice-next-grammar-rules-point">* ניתן להוסיף את המילה 같이 (ביחד) וניתן להשמיט<br />אותה והמשמעות תהיה זהה</p>
             </div>
-            <h2 className="grammar-practice-next-grammar-rules-heading">Grammar explation</h2>
+            <h2 className="grammar-practice-next-grammar-rules-heading">Grammar explanation</h2>
             <div className="grammar-practice-next-grammar-rules-english">
               <div className="grammar-practice-next-grammar-rules-english-row">
                 <span className="grammar-practice-next-grammar-rules-bullet" aria-hidden="true">•</span>
@@ -1195,7 +1195,7 @@ function GrammarPracticePage({
                   <div className="grammar-practice-wrong-feedback">
                     <span className="grammar-practice-wrong-icon" aria-hidden="true">
                       <svg className="grammar-practice-wrong-icon-mark" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="M8 2L2 8M2 2L8 8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
+                        <path d="M8 2L2 8M2 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                       </svg>
                     </span>
                     <span className="grammar-practice-wrong-text">틀렸어요!</span>
@@ -1255,7 +1255,7 @@ function GrammarPracticePage({
                   <div className="grammar-practice-wrong-feedback">
                     <span className="grammar-practice-wrong-icon" aria-hidden="true">
                       <svg className="grammar-practice-wrong-icon-mark" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="M8 2L2 8M2 2L8 8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
+                        <path d="M8 2L2 8M2 2L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                       </svg>
                     </span>
                     <span className="grammar-practice-wrong-text">틀렸어요!</span>
@@ -1299,7 +1299,7 @@ function GrammarPracticePage({
               <>
                 <div className="grammar-practice-options" role="list">
                   {questionsLoading && !firstMcq ? (
-                    <p className="grammar-practice-status">Loading…</p>
+                    <p className="grammar-practice-status">Loading...</p>
                   ) : (
                     choiceOptions.map((option) => {
                       const wasRevealed = revealedAnswers.includes(option)

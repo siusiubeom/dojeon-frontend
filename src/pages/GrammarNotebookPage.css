@@ -198,3 +198,106 @@
   width: 100%;
   height: 1px;
 }
+
+.grammar-notebook-detail {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.grammar-notebook-detail-hero,
+.grammar-notebook-detail-card {
+  border: 1px solid var(--dojeon-color-gray-200);
+  border-radius: 10px;
+  background: var(--dojeon-color-surface);
+  box-sizing: border-box;
+}
+
+.grammar-notebook-detail-hero {
+  min-height: 112px;
+  padding: 16px;
+}
+
+.grammar-notebook-detail-title {
+  margin: 18px 0 0;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-headline-small);
+}
+
+.grammar-notebook-detail-card {
+  padding: 14px 16px;
+}
+
+.grammar-notebook-detail-label {
+  margin: 0;
+  color: var(--dojeon-color-primary-action);
+  font: var(--dojeon-type-button-small);
+  text-transform: uppercase;
+}
+
+.grammar-notebook-detail-copy {
+  margin: 8px 0 0;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-body-medium);
+}
+
+.grammar-notebook-detail-stack {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grammar-notebook-detail-stack .grammar-notebook-detail-copy {
+  margin: 0;
+}
+
+.grammar-notebook-detail-lang {
+  min-width: 28px;
+  margin-right: 8px;
+  color: var(--dojeon-color-primary-action);
+  font: var(--dojeon-type-button-small);
+}
+
+.grammar-notebook-dialogue-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grammar-notebook-dialogue-line {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.grammar-notebook-dialogue-speaker {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--dojeon-color-primary-100);
+  color: var(--dojeon-color-primary-action);
+  font: var(--dojeon-type-button-small);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grammar-notebook-dialogue-ko,
+.grammar-notebook-dialogue-translation {
+  margin: 0;
+}
+
+.grammar-notebook-dialogue-ko {
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-body-medium);
+}
+
+.grammar-notebook-dialogue-translation {
+  margin-top: 2px;
+  color: var(--dojeon-color-gray-400);
+  font: var(--dojeon-type-caption);
+}

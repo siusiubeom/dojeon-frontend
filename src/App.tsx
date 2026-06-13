@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import './App.css'
 import SplashPage from './pages/SplashPage'
 import LoginPage from './pages/LoginPage'
@@ -20,6 +21,7 @@ import LessonDetailPage from './pages/LessonDetailPage'
 import VocabularyLessonPage from './pages/VocabularyLessonPage'
 import ProfileMainPage from './pages/ProfileMainPage'
 import { useUpdateUserMe } from './hooks/useUpdateUserMe.ts'
+import { useUserMe } from './hooks/useUserMe.ts'
 import {
   buildAuthSession,
   clearStoredAuthSession,
@@ -178,6 +180,7 @@ const getInitialScreen = (): Screen => {
 }
 
 function App() {
+  const queryClient = useQueryClient()
   const updateUserMe = useUpdateUserMe()
   const [screen, setScreen] = useState<Screen>(getInitialScreen)
   const [authSession, setAuthSession] = useState<AuthSession | null>(getStoredAuthSession)
@@ -204,9 +207,11 @@ function App() {
     'class',
   )
   const [settingBackScreen, setSettingBackScreen] = useState<'home' | 'profile-main'>('home')
+  const { data: userMeData } = useUserMe(Boolean(authSession))
 
   const currentEmail = authSession?.email ?? pendingSignup?.email ?? ''
   const currentUsername = currentEmail ? currentEmail.split('@')[0] : userName
+  const isPushNotificationOn = userMeData?.profile.isPushNotificationOn ?? true
 
   const resetLocalProfileState = () => {
     setUserName('Jinri')
@@ -217,6 +222,15 @@ function App() {
     setDailyGoal('')
     setKoreanGoal('')
   }
+
+  const clearAccountScopedQueries = useCallback(() => {
+    queryClient.removeQueries({ queryKey: ['user', 'me'] })
+    queryClient.removeQueries({ queryKey: ['home'] })
+    queryClient.removeQueries({ queryKey: ['learning'] })
+    queryClient.removeQueries({ queryKey: ['section'] })
+    queryClient.removeQueries({ queryKey: ['scrap'] })
+    queryClient.removeQueries({ queryKey: ['subscription'] })
+  }, [queryClient])
 
   const hasCompletedOnboarding =
     readLocalStorageItem(ONBOARDING_COMPLETED_KEY) === 'true'
@@ -234,6 +248,7 @@ function App() {
     const didSwitchAccount = syncLocalAccountOwner(email)
 
     if (didSwitchAccount) {
+      clearAccountScopedQueries()
       resetLocalProfileState()
     }
 
@@ -270,6 +285,7 @@ function App() {
 
     if (didSwitchAccount) {
       const timer = window.setTimeout(() => {
+        clearAccountScopedQueries()
         resetLocalProfileState()
       }, 0)
 
@@ -277,7 +293,43 @@ function App() {
         window.clearTimeout(timer)
       }
     }
-  }, [authSession?.email])
+  }, [authSession?.email, clearAccountScopedQueries])
+
+  useEffect(() => {
+    if (!authSession || !userMeData) {
+      return
+    }
+
+    const nextName = userMeData.profile.nickname?.trim() || getOnboardingUsername()
+    const nextPhoneNumber = userMeData.profile.phoneNumber ?? ''
+    const nextAgeRange = userMeData.profile.birthday ?? userMeData.profile.ageGroup ?? ''
+    const nextLanguage = userMeData.profile.motherLanguage ?? ''
+    const nextKoreanLevel = userMeData.profile.proficiencyLevel ?? ''
+    const nextDailyGoal = userMeData.profile.dailyGoalMin?.toString() ?? ''
+    const nextKoreanGoal = userMeData.profile.learningGoal ?? ''
+
+    saveOnboardingUsername(nextName)
+    writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
+    writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, nextAgeRange)
+    writeLocalStorageItem(ACCOUNT_LANGUAGE_KEY, nextLanguage)
+    writeLocalStorageItem(ACCOUNT_KOREAN_LEVEL_KEY, nextKoreanLevel)
+    writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, nextDailyGoal)
+    writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, nextKoreanGoal)
+
+    const timer = window.setTimeout(() => {
+      setUserName(nextName)
+      setPhoneNumber(nextPhoneNumber)
+      setAgeRange(nextAgeRange)
+      setLanguage(nextLanguage)
+      setKoreanLevel(nextKoreanLevel)
+      setDailyGoal(nextDailyGoal)
+      setKoreanGoal(nextKoreanGoal)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [authSession, userMeData])
 
   const handleLogout = async () => {
     setIsSigningOut(true)
@@ -290,6 +342,7 @@ function App() {
       // Local sign-out still proceeds when the logout request fails.
     } finally {
       clearStoredAuthSession()
+      clearAccountScopedQueries()
       setAuthSession(null)
       setPendingSignup(null)
       setSettingBackScreen('home')
@@ -331,21 +384,11 @@ function App() {
       {import.meta.env.DEV ? (
         <button
           type="button"
-          style={{
-            position: 'fixed',
-            top: 12,
-            right: 12,
-            zIndex: 9999,
-            padding: '8px 12px',
-            borderRadius: 8,
-            border: '1px solid #d0d0d0',
-            background: '#fff',
-            color: '#111',
-            fontSize: 12,
-          }}
+          className="app-dev-reset-button"
           onClick={() => {
             clearOnboardingStorage()
             clearStoredAuthSession()
+            clearAccountScopedQueries()
             setAuthSession(null)
             setPendingSignup(null)
             setUserName('Jinri')
@@ -505,10 +548,17 @@ function App() {
           onOpenPreferences={() => {
             setScreen('preferences')
           }}
+          isPushNotificationOn={isPushNotificationOn}
+          onTogglePushNotifications={async () => {
+            await updateUserMe.mutateAsync({
+              isPushNotificationOn: !isPushNotificationOn,
+            })
+          }}
           onSignOut={() => {
             void handleLogout()
           }}
           isSigningOut={isSigningOut}
+          isSavingNotification={updateUserMe.isPending}
         />
       ) : screen === 'account-info' ? (
         <AccountInfoPage
@@ -551,14 +601,17 @@ function App() {
           onSave={async (values) => {
             await updateUserMe.mutateAsync({
               motherLanguage: getOptionalString(values.language),
+              proficiencyLevel: getOptionalString(values.koreanLevel),
               dailyGoalMin: getOptionalNumber(values.dailyGoal),
               learningGoal: getOptionalString(values.koreanGoal),
             })
 
             setLanguage(values.language)
+            setKoreanLevel(values.koreanLevel)
             setDailyGoal(values.dailyGoal)
             setKoreanGoal(values.koreanGoal)
             writeLocalStorageItem(ACCOUNT_LANGUAGE_KEY, values.language)
+            writeLocalStorageItem(ACCOUNT_KOREAN_LEVEL_KEY, values.koreanLevel)
             writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, values.dailyGoal)
             writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, values.koreanGoal)
           }}

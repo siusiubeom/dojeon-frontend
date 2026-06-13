@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './GrammarNotebookPage.css'
 import { useGrammarScraps } from '../hooks/useGrammarScraps.ts'
+import { useSectionMaterials } from '../hooks/useSectionMaterials.ts'
 import type { GrammarScrapItem } from '../types/scraps.types.ts'
 
 interface GrammarNotebookPageProps {
@@ -39,8 +40,9 @@ const previewGrammarScraps: GrammarScrapItem[] = [
 
 function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
   const [isRecentSort, setIsRecentSort] = useState(true)
+  const [selectedScrap, setSelectedScrap] = useState<GrammarScrapItem | null>(null)
   const { items, loading, loadingMore, hasMore, error, fetchNextPage, refetch } =
-      useGrammarScraps()
+    useGrammarScraps()
   const visibleItems = import.meta.env.DEV && items.length === 0 ? previewGrammarScraps : items
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
@@ -50,90 +52,103 @@ function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
     if (!hasMore) return
 
     const observer = new IntersectionObserver(
-        (entries) => {
-          const [entry] = entries
-          if (entry?.isIntersecting && !loadingMore) {
-            fetchNextPage()
-          }
-        },
-        { rootMargin: '200px' },
+      (entries) => {
+        const [entry] = entries
+        if (entry?.isIntersecting && !loadingMore) {
+          fetchNextPage()
+        }
+      },
+      { rootMargin: '200px' },
     )
 
     observer.observe(node)
     return () => observer.disconnect()
   }, [hasMore, loadingMore, fetchNextPage])
 
-  const handleOpenGrammarDetail = () => {
-    // Detail navigation can be wired here when a grammar detail route is available.
+  const handleBackPress = () => {
+    if (selectedScrap) {
+      setSelectedScrap(null)
+      return
+    }
+
+    onBack()
   }
 
   return (
-      <main className="grammar-notebook-screen">
-        <section className="grammar-notebook-content">
-          <header className="grammar-notebook-header">
-            <button
-                type="button"
-                className="grammar-notebook-back"
-                onClick={onBack}
-                aria-label="Go back"
+    <main className="grammar-notebook-screen">
+      <section className="grammar-notebook-content">
+        <header className="grammar-notebook-header">
+          <button
+            type="button"
+            className="grammar-notebook-back"
+            onClick={handleBackPress}
+            aria-label="Go back"
+          >
+            <svg
+              className="grammar-notebook-back-icon"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
             >
-              <svg
-                  className="grammar-notebook-back-icon"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-              >
-                <path
-                    d="M15 18L9 12L15 6"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            <h1 className="grammar-notebook-title">Grammar</h1>
-          </header>
+              <path
+                d="M15 18L9 12L15 6"
+                stroke="currentColor"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <h1 className="grammar-notebook-title">
+            {selectedScrap ? 'Grammar note' : 'Grammar'}
+          </h1>
+        </header>
 
-          <div className="grammar-notebook-sort-row">
-            <button
+        {selectedScrap ? (
+          <GrammarDetail scrap={selectedScrap} />
+        ) : (
+          <>
+            <div className="grammar-notebook-sort-row">
+              <button
                 type="button"
                 className="grammar-notebook-sort-button"
                 onClick={() => setIsRecentSort((prev) => !prev)}
                 aria-label="Sort"
-            >
-              <span>Recently viewed</span>
-              <svg
-                  className={`grammar-notebook-sort-icon ${isRecentSort ? 'is-recent' : 'is-alt'}`}
+              >
+                <span>Recently viewed</span>
+                <svg
+                  className={`grammar-notebook-sort-icon ${
+                    isRecentSort ? 'is-recent' : 'is-alt'
+                  }`}
                   width="18"
                   height="18"
                   viewBox="0 0 18 18"
                   fill="none"
                   aria-hidden="true"
-              >
-                <path
+                >
+                  <path
                     d="M4.5 6.75L9 11.25L13.5 6.75"
                     stroke="currentColor"
                     strokeWidth="1.4"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
+                  />
+                </svg>
+              </button>
+            </div>
 
-          {loading ? (
-              <p className="grammar-notebook-status">Loading…</p>
-          ) : error && visibleItems.length === 0 ? (
+            {loading ? (
+              <p className="grammar-notebook-status">Loading...</p>
+            ) : error && visibleItems.length === 0 ? (
               <div className="notebook-empty-state">
                 <p>Grammar sync unavailable.</p>
                 <button type="button" onClick={() => void refetch()}>
                   Retry sync
                 </button>
               </div>
-          ) : visibleItems.length === 0 ? (
+            ) : visibleItems.length === 0 ? (
               <div className="notebook-empty-state">
                 <p>No grammar scraps yet.</p>
                 {error ? (
@@ -142,56 +157,135 @@ function GrammarNotebookPage({ onBack }: GrammarNotebookPageProps) {
                   </button>
                 ) : null}
               </div>
-          ) : (
+            ) : (
               <section className="grammar-notebook-card-list">
                 {visibleItems.map((scrap) => (
-                      <article
-                        key={scrap.scrapId}
-                        className="grammar-notebook-card"
-                        role="button"
-                        tabIndex={0}
-                        onClick={handleOpenGrammarDetail}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault()
-                            handleOpenGrammarDetail()
-                          }
-                        }}
-                      >
-                        <div className="grammar-notebook-card-top">
-                          <p className="grammar-notebook-course">{scrap.courseTitle}</p>
-                          <span className="grammar-notebook-badge">{scrap.lessonTitle}</span>
-                        </div>
-                        <div className="grammar-notebook-card-bottom">
-                          <p className="grammar-notebook-topic">{scrap.grammarPoint}</p>
-                        </div>
-                        <svg
-                            className="grammar-notebook-arrow"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 18 18"
-                            fill="none"
-                            aria-hidden="true"
-                        >
-                          <path
-                              d="M6.75 4.5L11.25 9L6.75 13.5"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                          />
-                        </svg>
-                      </article>
+                  <article
+                    key={scrap.scrapId}
+                    className="grammar-notebook-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedScrap(scrap)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setSelectedScrap(scrap)
+                      }
+                    }}
+                  >
+                    <div className="grammar-notebook-card-top">
+                      <p className="grammar-notebook-course">{scrap.courseTitle}</p>
+                      <span className="grammar-notebook-badge">{scrap.lessonTitle}</span>
+                    </div>
+                    <div className="grammar-notebook-card-bottom">
+                      <p className="grammar-notebook-topic">{scrap.grammarPoint}</p>
+                    </div>
+                    <svg
+                      className="grammar-notebook-arrow"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 18 18"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M6.75 4.5L11.25 9L6.75 13.5"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </article>
                 ))}
 
                 {hasMore && <div ref={sentinelRef} className="grammar-notebook-sentinel" />}
 
-                {loadingMore && <p className="grammar-notebook-status">Loading more…</p>}
+                {loadingMore && (
+                  <p className="grammar-notebook-status">Loading more...</p>
+                )}
               </section>
-          )}
+            )}
+          </>
+        )}
+      </section>
+    </main>
+  )
+}
 
-        </section>
-      </main>
+function GrammarDetail({ scrap }: { scrap: GrammarScrapItem }) {
+  const { data, loading } = useSectionMaterials(scrap.sectionId)
+  const material = data?.materials.find((item) => item.type === 'GRAMMAR_TABLE') ?? data?.materials[0]
+  const content = material?.contentText
+  const explanations = content?.explanations ?? []
+  const dialogues = content?.dialogues ?? []
+
+  return (
+    <section className="grammar-notebook-detail">
+      <article className="grammar-notebook-detail-hero">
+        <div className="grammar-notebook-card-top">
+          <p className="grammar-notebook-course">{scrap.courseTitle}</p>
+          <span className="grammar-notebook-badge">{scrap.lessonTitle}</span>
+        </div>
+        <h2 className="grammar-notebook-detail-title">
+          {content?.title || scrap.grammarPoint}
+        </h2>
+      </article>
+
+      <article className="grammar-notebook-detail-card">
+        <p className="grammar-notebook-detail-label">Grammar</p>
+        {loading ? (
+          <p className="grammar-notebook-detail-copy">Loading...</p>
+        ) : explanations.length > 0 ? (
+          <div className="grammar-notebook-detail-stack">
+            {explanations.map((explanation) => (
+              <p
+                key={`${explanation.lang}-${explanation.text}`}
+                className="grammar-notebook-detail-copy"
+              >
+                <span className="grammar-notebook-detail-lang">
+                  {explanation.lang.toUpperCase()}
+                </span>
+                {explanation.text}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="grammar-notebook-detail-copy">
+            Review this saved grammar point from your personal notebook.
+          </p>
+        )}
+      </article>
+
+      <article className="grammar-notebook-detail-card">
+        <p className="grammar-notebook-detail-label">Course</p>
+        <p className="grammar-notebook-detail-copy">
+          {scrap.courseTitle} / {scrap.lessonTitle}
+        </p>
+      </article>
+
+      {dialogues.length > 0 ? (
+        <article className="grammar-notebook-detail-card">
+          <p className="grammar-notebook-detail-label">Examples</p>
+          <div className="grammar-notebook-dialogue-list">
+            {dialogues.flatMap((dialogue, dialogueIndex) =>
+              dialogue.lines.map((line, lineIndex) => (
+                <div
+                  key={`${dialogueIndex}-${lineIndex}-${line.ko}`}
+                  className="grammar-notebook-dialogue-line"
+                >
+                  <span className="grammar-notebook-dialogue-speaker">{line.speaker}</span>
+                  <div>
+                    <p className="grammar-notebook-dialogue-ko">{line.ko}</p>
+                    <p className="grammar-notebook-dialogue-translation">{line.en}</p>
+                  </div>
+                </div>
+              )),
+            )}
+          </div>
+        </article>
+      ) : null}
+    </section>
   )
 }
 

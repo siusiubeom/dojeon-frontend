@@ -345,7 +345,7 @@ function VocabularyLessonPage({
                 You&apos;re gonna learn
                 <br />
                 {cardsLoading ? (
-                  '…'
+                  '...'
                 ) : (
                   <>
                     <span className="vocabulary-lesson-bubble-count">
@@ -376,7 +376,7 @@ function VocabularyLessonPage({
           </section>
         ) : cardsLoading ? (
           <section className="vocabulary-lesson-study">
-            <p className="vocabulary-lesson-loading">Loading cards…</p>
+            <p className="vocabulary-lesson-loading">Loading cards...</p>
           </section>
         ) : (
           <section className="vocabulary-lesson-study">

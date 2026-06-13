@@ -9,15 +9,16 @@ interface UseUserMeState {
   refetch: () => Promise<void>
 }
 
-export function useUserMe(): UseUserMeState {
+export function useUserMe(enabled = true): UseUserMeState {
   const { data, isPending, error, refetch } = useQuery<UserMeData | null, UserApiError>({
     queryKey: ['user', 'me'],
     queryFn: ({ signal }) => fetchUserMe(signal),
+    enabled,
   })
 
   return {
     data: data ?? null,
-    loading: isPending,
+    loading: enabled && isPending,
     error: error ?? null,
     refetch: async () => {
       await refetch()

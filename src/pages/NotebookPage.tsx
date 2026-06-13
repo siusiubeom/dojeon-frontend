@@ -89,7 +89,7 @@ function NotebookPage({
           </div>
 
           {loading && vocabGroups.length === 0 ? (
-            <p className="notebook-loading">Loading…</p>
+            <p className="notebook-loading">Loading...</p>
           ) : (
             <div className="notebook-card-row">
               {vocabGroups.map((group) => (
@@ -122,7 +122,7 @@ function NotebookPage({
           </div>
 
           {loading && grammarItems.length === 0 ? (
-            <p className="notebook-loading">Loading…</p>
+            <p className="notebook-loading">Loading...</p>
           ) : (
             <div className="notebook-grammar-list">
               {grammarItems.map((item) => (

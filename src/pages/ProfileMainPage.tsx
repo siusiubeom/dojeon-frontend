@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import './ProfileMainPage.css'
 import homeIcon from '../assets/home.svg'
 import editIcon from '../assets/edit.svg'
@@ -6,6 +7,7 @@ import bookOpenIcon from '../assets/book-open.svg'
 import profileIcon from '../assets/user.svg'
 import settingIcon from '../assets/setting_icon.svg'
 import { useUserMe } from '../hooks/useUserMe.ts'
+import { useSubscriptionPlans } from '../hooks/useSubscriptionPlans.ts'
 import type { UserMeData } from '../types/user.types.ts'
 
 const tabs = [
@@ -273,6 +275,13 @@ function ProfileMainPage({
   onOpenSetting,
 }: ProfileMainPageProps) {
   const { data: userMeData } = useUserMe()
+  const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false)
+  const {
+    data: subscriptionPlanData,
+    loading: subscriptionPlansLoading,
+    error: subscriptionPlansError,
+    refetch: refetchSubscriptionPlans,
+  } = useSubscriptionPlans(showSubscriptionPlans)
   const apiProfileData = userMeData ? mapUserMeToProfileData(userMeData) : null
   const profileData = {
     ...(apiProfileData ?? profileMainMockData),
@@ -285,7 +294,11 @@ function ProfileMainPage({
   const { user, recentCourse, stats, attendance, recentAchievements } = profileData
   const calendarDays = getCalendarDays(attendance.year, attendance.month)
   const calendarTitle = `${monthNames[attendance.month - 1]} ${attendance.year}`
-  const visibleAchievements = recentAchievements.slice(0, 4)
+  const [showAllAchievements, setShowAllAchievements] = useState(false)
+  const visibleAchievements = showAllAchievements
+    ? recentAchievements
+    : recentAchievements.slice(0, 4)
+  const canToggleAchievements = recentAchievements.length > 4
   const subscriptionCopy =
     user.subscriptionTier === 'FREE'
       ? 'Upgrade your plan for more learning features.'
@@ -317,7 +330,7 @@ function ProfileMainPage({
                 {user.nickname}!
               </h1>
               <p className="profile-main-meta">
-                @{user.username} <span aria-hidden="true">·</span> joined {user.joinedYear}
+                @{user.username} <span aria-hidden="true">/</span> joined {user.joinedYear}
               </p>
             </div>
           </div>
@@ -393,9 +406,15 @@ function ProfileMainPage({
         <section className="profile-main-section">
           <div className="profile-main-section-header">
             <h2 className="profile-main-section-title">Achievements</h2>
-            <button type="button" className="profile-main-section-link">
-              see more
-            </button>
+            {canToggleAchievements ? (
+              <button
+                type="button"
+                className="profile-main-section-link"
+                onClick={() => setShowAllAchievements((current) => !current)}
+              >
+                {showAllAchievements ? 'see less' : 'see more'}
+              </button>
+            ) : null}
           </div>
           <div className="profile-main-achievement-row">
             {visibleAchievements.length > 0 ? (
@@ -428,9 +447,49 @@ function ProfileMainPage({
           <h2 className="profile-main-section-title">Subscriptions</h2>
           <article className="profile-main-subscription-card">
             <p className="profile-main-subscription-placeholder">{subscriptionCopy}</p>
-            <button type="button" className="profile-main-subscribe-button">
+            <button
+              type="button"
+              className="profile-main-subscribe-button"
+              onClick={() => setShowSubscriptionPlans((current) => !current)}
+            >
               {user.subscriptionTier === 'FREE' ? 'Subscribe now' : 'Manage subscription'}
             </button>
+
+            {showSubscriptionPlans ? (
+              <div className="profile-main-plan-list">
+                {subscriptionPlansLoading ? (
+                  <p className="profile-main-plan-status">Loading plans...</p>
+                ) : subscriptionPlansError ? (
+                  <div className="profile-main-plan-status">
+                    <p>{subscriptionPlansError.message}</p>
+                    <button type="button" onClick={() => void refetchSubscriptionPlans()}>
+                      Retry
+                    </button>
+                  </div>
+                ) : subscriptionPlanData?.plans.length ? (
+                  subscriptionPlanData.plans.map((plan) => (
+                    <article key={plan.planId} className="profile-main-plan-card">
+                      <div className="profile-main-plan-head">
+                        <p className="profile-main-plan-title">{plan.title}</p>
+                        <p className="profile-main-plan-price">{plan.priceText}</p>
+                      </div>
+                      {plan.subText ? (
+                        <p className="profile-main-plan-subtext">{plan.subText}</p>
+                      ) : null}
+                      {plan.benefits.length > 0 ? (
+                        <ul className="profile-main-plan-benefits">
+                          {plan.benefits.map((benefit) => (
+                            <li key={benefit}>{benefit}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </article>
+                  ))
+                ) : (
+                  <p className="profile-main-plan-status">No plans available.</p>
+                )}
+              </div>
+            ) : null}
           </article>
         </section>
       </section>

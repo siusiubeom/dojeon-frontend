@@ -8,6 +8,7 @@ interface PreferencesPageProps {
   koreanGoal: string
   onSave: (values: {
     language: string
+    koreanLevel: string
     dailyGoal: string
     koreanGoal: string
   }) => void | Promise<void>
@@ -28,20 +29,23 @@ function PreferencesPage({
 }: PreferencesPageProps) {
   const koreanGoalOptions = ['Travel', 'Hobby', 'Study Abroad', 'Career']
   const [draftLanguage, setDraftLanguage] = useState(language)
+  const [draftKoreanLevel, setDraftKoreanLevel] = useState(koreanLevel)
   const [draftDailyGoal, setDraftDailyGoal] = useState(dailyGoal)
   const [draftKoreanGoal, setDraftKoreanGoal] = useState(koreanGoal)
   const [editing, setEditing] = useState({
     language: false,
+    koreanLevel: false,
     dailyGoal: false,
   })
   const [isKoreanGoalSheetOpen, setIsKoreanGoalSheetOpen] = useState(false)
 
   const hasPendingChanges =
     draftLanguage !== language ||
+    draftKoreanLevel !== koreanLevel ||
     draftDailyGoal !== dailyGoal ||
     draftKoreanGoal !== koreanGoal
 
-  const toggleEditing = (key: 'language' | 'dailyGoal') => {
+  const toggleEditing = (key: 'language' | 'koreanLevel' | 'dailyGoal') => {
     setEditing((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
@@ -49,11 +53,13 @@ function PreferencesPage({
     try {
       await onSave({
         language: draftLanguage,
+        koreanLevel: draftKoreanLevel,
         dailyGoal: draftDailyGoal,
         koreanGoal: draftKoreanGoal,
       })
       setEditing({
         language: false,
+        koreanLevel: false,
         dailyGoal: false,
       })
     } catch {
@@ -73,8 +79,12 @@ function PreferencesPage({
     },
     {
       label: 'Korean Level',
-      value: koreanLevel || '-',
-      editable: false,
+      value: draftKoreanLevel || '-',
+      editable: true,
+      isEditing: editing.koreanLevel,
+      onEdit: () => toggleEditing('koreanLevel'),
+      onChange: (value: string) => setDraftKoreanLevel(value),
+      inputValue: draftKoreanLevel,
     },
     {
       label: 'Daily Goal',

@@ -137,12 +137,34 @@
 }
 
 .grammar-practice-review-choice-button {
+  position: relative;
   width: 62px;
   height: 62px;
   border: 0;
   background: var(--dojeon-color-gray-200);
   padding: 0;
   cursor: pointer;
+}
+
+.grammar-practice-review-choice-button.is-selected {
+  background: var(--dojeon-color-primary-action);
+}
+
+.grammar-practice-review-choice-button.is-selected::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 11px;
+  border-left: 3px solid var(--dojeon-color-surface);
+  border-bottom: 3px solid var(--dojeon-color-surface);
+  transform: translate(-50%, -60%) rotate(-45deg);
+}
+
+.grammar-practice-review-choice-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .grammar-practice-review-label-row {
@@ -332,6 +354,7 @@
   height: 18px;
   border-radius: 50%;
   background: var(--dojeon-color-error);
+  color: var(--dojeon-color-surface);
   display: inline-flex;
   align-items: center;
   justify-content: center;

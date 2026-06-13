@@ -358,7 +358,6 @@
 
 .profile-main-subscription-card {
   margin-top: 12px;
-  min-height: 122px;
   border-radius: 10px;
   background: var(--dojeon-color-surface);
   border: 1px solid var(--dojeon-color-gray-200);
@@ -392,6 +391,87 @@
   font-weight: 500;
   line-height: normal;
   letter-spacing: 0;
+  cursor: pointer;
+}
+
+.profile-main-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-main-plan-card {
+  border-radius: 8px;
+  background: var(--dojeon-color-primary-50);
+  border: 1px solid var(--dojeon-color-primary-border);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.profile-main-plan-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.profile-main-plan-title,
+.profile-main-plan-price,
+.profile-main-plan-subtext,
+.profile-main-plan-status,
+.profile-main-plan-benefits {
+  margin: 0;
+  font-family: var(--dojeon-font-en);
+  line-height: normal;
+}
+
+.profile-main-plan-title {
+  color: var(--dojeon-color-gray-900);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.profile-main-plan-price {
+  color: var(--dojeon-color-primary-action);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.profile-main-plan-subtext {
+  margin-top: 6px;
+  color: var(--dojeon-color-gray-500);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.profile-main-plan-benefits {
+  margin-top: 8px;
+  padding-left: 18px;
+  color: var(--dojeon-color-gray-700);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.profile-main-plan-benefits li + li {
+  margin-top: 4px;
+}
+
+.profile-main-plan-status {
+  color: var(--dojeon-color-gray-500);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.profile-main-plan-status button {
+  margin-top: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--dojeon-color-primary-action);
+  font: var(--dojeon-type-button-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
 }
 

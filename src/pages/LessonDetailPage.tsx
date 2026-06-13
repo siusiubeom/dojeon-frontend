@@ -222,7 +222,7 @@ function LessonDetailPage({
               </button>
             </header>
           </div>
-          <p className="lesson-detail-status">Loading…</p>
+          <p className="lesson-detail-status">Loading...</p>
         </section>
       </main>
     )
