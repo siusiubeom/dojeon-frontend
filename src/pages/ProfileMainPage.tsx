@@ -5,6 +5,8 @@ import fileIcon from '../assets/file.svg'
 import bookOpenIcon from '../assets/book-open.svg'
 import profileIcon from '../assets/user.svg'
 import settingIcon from '../assets/setting_icon.svg'
+import { useUserMe } from '../hooks/useUserMe.ts'
+import type { UserMeData } from '../types/user.types.ts'
 
 const tabs = [
   { icon: homeIcon, label: 'HOME' },
@@ -15,7 +17,7 @@ const tabs = [
 ]
 
 interface ProfileUser {
-  userId: number
+  userId: string
   email: string
   hasPassword: boolean
   username: string
@@ -79,7 +81,7 @@ interface ProfileMainData {
 
 const profileMainMockData: ProfileMainData = {
   user: {
-    userId: 100,
+    userId: '100',
     email: 'example@email.com',
     hasPassword: true,
     username: 'username',
@@ -135,6 +137,64 @@ const profileMainMockData: ProfileMainData = {
     },
   ],
 }
+
+const getJoinedYear = (createdAt: string) => {
+  const date = new Date(createdAt)
+  return Number.isNaN(date.getTime()) ? new Date().getFullYear() : date.getFullYear()
+}
+
+const mapUserMeToProfileData = (data: UserMeData): ProfileMainData => ({
+  user: {
+    userId: data.profile.userId,
+    email: data.profile.email,
+    hasPassword: data.profile.hasPassword ?? true,
+    username: data.profile.username ?? data.profile.email.split('@')[0],
+    nickname: data.profile.nickname ?? data.profile.username ?? 'Dojeon',
+    phoneNumber: data.profile.phoneNumber,
+    birthday: data.profile.birthday,
+    profileImgUrl: data.profile.profileImgUrl,
+    joinedYear: getJoinedYear(data.profile.createdAt),
+    subscriptionTier: data.profile.subscriptionTier,
+    subscriptionPlanId: data.profile.subscriptionPlanId,
+    subscriptionExpiresAt: data.profile.subscriptionExpiresAt,
+    isOnboarded: data.profile.isOnboarded ?? false,
+  },
+  settings: {
+    motherLanguage: data.profile.motherLanguage,
+    proficiencyLevel: data.profile.proficiencyLevel,
+    dailyGoalMin: data.profile.dailyGoalMin,
+    learningGoal: data.profile.learningGoal,
+    isPushNotificationOn: data.profile.isPushNotificationOn,
+    isMarketingAgreed: data.profile.isMarketingAgreed,
+  },
+  recentCourse: data.recentCourse
+    ? {
+      courseId: data.recentCourse.courseId,
+      lessonId: data.recentCourse.lessonId,
+      sectionId: data.recentCourse.sectionId,
+      courseTitle: data.recentCourse.courseTitle,
+      lessonTitle: data.recentCourse.lessonTitle,
+      sectionSubtitle: data.recentCourse.grammarPreview ?? data.recentCourse.sectionTitle,
+    }
+    : null,
+  stats: {
+    totalCompletedLessons: data.stats.totalCompletedLessons,
+    totalStudyMin: data.stats.totalStudyMin,
+    currentStreak: data.stats.currentStreak,
+    bestStreak: data.stats.bestStreak,
+  },
+  attendance: {
+    year: data.attendance.year,
+    month: data.attendance.month,
+    activeDays: data.attendance.activeDays,
+  },
+  recentAchievements: data.recentAchievements.map((achievement) => ({
+    badgeId: achievement.badgeId,
+    title: achievement.title,
+    imageUrl: achievement.imageUrl,
+    earnedAt: achievement.earnedAt,
+  })),
+})
 
 const monthNames = [
   'January',
@@ -212,12 +272,14 @@ function ProfileMainPage({
   onOpenNotebook,
   onOpenSetting,
 }: ProfileMainPageProps) {
+  const { data: userMeData } = useUserMe()
+  const apiProfileData = userMeData ? mapUserMeToProfileData(userMeData) : null
   const profileData = {
-    ...profileMainMockData,
+    ...(apiProfileData ?? profileMainMockData),
     user: {
-      ...profileMainMockData.user,
-      nickname: nickname.trim() || profileMainMockData.user.nickname,
-      username: username.trim() || profileMainMockData.user.username,
+      ...(apiProfileData?.user ?? profileMainMockData.user),
+      nickname: apiProfileData?.user.nickname ?? (nickname.trim() || profileMainMockData.user.nickname),
+      username: apiProfileData?.user.username ?? (username.trim() || profileMainMockData.user.username),
     },
   }
   const { user, recentCourse, stats, attendance, recentAchievements } = profileData

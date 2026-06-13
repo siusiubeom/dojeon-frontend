@@ -66,7 +66,7 @@
   flex-direction: column;
   gap: 12px;
   box-sizing: border-box;
-  box-shadow: 0 8px 20px rgba(36, 36, 36, 0.04);
+  box-shadow: var(--shadow);
 }
 
 .goal-card {
@@ -160,7 +160,7 @@
   border-radius: 10px;
   white-space: nowrap;
   box-sizing: border-box;
-  box-shadow: 0 2px 8px rgba(17, 17, 17, 0.08);
+  box-shadow: var(--shadow);
 }
 
 .goal-progress-bubble::after {
@@ -452,7 +452,7 @@
 
 .home-tab-label {
   color: var(--dojeon-color-gray-300);
-  font-family: 'Pretendard', 'Noto Sans', system-ui, sans-serif;
+  font-family: var(--dojeon-font-en);
   font-size: 8px;
   font-weight: 400;
   line-height: normal;

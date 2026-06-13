@@ -10,7 +10,9 @@ interface PreferencesPageProps {
     language: string
     dailyGoal: string
     koreanGoal: string
-  }) => void
+  }) => void | Promise<void>
+  isSaving?: boolean
+  saveError?: string | null
   onBack: () => void
 }
 
@@ -20,6 +22,8 @@ function PreferencesPage({
   dailyGoal,
   koreanGoal,
   onSave,
+  isSaving = false,
+  saveError = null,
   onBack,
 }: PreferencesPageProps) {
   const koreanGoalOptions = ['Travel', 'Hobby', 'Study Abroad', 'Career']
@@ -39,6 +43,22 @@ function PreferencesPage({
 
   const toggleEditing = (key: 'language' | 'dailyGoal') => {
     setEditing((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const handleSave = async () => {
+    try {
+      await onSave({
+        language: draftLanguage,
+        dailyGoal: draftDailyGoal,
+        koreanGoal: draftKoreanGoal,
+      })
+      setEditing({
+        language: false,
+        dailyGoal: false,
+      })
+    } catch {
+      // The parent mutation exposes the error message through saveError.
+    }
   }
 
   const items = [
@@ -137,23 +157,21 @@ function PreferencesPage({
         </section>
 
         {hasPendingChanges ? (
-          <button
-            type="button"
-            className="preferences-save-button"
-            onClick={() => {
-              onSave({
-                language: draftLanguage,
-                dailyGoal: draftDailyGoal,
-                koreanGoal: draftKoreanGoal,
-              })
-              setEditing({
-                language: false,
-                dailyGoal: false,
-              })
-            }}
-          >
-            Save
-          </button>
+          <>
+            <button
+              type="button"
+              className="preferences-save-button"
+              disabled={isSaving}
+              onClick={() => void handleSave()}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+            {saveError ? (
+              <p className="preferences-save-error" role="alert">
+                {saveError}
+              </p>
+            ) : null}
+          </>
         ) : null}
       </section>
 

@@ -19,6 +19,7 @@ import GrammarNotebookPage from './pages/GrammarNotebookPage'
 import LessonDetailPage from './pages/LessonDetailPage'
 import VocabularyLessonPage from './pages/VocabularyLessonPage'
 import ProfileMainPage from './pages/ProfileMainPage'
+import { useUpdateUserMe } from './hooks/useUpdateUserMe.ts'
 import {
   buildAuthSession,
   clearStoredAuthSession,
@@ -138,6 +139,27 @@ const getStoredKoreanGoal = () => {
   return readLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY) ?? ''
 }
 
+const getOptionalString = (value: string) => {
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+const getOptionalNumber = (value: string) => {
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+const getBirthdayOrAgeGroupPayload = (value: string) => {
+  const trimmed = value.trim()
+  if (!trimmed) return {}
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return { birthday: trimmed }
+  }
+
+  return { ageGroup: trimmed }
+}
+
 type Screen =
   | 'splash' | 'login' | 'signup' | 'verify-email' | 'verify-success'
   | 'onboarding' | 'home' | 'class' | 'practice' | 'grammar-practice' | 'setting'
@@ -156,6 +178,7 @@ const getInitialScreen = (): Screen => {
 }
 
 function App() {
+  const updateUserMe = useUpdateUserMe()
   const [screen, setScreen] = useState<Screen>(getInitialScreen)
   const [authSession, setAuthSession] = useState<AuthSession | null>(getStoredAuthSession)
   const [pendingSignup, setPendingSignup] = useState<SignupSubmission | null>(null)
@@ -494,10 +517,16 @@ function App() {
           nickname={userName}
           phoneNumber={phoneNumber}
           ageGroupOrBirthday={ageRange}
-          onSave={(values) => {
+          onSave={async (values) => {
             const nextNickname = values.nickname.trim() || 'Jinri'
             const nextPhoneNumber = values.phoneNumber.trim()
             const nextAgeGroupOrBirthday = values.ageGroupOrBirthday.trim()
+
+            await updateUserMe.mutateAsync({
+              nickname: nextNickname,
+              phoneNumber: getOptionalString(nextPhoneNumber),
+              ...getBirthdayOrAgeGroupPayload(nextAgeGroupOrBirthday),
+            })
 
             setUserName(nextNickname)
             setPhoneNumber(nextPhoneNumber)
@@ -507,6 +536,8 @@ function App() {
             writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
             writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, nextAgeGroupOrBirthday)
           }}
+          isSaving={updateUserMe.isPending}
+          saveError={updateUserMe.error?.message ?? null}
           onBack={() => {
             setScreen('setting')
           }}
@@ -517,7 +548,13 @@ function App() {
           koreanLevel={koreanLevel}
           dailyGoal={dailyGoal}
           koreanGoal={koreanGoal}
-          onSave={(values) => {
+          onSave={async (values) => {
+            await updateUserMe.mutateAsync({
+              motherLanguage: getOptionalString(values.language),
+              dailyGoalMin: getOptionalNumber(values.dailyGoal),
+              learningGoal: getOptionalString(values.koreanGoal),
+            })
+
             setLanguage(values.language)
             setDailyGoal(values.dailyGoal)
             setKoreanGoal(values.koreanGoal)
@@ -525,6 +562,8 @@ function App() {
             writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, values.dailyGoal)
             writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, values.koreanGoal)
           }}
+          isSaving={updateUserMe.isPending}
+          saveError={updateUserMe.error?.message ?? null}
           onBack={() => {
             setScreen('setting')
           }}

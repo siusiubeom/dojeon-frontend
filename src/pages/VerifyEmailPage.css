@@ -19,7 +19,7 @@
 
 .verify-email-message {
   margin: 0;
-  color: #707070;
+  color: var(--dojeon-color-gray-600);
   font-size: 16px;
   font-weight: 400;
   text-align: center;
@@ -31,18 +31,19 @@
 .verify-code-fields {
   margin-top: 72px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
 }
 
 .verify-code-cell {
   position: relative;
   display: grid;
   place-items: center;
-  width: 76px;
-  height: 76px;
+  width: 100%;
+  aspect-ratio: 1;
   margin: 0 auto;
-  background: #fff;
+  background: var(--dojeon-color-surface);
 }
 
 .verify-code-dot {
@@ -51,10 +52,10 @@
   top: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  font-size: 60px;
+  font-size: clamp(34px, 11vw, 48px);
   line-height: 1;
-  color: #bfbfbf;
-  font-family: Arial, sans-serif;
+  color: var(--dojeon-color-gray-300);
+  font-family: var(--dojeon-font-en);
   font-weight: 500;
   z-index: 1;
 }
@@ -64,10 +65,10 @@
   height: 100%;
   position: relative;
   z-index: 2;
-  border: 1px solid #d2d2d2;
+  border: 1px solid var(--dojeon-color-gray-200);
   border-radius: 12px;
-  background: #fff;
-  color: #000;
+  background: var(--dojeon-color-surface);
+  color: var(--dojeon-color-gray-900);
   text-align: center;
   font-size: 28px;
   font-weight: 500;
@@ -85,12 +86,12 @@
 }
 
 .verify-code-input:focus-visible {
-  border-color: #94a3b8;
+  border-color: var(--dojeon-color-primary-border);
 }
 
 .verify-email-timer {
   margin: 50px 0 0;
-  color: #848484;
+  color: var(--dojeon-color-gray-500);
   font-size: 16px;
   font-weight: 400;
   text-align: center;
@@ -105,7 +106,7 @@
 
 .verify-email-resend-title {
   margin: 0;
-  color: #c3c3c3;
+  color: var(--dojeon-color-gray-400);
   font-size: 16px;
   font-weight: 400;
   text-align: center;
@@ -116,7 +117,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: #848484;
+  color: var(--dojeon-color-gray-500);
   font-size: 16px;
   font-weight: 400;
   text-align: center;
@@ -130,14 +131,14 @@
 
 .verify-email-resend-error {
   margin: 8px 0 0;
-  color: #ff5f5f;
+  color: var(--dojeon-color-error);
   font-size: 12px;
   line-height: 1.35;
   text-align: center;
 }
 
 .verify-email-address {
-  color: #1f2933;
+  color: var(--dojeon-color-gray-800);
   font-size: 18px;
   font-weight: 700;
 }

@@ -126,7 +126,7 @@
 
 .practice-tab-label {
   color: var(--dojeon-color-gray-300);
-  font-family: 'Pretendard', 'Noto Sans', system-ui, sans-serif;
+  font-family: var(--dojeon-font-en);
   font-size: 8px;
   font-weight: 400;
   line-height: normal;
