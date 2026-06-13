@@ -141,9 +141,17 @@ function LessonDetailPage({
     return pathId !== null && selectedPathIds.has(pathId)
   })
 
-  const getModuleProgressDisplayValue = (sectionId: number, progressPercent: number) =>
-    completedSectionIds.has(sectionId) ? 100 :
+  const getModuleProgressDisplayValue = (
+    sectionId: number,
+    progressPercent: number,
+    serverCompleted: boolean,
+  ) =>
+    completedSectionIds.has(sectionId) || serverCompleted ? 100 :
     progressPercent >= 100 ? 100 : Math.max(progressPercent, minimumModuleFillPercent)
+  const selectedSection = sections.find((section) => section.sectionId === selectedModuleId)
+  const selectedSectionIsCompleted = selectedSection
+    ? isSectionCompleted(selectedSection.sectionId, selectedSection.isCompleted)
+    : false
 
   const togglePath = (pathId: LessonPathId) => {
     setSelectedPathIds((current) => {
@@ -178,10 +186,10 @@ function LessonDetailPage({
     if (selectedModuleId === null) return
     const section = sections.find((s) => s.sectionId === selectedModuleId)
     if (!section) return
+    if (isSectionCompleted(section.sectionId, section.isCompleted)) return
 
     if (selectedModuleId < 0) {
       setCompletedSectionIds((current) => new Set(current).add(selectedModuleId))
-      setSelectedModuleId(null)
       return
     }
 
@@ -196,7 +204,6 @@ function LessonDetailPage({
         },
       })
       setCompletedSectionIds((current) => new Set(current).add(selectedModuleId))
-      setSelectedModuleId(null)
     } catch {
       // 사용자가 다시 시도할 수 있도록 선택한 모듈 상태를 유지한다.
     }
@@ -436,9 +443,8 @@ function LessonDetailPage({
                     selectedModuleId === section.sectionId || isCompleted
                       ? 'lesson-detail-module-card-selected'
                       : ''
-                  }`}
+                  } ${isCompleted ? 'lesson-detail-module-card-completed' : ''}`}
                   onClick={() => {
-                    if (isCompleted) return
                     setSelectedModuleId((current) =>
                       current === section.sectionId ? null : section.sectionId,
                     )
@@ -452,6 +458,7 @@ function LessonDetailPage({
                         width: `${getModuleProgressDisplayValue(
                           section.sectionId,
                           section.progressPercent,
+                          section.isCompleted,
                         )}%`,
                       }}
                     />
@@ -462,7 +469,7 @@ function LessonDetailPage({
           </div>
 
           <div className="lesson-detail-action-row">
-            {selectedModuleId !== null ? (
+            {selectedModuleId !== null && !selectedSectionIsCompleted ? (
               <div className="lesson-detail-complete-wrap">
                 <span className="lesson-detail-complete-bubble">Mark as complete</span>
                 <button

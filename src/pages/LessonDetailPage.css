@@ -303,6 +303,10 @@
   background: var(--dojeon-color-primary-container);
 }
 
+.lesson-detail-module-card-completed {
+  cursor: pointer;
+}
+
 .lesson-detail-module-title {
   width: 100%;
   flex: 1;
@@ -396,6 +400,13 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+.lesson-detail-complete-button:disabled {
+  border-color: var(--dojeon-color-primary-300);
+  background: var(--dojeon-color-primary-container-soft);
+  color: var(--dojeon-color-primary-300);
+  cursor: default;
 }
 
 .lesson-detail-complete-error {

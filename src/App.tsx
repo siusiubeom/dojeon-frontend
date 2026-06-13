@@ -602,22 +602,12 @@ function App() {
           onBack={() => {
             setScreen(vocabularyLessonBackScreen)
           }}
-          onOpenHome={() => {
-            setScreen('home')
-          }}
-          onOpenClass={() => {
-            setScreen('class')
-          }}
-          onOpenPractice={() => {
-            setScreen('practice')
-          }}
-          onOpenNotebook={() => {
-            setScreen('notebook')
-          }}
-          onOpenProfile={() => {
-            setScreen('profile-main')
-          }}
-          onOpenNextGrammar={() => {
+          onOpenNextGrammar={(nextSectionId) => {
+            if (nextSectionId === null) {
+              setSelectedSectionId(null)
+            } else if (nextSectionId !== undefined) {
+              setSelectedSectionId(nextSectionId)
+            }
             setGrammarPracticeInitialStep('next-grammar')
             setGrammarPracticeBackScreen('lesson-detail')
             setScreen('grammar-practice')
