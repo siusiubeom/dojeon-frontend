@@ -13,6 +13,7 @@ For the current web app, use the matching CSS custom properties in `src/index.cs
 | Token | Hex |
 | --- | --- |
 | Background | `#F8F8FB` |
+| AppBackground | `#F8F8FB` |
 | SplashBackground | `#D2A8E0` |
 | SplashText | `#162F57` |
 | Surface | `#FFFFFF` |
@@ -22,7 +23,7 @@ For the current web app, use the matching CSS custom properties in `src/index.cs
 | Token | Hex |
 | --- | --- |
 | Primary50 | `#F7F0F9` |
-| Primary100 | `#E7D7F0` |
+| Primary100 | `#EEDDF5` |
 | Primary200 | `#D3B7E4` |
 | Primary300 | `#BF96D8` |
 | Primary400 | `#AD77CD` |
@@ -38,6 +39,7 @@ For the current web app, use the matching CSS custom properties in `src/index.cs
 | --- | --- | --- |
 | PrimaryAction | `#872FB8` | Main CTA buttons, active progress areas, emphasized actions |
 | PrimaryContainer | `#ECE5F4` | Selected tabs, choice cards, input areas, light emphasis backgrounds |
+| PrimaryContainerSoft | `#F4EAF8` | Lesson path cards and very light primary surfaces |
 | PrimaryBorder | `#DFC9EC` | Choice card borders and light primary outlines |
 | PrimaryFocusRing | `rgba(223, 201, 236, 0.35)` | Focus outlines for inputs and controls |
 | TabInactive | `#E1E2EE` | Unselected goal tabs |
@@ -82,6 +84,12 @@ For the current web app, use the matching CSS custom properties in `src/index.cs
 | Error | `#D3362B` |
 | ErrorSurface | `#FBE8E7` |
 
+### Overlay
+
+| Token | Value | Usage |
+| --- | --- | --- |
+| Dim | `rgba(0, 0, 0, 0.45)` | Dropdown and modal dim overlays |
+
 ## Android Compose Reference
 
 When an Android Compose module is present, `Color.kt` should expose these tokens through `AppColors`:
@@ -89,12 +97,13 @@ When an Android Compose module is present, `Color.kt` should expose these tokens
 ```kotlin
 object AppColors {
     val Background = Color(0xFFF8F8FB)
+    val AppBackground = Color(0xFFF8F8FB)
     val SplashBackground = Color(0xFFD2A8E0)
     val SplashText = Color(0xFF162F57)
     val Surface = Color(0xFFFFFFFF)
 
     val Primary50 = Color(0xFFF7F0F9)
-    val Primary100 = Color(0xFFE7D7F0)
+    val Primary100 = Color(0xFFEEDDF5)
     val Primary200 = Color(0xFFD3B7E4)
     val Primary300 = Color(0xFFBF96D8)
     val Primary400 = Color(0xFFAD77CD)
@@ -105,6 +114,7 @@ object AppColors {
     val Primary900 = Color(0xFF361F56)
     val PrimaryAction = Color(0xFF872FB8)
     val PrimaryContainer = Color(0xFFECE5F4)
+    val PrimaryContainerSoft = Color(0xFFF4EAF8)
     val PrimaryBorder = Color(0xFFDFC9EC)
     val TabInactive = Color(0xFFE1E2EE)
 
@@ -135,5 +145,6 @@ object AppColors {
     val ErrorLight = Color(0xFFFBE8E7)
     val Error = Color(0xFFD3362B)
     val ErrorSurface = ErrorLight
+    val Dim = Color(0x73000000)
 }
 ```

@@ -428,11 +428,11 @@ function App() {
           onOpenPractice={() => {
             setScreen('practice')
           }}
+          onOpenNotebook={() => {
+            setScreen('notebook')
+          }}
           onOpenProfile={() => {
             setScreen('profile-main')
-          }}
-          onOpenCurrentLesson={(sectionId, sectionType) => {
-            handleOpenSection(sectionId, sectionType, 'class')
           }}
           onOpenLesson={(_courseId, lessonId) => {
             setSelectedLessonNumericId(lessonId)
