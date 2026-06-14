@@ -226,13 +226,28 @@ export async function updateUserMe(payload: PatchUserPayload): Promise<UpdateUse
         ...mockUserMe.profile,
         nickname: payload.nickname ?? mockUserMe.profile.nickname,
         username: payload.username ?? mockUserMe.profile.username,
-        phoneNumber: payload.phoneNumber ?? mockUserMe.profile.phoneNumber,
-        birthday: payload.birthday ?? mockUserMe.profile.birthday,
-        motherLanguage: payload.motherLanguage ?? mockUserMe.profile.motherLanguage,
-        proficiencyLevel: payload.proficiencyLevel ?? mockUserMe.profile.proficiencyLevel,
-        ageGroup: payload.ageGroup ?? mockUserMe.profile.ageGroup,
-        dailyGoalMin: payload.dailyGoalMin ?? mockUserMe.profile.dailyGoalMin,
-        learningGoal: payload.learningGoal ?? mockUserMe.profile.learningGoal,
+        phoneNumber:
+          'phoneNumber' in payload
+            ? payload.phoneNumber ?? mockUserMe.profile.phoneNumber
+            : mockUserMe.profile.phoneNumber,
+        birthday:
+          'birthday' in payload
+            ? payload.birthday ?? mockUserMe.profile.birthday
+            : mockUserMe.profile.birthday,
+        motherLanguage:
+          'motherLanguage' in payload
+            ? payload.motherLanguage ?? mockUserMe.profile.motherLanguage
+            : mockUserMe.profile.motherLanguage,
+        proficiencyLevel:
+          'proficiencyLevel' in payload
+            ? payload.proficiencyLevel ?? mockUserMe.profile.proficiencyLevel
+            : mockUserMe.profile.proficiencyLevel,
+        ageGroup:
+          'ageGroup' in payload ? payload.ageGroup ?? mockUserMe.profile.ageGroup : mockUserMe.profile.ageGroup,
+        dailyGoalMin:
+          payload.dailyGoalMin ?? mockUserMe.profile.dailyGoalMin,
+        learningGoal:
+          'learningGoal' in payload ? payload.learningGoal ?? mockUserMe.profile.learningGoal : mockUserMe.profile.learningGoal,
         isPushNotificationOn:
           payload.isPushNotificationOn ?? mockUserMe.profile.isPushNotificationOn,
         isMarketingAgreed: payload.isMarketingAgreed ?? mockUserMe.profile.isMarketingAgreed,

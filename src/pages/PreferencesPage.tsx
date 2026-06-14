@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './PreferencesPage.css'
 
 interface PreferencesPageProps {
@@ -10,7 +10,7 @@ interface PreferencesPageProps {
     language: string
     dailyGoal: string
     koreanGoal: string
-  }) => void
+  }) => void | Promise<void>
   onBack: () => void
 }
 
@@ -22,7 +22,14 @@ function PreferencesPage({
   onSave,
   onBack,
 }: PreferencesPageProps) {
-  const koreanGoalOptions = ['Travel', 'Hobby', 'Study Abroad', 'Career']
+  const koreanGoalOptions = [
+    'Fun',
+    'Tourism',
+    'Understanding Korean content',
+    'Study in Korea',
+    'Work in Korea',
+    'Others',
+  ]
   const [draftLanguage, setDraftLanguage] = useState(language)
   const [draftDailyGoal, setDraftDailyGoal] = useState(dailyGoal)
   const [draftKoreanGoal, setDraftKoreanGoal] = useState(koreanGoal)
@@ -31,6 +38,19 @@ function PreferencesPage({
     dailyGoal: false,
   })
   const [isKoreanGoalSheetOpen, setIsKoreanGoalSheetOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const resetDraftsToProps = () => {
+    setDraftLanguage(language)
+    setDraftDailyGoal(dailyGoal)
+    setDraftKoreanGoal(koreanGoal)
+  }
+
+  useEffect(() => {
+    setDraftLanguage(language)
+    setDraftDailyGoal(dailyGoal)
+    setDraftKoreanGoal(koreanGoal)
+  }, [language, dailyGoal, koreanGoal])
 
   const hasPendingChanges =
     draftLanguage !== language ||
@@ -126,6 +146,7 @@ function PreferencesPage({
                   <button
                     type="button"
                     className="preferences-edit-button"
+                    disabled={isSaving}
                     onClick={item.onEdit}
                   >
                     EDIT
@@ -140,19 +161,37 @@ function PreferencesPage({
           <button
             type="button"
             className="preferences-save-button"
-            onClick={() => {
-              onSave({
-                language: draftLanguage,
-                dailyGoal: draftDailyGoal,
-                koreanGoal: draftKoreanGoal,
-              })
+            disabled={isSaving}
+            onClick={async () => {
+              if (isSaving) {
+                return
+              }
+
+              setIsSaving(true)
+              try {
+                await onSave({
+                  language: draftLanguage,
+                  dailyGoal: draftDailyGoal,
+                  koreanGoal: draftKoreanGoal,
+                })
+              } catch {
+                resetDraftsToProps()
+                setEditing({
+                  language: false,
+                  dailyGoal: false,
+                })
+                return
+              } finally {
+                setIsSaving(false)
+              }
+
               setEditing({
                 language: false,
                 dailyGoal: false,
               })
             }}
           >
-            Save
+            {isSaving ? 'Saving...' : 'Save'}
           </button>
         ) : null}
       </section>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './AccountInfoPage.css'
 
 interface AccountInfoPageProps {
@@ -41,6 +41,22 @@ function AccountInfoPage({
     phoneNumber: false,
     ageGroupOrBirthday: false,
   })
+  const resetDraftsToProps = () => {
+    setDraftNickname(nickname)
+    setDraftPhoneNumber(phoneNumber)
+    setDraftAgeGroupOrBirthday(ageGroupOrBirthday)
+    setNewPassword('')
+    setPasswordMessage('')
+  }
+
+  useEffect(() => {
+    setDraftNickname(nickname)
+    setDraftPhoneNumber(phoneNumber)
+    setDraftAgeGroupOrBirthday(ageGroupOrBirthday)
+    setNewPassword('')
+    setPasswordMessage('')
+  }, [nickname, phoneNumber, ageGroupOrBirthday])
+
   const isPasswordChangeReady = newPassword.trim().length > 0
   const passwordRules = [
     {
@@ -264,6 +280,13 @@ function AccountInfoPage({
                     : undefined,
                 })
               } catch {
+                resetDraftsToProps()
+                setEditing({
+                  nickname: false,
+                  password: false,
+                  phoneNumber: false,
+                  ageGroupOrBirthday: false,
+                })
                 return
               } finally {
                 setIsSaving(false)

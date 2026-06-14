@@ -142,9 +142,46 @@ const parseDailyGoalMin = (value: string) => {
   return minutes ? Number(minutes) : undefined
 }
 
+const validDailyGoalMin = new Set([5, 15, 30, 60])
+
 const validAgeGroups = new Set(['0-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65-'])
 
 const isBirthdayValue = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
+
+const normalizeBirthdayValue = (value?: string | null) => {
+  if (!value) {
+    return ''
+  }
+
+  const [date] = value.trim().match(/^\d{4}-\d{2}-\d{2}/) ?? []
+  return date ?? ''
+}
+
+const formatAgeGroupOrBirthday = (ageGroup?: string | null, birthday?: string | null) => {
+  return [ageGroup?.trim(), normalizeBirthdayValue(birthday)].filter(Boolean).join(' ')
+}
+
+const parseAgeGroupOrBirthdayInput = (value: string) => {
+  const tokens = value.trim().split(/\s+/).filter(Boolean)
+  let ageGroup = ''
+  let birthday = ''
+
+  for (const token of tokens) {
+    if (validAgeGroups.has(token) && !ageGroup) {
+      ageGroup = token
+      continue
+    }
+
+    if (isBirthdayValue(token) && !birthday) {
+      birthday = token
+      continue
+    }
+
+    return null
+  }
+
+  return { ageGroup, birthday }
+}
 
 function App() {
   const updateUserMeMutation = useUpdateUserMe()
@@ -158,6 +195,7 @@ function App() {
   const [authSession, setAuthSession] = useState<AuthSession | null>(getStoredAuthSession)
   const [pendingSignup, setPendingSignup] = useState<SignupSubmission | null>(null)
   const [userName, setUserName] = useState(getOnboardingUsername)
+  const [accountUsername, setAccountUsername] = useState('')
   const [ageRange, setAgeRange] = useState(getStoredAgeRange)
   const [phoneNumber, setPhoneNumber] = useState(getStoredPhoneNumber)
   const [language, setLanguage] = useState(getStoredLanguage)
@@ -182,10 +220,11 @@ function App() {
   const [settingBackScreen, setSettingBackScreen] = useState<'home' | 'profile-main'>('home')
 
   const currentEmail = authSession?.email ?? pendingSignup?.email ?? ''
-  const currentUsername = currentEmail ? currentEmail.split('@')[0] : userName
+  const currentUsername = accountUsername || (currentEmail ? currentEmail.split('@')[0] : userName)
 
   const resetLocalProfileState = useCallback(() => {
     setUserName('Jinri')
+    setAccountUsername('')
     setAgeRange('')
     setPhoneNumber('')
     setLanguage('')
@@ -201,8 +240,9 @@ function App() {
     }
 
     const nextNickname = userMe.profile.nickname?.trim() || 'Jinri'
+    const nextUsername = userMe.profile.username?.trim() || ''
     const nextPhoneNumber = userMe.profile.phoneNumber ?? ''
-    const nextAgeGroup = userMe.profile.ageGroup ?? ''
+    const nextAgeGroup = formatAgeGroupOrBirthday(userMe.profile.ageGroup, userMe.profile.birthday)
     const nextLanguage = userMe.profile.motherLanguage ?? ''
     const nextKoreanLevel = userMe.profile.proficiencyLevel ?? ''
     const nextDailyGoal =
@@ -210,6 +250,7 @@ function App() {
     const nextKoreanGoal = userMe.profile.learningGoal ?? ''
 
     setUserName(nextNickname)
+    setAccountUsername(nextUsername)
     setPhoneNumber(nextPhoneNumber)
     setAgeRange(nextAgeGroup)
     setLanguage(nextLanguage)
@@ -545,18 +586,49 @@ function App() {
             const nextNickname = values.nickname.trim() || 'Jinri'
             const nextPhoneNumber = values.phoneNumber.trim()
             const nextAgeGroupOrBirthday = values.ageGroupOrBirthday.trim()
+            const parsedAgeGroupOrBirthday = parseAgeGroupOrBirthdayInput(nextAgeGroupOrBirthday)
+            const currentAgeGroupOrBirthday = parseAgeGroupOrBirthdayInput(ageRange)
+            const currentBirthday = currentAgeGroupOrBirthday?.birthday || ''
+
+            if (!parsedAgeGroupOrBirthday) {
+              window.alert('Enter a valid age group and/or birthday in YYYY-MM-DD format.')
+              throw new Error('Invalid age group or birthday')
+            }
+
+            const nextAgeGroup =
+              parsedAgeGroupOrBirthday.ageGroup || currentAgeGroupOrBirthday?.ageGroup || ''
+
+            if (!nextAgeGroup) {
+              window.alert('Enter an age group.')
+              throw new Error('Age group is required')
+            }
+
+            if (!nextPhoneNumber && phoneNumber) {
+              window.alert('Phone number cannot be cleared.')
+              throw new Error('Phone number cannot be cleared')
+            }
+
+            if (!parsedAgeGroupOrBirthday.birthday && currentBirthday) {
+              window.alert('Birthday cannot be cleared.')
+              throw new Error('Birthday cannot be cleared')
+            }
+
+            const normalizedAgeGroupOrBirthday = formatAgeGroupOrBirthday(
+              nextAgeGroup,
+              parsedAgeGroupOrBirthday.birthday,
+            )
+
             const payload: PatchUserPayload = {
               nickname: nextNickname,
+              ageGroup: nextAgeGroup,
             }
 
             if (nextPhoneNumber) {
               payload.phoneNumber = nextPhoneNumber
             }
 
-            if (validAgeGroups.has(nextAgeGroupOrBirthday)) {
-              payload.ageGroup = nextAgeGroupOrBirthday
-            } else if (isBirthdayValue(nextAgeGroupOrBirthday)) {
-              payload.birthday = nextAgeGroupOrBirthday
+            if (parsedAgeGroupOrBirthday.birthday) {
+              payload.birthday = parsedAgeGroupOrBirthday.birthday
             }
 
             try {
@@ -569,10 +641,10 @@ function App() {
 
             setUserName(nextNickname)
             setPhoneNumber(nextPhoneNumber)
-            setAgeRange(nextAgeGroupOrBirthday)
+            setAgeRange(normalizedAgeGroupOrBirthday)
             saveOnboardingUsername(nextNickname)
             writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
-            writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, nextAgeGroupOrBirthday)
+            writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, normalizedAgeGroupOrBirthday)
 
             if (!values.passwordChange) {
               window.alert('Your account information has been saved.')
@@ -601,29 +673,35 @@ function App() {
           koreanLevel={koreanLevel}
           dailyGoal={dailyGoal}
           koreanGoal={koreanGoal}
-          onSave={(values) => {
-            updateUserMeMutation.mutate(
-              {
+          onSave={async (values) => {
+            const nextDailyGoalMin = parseDailyGoalMin(values.dailyGoal)
+
+            if (!nextDailyGoalMin || !validDailyGoalMin.has(nextDailyGoalMin)) {
+              window.alert('Choose a daily goal of 5, 15, 30, or 60 minutes.')
+              throw new Error('Invalid daily goal')
+            }
+
+            const nextDailyGoal = `${nextDailyGoalMin} min`
+
+            try {
+              await updateUserMeMutation.mutateAsync({
                 motherLanguage: values.language,
-                dailyGoalMin: parseDailyGoalMin(values.dailyGoal),
+                dailyGoalMin: nextDailyGoalMin,
                 learningGoal: values.koreanGoal,
-              },
-              {
-                onSuccess: () => {
-                  setLanguage(values.language)
-                  setDailyGoal(values.dailyGoal)
-                  setKoreanGoal(values.koreanGoal)
-                  writeLocalStorageItem(ACCOUNT_LANGUAGE_KEY, values.language)
-                  writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, values.dailyGoal)
-                  writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, values.koreanGoal)
-                  window.alert('Your preferences have been saved.')
-                },
-                onError: (error) => {
-                  console.error('Failed to update preferences', error)
-                  window.alert('Could not save your preferences. Please try again.')
-                },
-              },
-            )
+              })
+            } catch (error) {
+              console.error('Failed to update preferences', error)
+              window.alert('Could not save your preferences. Please try again.')
+              throw error
+            }
+
+            setLanguage(values.language)
+            setDailyGoal(nextDailyGoal)
+            setKoreanGoal(values.koreanGoal)
+            writeLocalStorageItem(ACCOUNT_LANGUAGE_KEY, values.language)
+            writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, nextDailyGoal)
+            writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, values.koreanGoal)
+            window.alert('Your preferences have been saved.')
           }}
           onBack={() => {
             setScreen('setting')

@@ -41,10 +41,10 @@ const onboardingSteps: OnboardingStep[] = [
     progressStyle: 'default',
     progressStep: 2,
     choices: [
-      { id: 'hebrew', label: 'Hebrew' },
-      { id: 'english', label: 'English' },
+      { id: 'Hebrew', label: 'Hebrew' },
+      { id: 'English', label: 'English' },
     ],
-    validator: (value) => value === 'hebrew' || value === 'english',
+    validator: (value) => value === 'Hebrew' || value === 'English',
   },
   {
     id: 'koreanLevel',
@@ -55,16 +55,16 @@ const onboardingSteps: OnboardingStep[] = [
     progressStyle: 'compact',
     progressStep: 3,
     choices: [
-      { id: 'nothing', label: 'Nothing' },
-      { id: 'only-hangul', label: 'Only hangul' },
-      { id: 'intermediate', label: 'Intermediate' },
-      { id: 'advanced', label: 'Advanced' },
+      { id: 'Nothing', label: 'Nothing' },
+      { id: 'Only hangul', label: 'Only hangul' },
+      { id: 'Intermediate', label: 'Intermediate' },
+      { id: 'Advanced', label: 'Advanced' },
     ],
     validator: (value) =>
-      value === 'nothing' ||
-      value === 'only-hangul' ||
-      value === 'intermediate' ||
-      value === 'advanced',
+      value === 'Nothing' ||
+      value === 'Only hangul' ||
+      value === 'Intermediate' ||
+      value === 'Advanced',
   },
   {
     id: 'ageRange',
@@ -81,7 +81,7 @@ const onboardingSteps: OnboardingStep[] = [
       { id: '35-44', label: '35-44' },
       { id: '45-54', label: '45-54' },
       { id: '55-64', label: '55-64' },
-      { id: '65-plus', label: '65 -' },
+      { id: '65-', label: '65 -' },
     ],
     validator: (value) =>
       value === '0-17' ||
@@ -90,7 +90,7 @@ const onboardingSteps: OnboardingStep[] = [
       value === '35-44' ||
       value === '45-54' ||
       value === '55-64' ||
-      value === '65-plus',
+      value === '65-',
   },
   {
     id: 'dailyStudyTime',
@@ -121,20 +121,20 @@ const onboardingSteps: OnboardingStep[] = [
     progressStyle: 'goal',
     progressStep: 6,
     choices: [
-      { id: 'fun', label: 'Fun' },
-      { id: 'tourism', label: 'Tourism' },
-      { id: 'understanding-content', label: 'Understanding\nKorean content' },
-      { id: 'study-in-korea', label: 'Study in Korea' },
-      { id: 'work-in-korea', label: 'Work in Korea' },
-      { id: 'others', label: 'Others' },
+      { id: 'Fun', label: 'Fun' },
+      { id: 'Tourism', label: 'Tourism' },
+      { id: 'Understanding Korean content', label: 'Understanding\nKorean content' },
+      { id: 'Study in Korea', label: 'Study in Korea' },
+      { id: 'Work in Korea', label: 'Work in Korea' },
+      { id: 'Others', label: 'Others' },
     ],
     validator: (value) =>
-      value === 'fun' ||
-      value === 'tourism' ||
-      value === 'understanding-content' ||
-      value === 'study-in-korea' ||
-      value === 'work-in-korea' ||
-      value === 'others',
+      value === 'Fun' ||
+      value === 'Tourism' ||
+      value === 'Understanding Korean content' ||
+      value === 'Study in Korea' ||
+      value === 'Work in Korea' ||
+      value === 'Others',
   },
   {
     id: 'complete',
