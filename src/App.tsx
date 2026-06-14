@@ -148,6 +148,8 @@ const validAgeGroups = new Set(['0-17', '18-24', '25-34', '35-44', '45-54', '55-
 
 const isBirthdayValue = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
 
+const normalizeAgeGroupToken = (token: string) => (token === '65-plus' ? '65-' : token)
+
 const normalizeBirthdayValue = (value?: string | null) => {
   if (!value) {
     return ''
@@ -167,8 +169,10 @@ const parseAgeGroupOrBirthdayInput = (value: string) => {
   let birthday = ''
 
   for (const token of tokens) {
-    if (validAgeGroups.has(token) && !ageGroup) {
-      ageGroup = token
+    const normalizedToken = normalizeAgeGroupToken(token)
+
+    if (validAgeGroups.has(normalizedToken) && !ageGroup) {
+      ageGroup = normalizedToken
       continue
     }
 
