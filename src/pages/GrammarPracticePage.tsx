@@ -141,6 +141,7 @@ function GrammarPracticePage({
   const [reviewSaveScrap, setReviewSaveScrap] = useState<boolean | null>(null)
 
   const readingDragStartXRef = useRef<number | null>(null)
+  const readingDragOffsetRef = useRef(0)
   const readingDidDragRef = useRef(false)
   const listeningProgressRef = useRef<HTMLDivElement | null>(null)
   const nextGrammarLessonRef = useRef<HTMLElement | null>(null)
@@ -211,6 +212,7 @@ function GrammarPracticePage({
       prompt: '두 사람은 며칠에 만났어요?',
       type: 'choice',
       options: ['월요일', '수요일', '토요일', '일요일'],
+      correctAnswer: '토요일',
     },
     { title: 'Question 2', prompt: '마리 씨는 왜 오늘 영화를 못 봐요?', type: 'blank' },
   ]
@@ -1233,6 +1235,7 @@ function GrammarPracticePage({
               className="grammar-practice-reading-question-viewport"
               onPointerDown={(e) => {
                 readingDragStartXRef.current = e.clientX
+                readingDragOffsetRef.current = 0
                 readingDidDragRef.current = false
                 setIsReadingDragging(true)
               }}
@@ -1240,17 +1243,20 @@ function GrammarPracticePage({
                 if (readingDragStartXRef.current === null) return
                 const deltaX = e.clientX - readingDragStartXRef.current
                 if (Math.abs(deltaX) > 8) readingDidDragRef.current = true
+                readingDragOffsetRef.current = deltaX
                 setReadingDragOffset(deltaX)
               }}
               onPointerUp={() => {
                 if (readingDragStartXRef.current === null) return
-                if (readingDragOffset <= -40 && readingQuestionIndex < readingQuestions.length - 1) {
+                const finalDragOffset = readingDragOffsetRef.current
+                if (finalDragOffset <= -32 && readingQuestionIndex < readingQuestions.length - 1) {
                   setReadingQuestionIndex((prev) => prev + 1)
                 }
-                if (readingDragOffset >= 40 && readingQuestionIndex > 0) {
+                if (finalDragOffset >= 32 && readingQuestionIndex > 0) {
                   setReadingQuestionIndex((prev) => prev - 1)
                 }
                 readingDragStartXRef.current = null
+                readingDragOffsetRef.current = 0
                 setReadingDragOffset(0)
                 setIsReadingDragging(false)
                 window.setTimeout(() => { readingDidDragRef.current = false }, 0)
@@ -1258,12 +1264,14 @@ function GrammarPracticePage({
               onPointerLeave={() => {
                 if (readingDragStartXRef.current === null) return
                 readingDragStartXRef.current = null
+                readingDragOffsetRef.current = 0
                 setReadingDragOffset(0)
                 setIsReadingDragging(false)
                 window.setTimeout(() => { readingDidDragRef.current = false }, 0)
               }}
               onPointerCancel={() => {
                 readingDragStartXRef.current = null
+                readingDragOffsetRef.current = 0
                 setReadingDragOffset(0)
                 setIsReadingDragging(false)
                 readingDidDragRef.current = false
@@ -1273,65 +1281,114 @@ function GrammarPracticePage({
                 className={`grammar-practice-reading-question-track ${isReadingDragging ? 'is-dragging' : ''}`}
                 style={{ transform: `translateX(${readingTrackTranslate}px)` }}
               >
-                {readingQuestions.map((question, index) => (
-                  <section key={question.title} className="grammar-practice-reading-question-card">
-                    <p className="grammar-practice-reading-question-title">{question.title}</p>
-                    <p className="grammar-practice-reading-question-prompt">{question.prompt}</p>
-                    {question.type === 'choice' && question.options ? (
-                      <div className="grammar-practice-reading-options">
-                        {question.options.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            className={`grammar-practice-reading-option-button ${
-                              readingAnswers[index] === option ? 'grammar-practice-reading-option-button-selected' : ''
-                            }`}
-                            onClick={() => {
-                              if (readingDidDragRef.current) return
-                              setReadingAnswers((prev) => ({ ...prev, [index]: option }))
-                              if (index < readingQuestions.length - 1) {
-                                setReadingQuestionIndex(index + 1)
-                              }
-                            }}
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="grammar-practice-reading-blank-group">
-                        <p className="grammar-practice-reading-blank-line">
-                          오늘은
-                          <input
-                            type="text"
-                            className="grammar-practice-reading-inline-blank"
-                            value={readingBlankAnswers.meeting}
-                            onPointerDown={(event) => event.stopPropagation()}
-                            onPointerUp={(event) => event.stopPropagation()}
-                            onChange={(event) =>
-                              setReadingBlankAnswers((prev) => ({ ...prev, meeting: event.target.value }))
-                            }
+                {readingQuestions.map((question, index) => {
+                  const selectedReadingAnswer = readingAnswers[index]
+                  const hasReadingChoiceResult = question.type === 'choice' && Boolean(selectedReadingAnswer)
+                  const isReadingChoiceCorrect = selectedReadingAnswer === question.correctAnswer
+
+                  return (
+                    <section key={question.title} className="grammar-practice-reading-question-slide">
+                      {hasReadingChoiceResult ? (
+                        <span
+                          className={`grammar-practice-reading-result-art ${
+                            isReadingChoiceCorrect
+                              ? 'grammar-practice-reading-result-art-correct'
+                              : 'grammar-practice-reading-result-art-wrong'
+                          }`}
+                          aria-hidden="true"
+                        >
+                          <span className="grammar-practice-reading-result-mark" />
+                          <img
+                            src={isReadingChoiceCorrect ? choiceCorrectImage : choiceWrongImage}
+                            alt=""
                           />
-                          이/가 있어요.
-                        </p>
-                        <p className="grammar-practice-reading-blank-line">
-                          그래서
-                          <input
-                            type="text"
-                            className="grammar-practice-reading-inline-blank"
-                            value={readingBlankAnswers.reason}
-                            onPointerDown={(event) => event.stopPropagation()}
-                            onPointerUp={(event) => event.stopPropagation()}
-                            onChange={(event) =>
-                              setReadingBlankAnswers((prev) => ({ ...prev, reason: event.target.value }))
-                            }
-                          />
-                          .
-                        </p>
+                        </span>
+                      ) : null}
+                      <div
+                        className={`grammar-practice-reading-question-card ${
+                          question.type === 'blank' ? 'grammar-practice-reading-question-card-blank' : ''
+                        }`}
+                      >
+                        <p className="grammar-practice-reading-question-title">{question.title}</p>
+                        <p className="grammar-practice-reading-question-prompt">{question.prompt}</p>
+                        {question.type === 'choice' && question.options ? (
+                          <div className="grammar-practice-reading-options">
+                            {question.options.map((option) => {
+                              const isSelectedOption = selectedReadingAnswer === option
+                              const isAnsweredChoice = Boolean(selectedReadingAnswer)
+                              const isCorrectOption = question.correctAnswer === option
+                              const isCorrectSelectedOption = isSelectedOption && isAnsweredChoice && isCorrectOption
+                              const isWrongSelectedOption = isSelectedOption && isAnsweredChoice && !isCorrectOption
+
+                              return (
+                                <button
+                                  key={option}
+                                  type="button"
+                                  className={`grammar-practice-reading-option-button ${
+                                    isSelectedOption ? 'grammar-practice-reading-option-button-selected' : ''
+                                  } ${
+                                    isCorrectSelectedOption
+                                      ? 'grammar-practice-reading-option-button-correct'
+                                      : ''
+                                  } ${
+                                    isWrongSelectedOption
+                                      ? 'grammar-practice-reading-option-button-wrong'
+                                      : ''
+                                  }`}
+                                  onClick={() => {
+                                    if (readingDidDragRef.current) return
+                                    setReadingAnswers((prev) => ({ ...prev, [index]: option }))
+                                  }}
+                                >
+                                  {option}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <div className="grammar-practice-reading-blank-group">
+                            <p className="grammar-practice-reading-blank-line">
+                              오늘은
+                              <input
+                                type="text"
+                                className={`grammar-practice-reading-inline-blank ${
+                                  readingBlankAnswers.meeting.trim() === '회의'
+                                    ? 'grammar-practice-reading-inline-blank-correct'
+                                    : ''
+                                }`}
+                                value={readingBlankAnswers.meeting}
+                                onPointerDown={(event) => event.stopPropagation()}
+                                onPointerUp={(event) => event.stopPropagation()}
+                                onChange={(event) =>
+                                  setReadingBlankAnswers((prev) => ({ ...prev, meeting: event.target.value }))
+                                }
+                              />
+                              이/가 있어요.
+                            </p>
+                            <p className="grammar-practice-reading-blank-line">
+                              그래서
+                              <input
+                                type="text"
+                                className={`grammar-practice-reading-inline-blank ${
+                                  readingBlankAnswers.reason.trim() === '바빠요'
+                                    ? 'grammar-practice-reading-inline-blank-correct'
+                                    : ''
+                                }`}
+                                value={readingBlankAnswers.reason}
+                                onPointerDown={(event) => event.stopPropagation()}
+                                onPointerUp={(event) => event.stopPropagation()}
+                                onChange={(event) =>
+                                  setReadingBlankAnswers((prev) => ({ ...prev, reason: event.target.value }))
+                                }
+                              />
+                              .
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </section>
-                ))}
+                    </section>
+                  )
+                })}
               </div>
             </div>
             <div className="grammar-practice-reading-dots" aria-label="reading question progress">
