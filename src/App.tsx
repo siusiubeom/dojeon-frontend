@@ -192,7 +192,9 @@ const devPreviewScreens = new Set<Screen>([
 
 const devPreviewPracticeSteps = new Set<PracticeStep>([
   'choice',
+  'fill-intro',
   'fill',
+  'make-intro',
   'make',
   'review',
   'reading',

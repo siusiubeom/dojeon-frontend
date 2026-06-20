@@ -83,27 +83,290 @@
   line-height: 1.2;
 }
 
-.grammar-practice-review-screen {
-  flex: 1;
-  margin-top: 31px;
+.grammar-practice-fill-intro-page {
+  min-height: 100svh;
+  width: min(390px, 100%);
+  margin: 0 auto;
+  background: var(--dojeon-color-background);
+  display: flex;
+  justify-content: center;
+}
+
+.grammar-practice-fill-intro-content {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  padding: 50px 24px calc(24px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 96px minmax(0, 1fr) 48px;
+  align-items: center;
+  justify-items: center;
+}
+
+.grammar-practice-fill-intro-back {
+  position: absolute;
+  left: 8px;
+  top: 50px;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dojeon-color-gray-800);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.grammar-practice-fill-intro-back-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.grammar-practice-fill-intro-center {
+  grid-row: 2;
+  width: 100%;
+  align-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  transform: translateY(-18px);
+}
+
+.grammar-practice-fill-intro-copy {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  color: var(--dojeon-color-primary-900);
+  text-align: center;
+}
+
+.grammar-practice-fill-intro-title {
+  margin: 0;
+  color: var(--dojeon-color-primary-action);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.grammar-practice-fill-intro-subtitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.grammar-practice-fill-intro-character {
+  width: 116px;
+  height: 140px;
+  margin-top: 29px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.grammar-practice-fill-intro-start {
+  grid-row: 3;
+  width: 100%;
+  height: 48px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.grammar-practice-make-intro-page {
+  min-height: 100svh;
+  width: min(390px, 100%);
+  margin: 0 auto;
+  background: var(--dojeon-color-background);
+  display: flex;
+  justify-content: center;
+}
+
+.grammar-practice-make-intro-content {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  padding: 50px 24px calc(24px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 96px minmax(0, 1fr) 48px;
+  align-items: center;
+  justify-items: center;
+}
+
+.grammar-practice-make-intro-back {
+  position: absolute;
+  left: 8px;
+  top: 50px;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dojeon-color-gray-800);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.grammar-practice-make-intro-back-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.grammar-practice-make-intro-center {
+  grid-row: 2;
+  width: 100%;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-18px);
+}
+
+.grammar-practice-make-intro-copy {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  color: var(--dojeon-color-primary-900);
+  text-align: center;
+}
+
+.grammar-practice-make-intro-title {
+  margin: 0;
+  color: var(--dojeon-color-primary-action);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.grammar-practice-make-intro-subtitle {
+  width: min(210px, 100%);
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.grammar-practice-make-intro-character {
+  width: 116px;
+  height: 140px;
+  margin-top: 29px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.grammar-practice-make-intro-start {
+  grid-row: 3;
+  width: 100%;
+  height: 48px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.grammar-practice-review-screen {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 0 0 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.grammar-practice-review-main {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 16px 0 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.grammar-practice-content-review .grammar-practice-title {
+  display: none;
+}
+
+.grammar-practice-content-review .grammar-practice-header {
+  min-height: 56px;
+  justify-content: flex-start;
+}
+
+.grammar-practice-content-review .grammar-practice-close {
+  left: -1px;
+}
+
+.grammar-practice-review-hero {
+  width: 100%;
+  margin-bottom: 38px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  text-align: center;
+}
+
+.grammar-practice-review-hero-title {
+  margin: 0;
+  color: var(--dojeon-color-primary-action);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.grammar-practice-review-hero-subtitle {
+  margin: 0;
+  color: var(--dojeon-color-primary-900);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .grammar-practice-review-section {
-  width: min(350px, 100%);
+  width: min(360px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .grammar-practice-review-section-complete {
-  margin-top: 34px;
+  margin-top: 40px;
 }
 
 .grammar-practice-review-section-notebook {
-  margin-top: 27px;
+  margin-top: 40px;
 }
 
 .grammar-practice-review-question,
@@ -115,51 +378,51 @@
 }
 
 .grammar-practice-review-question {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .grammar-practice-review-subtitle {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .grammar-practice-review-choice-row {
-  margin-top: 18px;
+  margin-top: 20px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 52px;
-}
-
-.grammar-practice-review-choice-row-binary {
-  gap: 52px;
+  gap: 24px;
 }
 
 .grammar-practice-review-choice-button {
   position: relative;
-  width: 62px;
-  height: 62px;
-  border: 0;
+  width: 66px;
+  height: 66px;
+  border: 1px solid var(--dojeon-color-gray-200);
+  border-radius: 8px;
   background: var(--dojeon-color-gray-200);
   padding: 0;
+  overflow: hidden;
   cursor: pointer;
 }
 
 .grammar-practice-review-choice-button.is-selected {
-  background: var(--dojeon-color-primary-action);
+  border-color: var(--dojeon-color-primary-300);
+  background: var(--dojeon-color-primary-50);
 }
 
-.grammar-practice-review-choice-button.is-selected::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 20px;
-  height: 11px;
-  border-left: 3px solid var(--dojeon-color-surface);
-  border-bottom: 3px solid var(--dojeon-color-surface);
-  transform: translate(-50%, -60%) rotate(-45deg);
+.grammar-practice-review-choice-image {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: grayscale(1);
+  opacity: 0.42;
+}
+
+.grammar-practice-review-choice-button.is-selected .grammar-practice-review-choice-image {
+  filter: none;
+  opacity: 1;
 }
 
 .grammar-practice-review-choice-button:disabled {
@@ -168,47 +431,121 @@
 }
 
 .grammar-practice-review-label-row {
-  margin-top: 4px;
+  margin-top: 7px;
   display: grid;
   justify-content: center;
-  color: var(--dojeon-color-gray-900);
-  font-size: 16px;
-  font-weight: 500;
+  color: var(--dojeon-color-gray-600);
+  font-size: 12px;
+  font-weight: 400;
   line-height: 1.2;
   text-align: center;
 }
 
 .grammar-practice-review-label-row-three {
-  width: 290px;
-  grid-template-columns: repeat(3, 62px);
-  column-gap: 52px;
+  width: 246px;
+  grid-template-columns: repeat(3, 66px);
+  column-gap: 24px;
 }
 
-.grammar-practice-review-label-row-binary {
-  width: 176px;
-  grid-template-columns: repeat(2, 62px);
-  column-gap: 52px;
+.grammar-practice-review-label-row-three span:nth-child(2) {
+  color: var(--dojeon-color-primary-action);
 }
 
-.grammar-practice-review-action-row {
-  width: min(350px, 100%);
-  margin-top: 170px;
+.grammar-practice-review-pill-row {
+  margin-top: 18px;
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: center;
+  gap: 22px;
 }
 
-.grammar-practice-review-action-button {
-  width: 170px;
-  height: 54px;
+.grammar-practice-review-pill-button {
+  width: 88px;
+  height: 42px;
   border: 0;
-  border-radius: 10px;
-  background: var(--dojeon-color-primary-action);
-  color: var(--dojeon-color-surface);
-  font-size: 16px;
+  border-radius: 7px;
+  background: var(--dojeon-color-gray-200);
+  color: var(--dojeon-color-gray-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1.2;
   cursor: pointer;
+}
+
+.grammar-practice-review-pill-button.is-selected {
+  background: var(--dojeon-color-primary-50);
+  color: var(--dojeon-color-primary-action);
+}
+
+.grammar-practice-review-pill-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.grammar-practice-review-pill-mark {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.grammar-practice-review-pill-mark-yes {
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+
+.grammar-practice-review-pill-mark-no::before,
+.grammar-practice-review-pill-mark-no::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.grammar-practice-review-pill-mark-no::before {
+  transform: rotate(45deg);
+}
+
+.grammar-practice-review-pill-mark-no::after {
+  transform: rotate(-45deg);
+}
+
+.grammar-practice-review-action-row {
+  width: 100%;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.grammar-practice-review-action-button {
+  width: 100%;
+  height: 50px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.grammar-practice-review-action-button-secondary {
+  height: 34px;
+  border: 1px solid var(--dojeon-color-primary-border);
+  background: var(--dojeon-color-surface);
+  color: var(--dojeon-color-primary-action);
 }
 
 .grammar-practice-progress {
@@ -600,6 +937,830 @@
 
 .grammar-practice-next-button-fill {
   margin-top: auto;
+}
+
+.grammar-practice-content-fill {
+  position: relative;
+  --grammar-practice-fill-success: var(--dojeon-color-success);
+  --grammar-practice-fill-success-panel: var(--dojeon-color-success-surface);
+  --grammar-practice-fill-danger: var(--dojeon-color-error-strong);
+  --grammar-practice-fill-danger-mark: var(--dojeon-color-error-mark);
+  --grammar-practice-choice-success: var(--grammar-practice-fill-success);
+  --grammar-practice-choice-danger: var(--grammar-practice-fill-danger);
+}
+
+.grammar-practice-content-fill .grammar-practice-progress {
+  height: 18px;
+  margin-top: 21px;
+}
+
+.grammar-practice-content-fill .grammar-practice-progress-track,
+.grammar-practice-content-fill .grammar-practice-progress-fill {
+  height: 7px;
+}
+
+.grammar-practice-content-fill .grammar-practice-progress-dot-past {
+  background: var(--dojeon-color-surface);
+}
+
+.grammar-practice-content-fill .grammar-practice-progress-dot-upcoming {
+  background: var(--dojeon-color-primary-300);
+}
+
+.grammar-practice-content-fill .grammar-practice-guide {
+  width: 100%;
+  margin-top: 28px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.grammar-practice-content-fill .grammar-practice-question-card-fill {
+  width: 100%;
+  height: 201px;
+  margin-top: 28px;
+  border: 1px solid var(--dojeon-color-primary-border);
+  border-radius: 18px;
+  background: var(--dojeon-color-primary-50);
+  padding: 24px 18px;
+}
+
+.grammar-practice-content-fill .grammar-practice-question-row {
+  gap: 8px;
+}
+
+.grammar-practice-content-fill .grammar-practice-question-text,
+.grammar-practice-content-fill .grammar-practice-question-dot {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.grammar-practice-content-fill .grammar-practice-answer-column,
+.grammar-practice-content-fill .grammar-practice-answer-input {
+  width: 86px;
+  height: 30px;
+}
+
+.grammar-practice-content-fill .grammar-practice-answer-input {
+  border-radius: 4px;
+  background: var(--dojeon-color-primary-border);
+  color: var(--dojeon-color-gray-900);
+  font-size: 12px;
+  font-weight: 600;
+  caret-color: var(--dojeon-color-gray-900);
+}
+
+.grammar-practice-content-fill .grammar-practice-answer-input:focus {
+  box-shadow: 0 0 0 2px var(--dojeon-color-primary-focus-ring);
+}
+
+.grammar-practice-content-fill .grammar-practice-question-card-fill:has(.grammar-practice-correct-answer-fill) .grammar-practice-answer-input {
+  background: var(--dojeon-color-error-light);
+  color: var(--dojeon-color-error);
+}
+
+.grammar-practice-content-fill .grammar-practice-correct-answer-fill {
+  top: calc(100% + 7px);
+  color: var(--grammar-practice-fill-success);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.grammar-practice-content-fill .grammar-practice-learn-more-wrap {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.grammar-practice-content-fill .grammar-practice-learn-more-button {
+  width: 83px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--dojeon-color-secondary-container);
+  color: var(--dojeon-color-gray-700);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.grammar-practice-content-fill .grammar-practice-next-button {
+  width: 100%;
+  height: 52px;
+  border-radius: 8px;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.grammar-practice-content-fill .grammar-practice-next-button:disabled {
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  opacity: 1;
+}
+
+.grammar-practice-fill-result-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: clamp(136px, 22dvh, 176px);
+  box-sizing: border-box;
+  padding: 48px 36px 82px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.grammar-practice-fill-result-panel-correct {
+  background: var(--grammar-practice-fill-success-panel);
+  color: var(--grammar-practice-fill-success);
+}
+
+.grammar-practice-fill-result-panel-wrong {
+  background: var(--dojeon-color-error-light);
+  color: var(--grammar-practice-fill-danger);
+}
+
+.grammar-practice-fill-result-text {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.grammar-practice-fill-result-art {
+  position: absolute;
+  right: 20px;
+  bottom: 68px;
+  width: 134px;
+  height: 118px;
+}
+
+.grammar-practice-fill-result-art img {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+  z-index: 2;
+}
+
+.grammar-practice-fill-result-art-mark {
+  position: absolute;
+  right: 31px;
+  bottom: 3px;
+  width: 78px;
+  height: 78px;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.grammar-practice-fill-result-panel-correct .grammar-practice-fill-result-art-mark {
+  border: 18px solid var(--grammar-practice-fill-success);
+  border-radius: 999px;
+}
+
+.grammar-practice-fill-result-panel-wrong .grammar-practice-fill-result-art-mark::before,
+.grammar-practice-fill-result-panel-wrong .grammar-practice-fill-result-art-mark::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 99px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--grammar-practice-fill-danger-mark);
+  transform-origin: center;
+}
+
+.grammar-practice-fill-result-panel-wrong .grammar-practice-fill-result-art-mark::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.grammar-practice-fill-result-panel-wrong .grammar-practice-fill-result-art-mark::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.grammar-practice-content-make {
+  position: relative;
+  --grammar-practice-fill-success: var(--dojeon-color-success);
+  --grammar-practice-fill-success-panel: var(--dojeon-color-success-surface);
+  --grammar-practice-fill-danger: var(--dojeon-color-error-strong);
+  --grammar-practice-fill-danger-mark: var(--dojeon-color-error-mark);
+  --grammar-practice-choice-success: var(--grammar-practice-fill-success);
+  --grammar-practice-choice-danger: var(--grammar-practice-fill-danger);
+}
+
+.grammar-practice-content-make .grammar-practice-progress {
+  height: 18px;
+  margin-top: 21px;
+}
+
+.grammar-practice-content-make .grammar-practice-progress-track,
+.grammar-practice-content-make .grammar-practice-progress-fill {
+  height: 7px;
+}
+
+.grammar-practice-content-make .grammar-practice-progress-dot-past {
+  background: var(--dojeon-color-surface);
+}
+
+.grammar-practice-content-make .grammar-practice-progress-dot-upcoming {
+  background: var(--dojeon-color-primary-300);
+}
+
+.grammar-practice-content-make .grammar-practice-guide {
+  width: 100%;
+  margin-top: 28px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.grammar-practice-content-make .grammar-practice-question-card-make {
+  width: 100%;
+  height: 201px;
+  margin-top: 28px;
+  border: 1px solid var(--dojeon-color-primary-border);
+  border-radius: 18px;
+  background: var(--dojeon-color-primary-50);
+  padding: 24px 18px;
+}
+
+.grammar-practice-content-make .grammar-practice-question-stack-make {
+  width: min(280px, 100%);
+  gap: 26px;
+}
+
+.grammar-practice-content-make .grammar-practice-make-row {
+  width: 100%;
+  gap: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.grammar-practice-content-make .grammar-practice-make-divider {
+  height: 14px;
+  background: var(--dojeon-color-gray-900);
+}
+
+.grammar-practice-content-make .grammar-practice-answer-column-make,
+.grammar-practice-content-make .grammar-practice-make-input-wrap {
+  width: min(230px, 100%);
+  height: 30px;
+}
+
+.grammar-practice-content-make .grammar-practice-answer-input {
+  width: 100%;
+  height: 30px;
+  border-radius: 4px;
+  background: var(--dojeon-color-primary-border);
+  color: var(--dojeon-color-gray-900);
+  font-size: 12px;
+  font-weight: 600;
+  caret-color: var(--dojeon-color-gray-900);
+}
+
+.grammar-practice-content-make .grammar-practice-answer-input:focus {
+  box-shadow: 0 0 0 2px var(--dojeon-color-primary-focus-ring);
+}
+
+.grammar-practice-content-make .grammar-practice-question-card-make.is-wrong .grammar-practice-answer-input {
+  background: var(--dojeon-color-error-light);
+  color: var(--dojeon-color-error);
+}
+
+.grammar-practice-content-make .grammar-practice-correct-answer-make {
+  top: calc(100% + 8px);
+  width: max-content;
+  max-width: 270px;
+  color: var(--grammar-practice-fill-success);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.grammar-practice-content-make .grammar-practice-learn-more-wrap {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.grammar-practice-content-make .grammar-practice-learn-more-button {
+  width: 83px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--dojeon-color-secondary-container);
+  color: var(--dojeon-color-gray-700);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.grammar-practice-content-make .grammar-practice-next-button {
+  width: 100%;
+  height: 52px;
+  border-radius: 8px;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.grammar-practice-content-make .grammar-practice-next-button:disabled {
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  opacity: 1;
+}
+
+.grammar-practice-result-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: clamp(136px, 22dvh, 176px);
+  box-sizing: border-box;
+  padding: 48px 36px 82px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.grammar-practice-result-panel-correct {
+  background: var(--grammar-practice-fill-success-panel);
+  color: var(--grammar-practice-fill-success);
+}
+
+.grammar-practice-result-panel-wrong {
+  background: var(--dojeon-color-error-light);
+  color: var(--grammar-practice-fill-danger);
+}
+
+.grammar-practice-result-icon {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.grammar-practice-result-icon-correct {
+  border-radius: 50%;
+  background: var(--grammar-practice-fill-success);
+}
+
+.grammar-practice-result-icon-correct::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 7px;
+  height: 4px;
+  border-left: 2px solid var(--dojeon-color-surface);
+  border-bottom: 2px solid var(--dojeon-color-surface);
+  transform: rotate(-45deg);
+}
+
+.grammar-practice-result-icon-wrong {
+  border-radius: 50%;
+  background: var(--grammar-practice-fill-danger);
+}
+
+.grammar-practice-result-icon-wrong::before,
+.grammar-practice-result-icon-wrong::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 7px;
+  width: 8px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--dojeon-color-surface);
+}
+
+.grammar-practice-result-icon-wrong::before {
+  transform: rotate(45deg);
+}
+
+.grammar-practice-result-icon-wrong::after {
+  transform: rotate(-45deg);
+}
+
+.grammar-practice-result-text {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.grammar-practice-result-art {
+  position: absolute;
+  right: 20px;
+  bottom: 68px;
+  width: 134px;
+  height: 118px;
+}
+
+.grammar-practice-result-art img {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+  z-index: 2;
+}
+
+.grammar-practice-result-art-mark {
+  position: absolute;
+  right: 31px;
+  bottom: 3px;
+  width: 78px;
+  height: 78px;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.grammar-practice-result-panel-correct .grammar-practice-result-art-mark {
+  border: 18px solid var(--grammar-practice-fill-success);
+  border-radius: 999px;
+}
+
+.grammar-practice-result-panel-wrong .grammar-practice-result-art-mark::before,
+.grammar-practice-result-panel-wrong .grammar-practice-result-art-mark::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 99px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--grammar-practice-fill-danger-mark);
+  transform-origin: center;
+}
+
+.grammar-practice-result-panel-wrong .grammar-practice-result-art-mark::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.grammar-practice-result-panel-wrong .grammar-practice-result-art-mark::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.grammar-practice-make-result-panel {
+  min-height: clamp(136px, 22dvh, 176px);
+}
+
+.grammar-practice-content-choice {
+  position: relative;
+  --grammar-practice-choice-success: var(--dojeon-color-success);
+  --grammar-practice-choice-success-surface: var(--dojeon-color-success-surface);
+  --grammar-practice-choice-success-panel: var(--dojeon-color-success-surface);
+  --grammar-practice-choice-danger: var(--dojeon-color-error-strong);
+  --grammar-practice-choice-danger-mark: var(--dojeon-color-error-mark);
+}
+
+.grammar-practice-content-choice .grammar-practice-progress {
+  height: 18px;
+  margin-top: 21px;
+}
+
+.grammar-practice-content-choice .grammar-practice-progress-track,
+.grammar-practice-content-choice .grammar-practice-progress-fill {
+  height: 7px;
+}
+
+.grammar-practice-content-choice .grammar-practice-progress-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.grammar-practice-content-choice .grammar-practice-progress-dot-past {
+  background: var(--dojeon-color-surface);
+}
+
+.grammar-practice-content-choice .grammar-practice-progress-dot-upcoming {
+  background: var(--dojeon-color-primary-300);
+}
+
+.grammar-practice-content-choice .grammar-practice-guide {
+  width: 100%;
+  margin-top: 28px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.grammar-practice-content-choice .grammar-practice-question-card:not(.grammar-practice-question-card-correct):not(.grammar-practice-question-card-wrong) {
+  width: 100%;
+  height: 201px;
+  margin-top: 28px;
+  border: 1px solid var(--dojeon-color-primary-border);
+  border-radius: 18px;
+  background: var(--dojeon-color-primary-50);
+  padding: 24px 18px;
+}
+
+.grammar-practice-content-choice .grammar-practice-question-row {
+  gap: 8px;
+}
+
+.grammar-practice-content-choice .grammar-practice-answer-column,
+.grammar-practice-content-choice .grammar-practice-answer-slot {
+  width: 86px;
+  height: 30px;
+}
+
+.grammar-practice-content-choice .grammar-practice-answer-slot {
+  border-radius: 4px;
+  background: var(--dojeon-color-primary-border);
+}
+
+.grammar-practice-content-choice .grammar-practice-options {
+  width: 100%;
+  margin-top: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.grammar-practice-content-choice .grammar-practice-option-button {
+  width: 100%;
+  height: 65px;
+  border-radius: 13px;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.grammar-practice-content-choice .grammar-practice-option-button:not(.grammar-practice-option-button-correct):not(.grammar-practice-option-button-wrong) {
+  border: 1px solid var(--dojeon-color-border);
+  background: var(--dojeon-color-surface);
+  color: var(--dojeon-color-gray-900);
+}
+
+.grammar-practice-content-choice .grammar-practice-option-button-selected:not(.grammar-practice-option-button-correct):not(.grammar-practice-option-button-wrong) {
+  border: 2px solid var(--dojeon-color-primary-300);
+  background: var(--dojeon-color-surface);
+  color: var(--dojeon-color-primary-action);
+  font-weight: 500;
+}
+
+.grammar-practice-content-choice .grammar-practice-option-button-correct {
+  border: 2px solid var(--grammar-practice-choice-success);
+  background: var(--grammar-practice-choice-success-surface);
+  color: var(--grammar-practice-choice-success);
+  font-weight: 700;
+}
+
+.grammar-practice-content-choice .grammar-practice-option-button-wrong {
+  border-width: 2px;
+  background: var(--dojeon-color-error-light);
+  color: var(--dojeon-color-error);
+  font-weight: 500;
+}
+
+.grammar-practice-content-choice .grammar-practice-hint-wrap {
+  width: 100%;
+  margin-top: 19px;
+}
+
+.grammar-practice-content-choice .grammar-practice-hint-button {
+  width: 83px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--dojeon-color-secondary-container);
+  color: var(--dojeon-color-gray-700);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.grammar-practice-content-choice .grammar-practice-next-button {
+  width: 100%;
+  height: 52px;
+  border-radius: 8px;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  font-size: 16px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.grammar-practice-content-choice .grammar-practice-next-button:disabled {
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  opacity: 1;
+}
+
+.grammar-practice-choice-flash {
+  position: absolute;
+  left: 50%;
+  top: clamp(360px, 49dvh, 412px);
+  width: 250px;
+  height: 250px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.grammar-practice-choice-flash-mark {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  width: 138px;
+  height: 138px;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.grammar-practice-choice-flash-correct .grammar-practice-choice-flash-mark {
+  border: 18px solid var(--dojeon-color-primary-300);
+  border-radius: 999px;
+}
+
+.grammar-practice-choice-flash-wrong .grammar-practice-choice-flash-mark::before,
+.grammar-practice-choice-flash-wrong .grammar-practice-choice-flash-mark::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 172px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--grammar-practice-choice-danger-mark);
+  transform-origin: center;
+}
+
+.grammar-practice-choice-flash-wrong .grammar-practice-choice-flash-mark::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.grammar-practice-choice-flash-wrong .grammar-practice-choice-flash-mark::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.grammar-practice-choice-flash-character {
+  position: absolute;
+  left: 50%;
+  top: 76px;
+  width: 144px;
+  height: 144px;
+  object-fit: contain;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.grammar-practice-choice-flash-text {
+  position: absolute;
+  left: 50%;
+  top: 224px;
+  transform: translateX(-50%);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.grammar-practice-choice-flash-correct .grammar-practice-choice-flash-text {
+  color: var(--dojeon-color-primary-action);
+}
+
+.grammar-practice-choice-flash-wrong .grammar-practice-choice-flash-text {
+  color: var(--grammar-practice-choice-danger);
+}
+
+.grammar-practice-choice-result-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: clamp(188px, 25dvh, 214px);
+  box-sizing: border-box;
+  padding: 61px 36px 88px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.grammar-practice-choice-result-panel-correct {
+  background: var(--grammar-practice-choice-success-panel);
+  color: var(--grammar-practice-choice-success);
+}
+
+.grammar-practice-choice-result-panel-wrong {
+  background: var(--dojeon-color-error-light);
+  color: var(--grammar-practice-choice-danger);
+}
+
+.grammar-practice-choice-result-icon {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.grammar-practice-choice-result-icon-correct {
+  border-radius: 50%;
+  background: var(--grammar-practice-choice-success);
+}
+
+.grammar-practice-choice-result-icon-correct::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 7px;
+  height: 4px;
+  border-left: 2px solid var(--dojeon-color-surface);
+  border-bottom: 2px solid var(--dojeon-color-surface);
+  transform: rotate(-45deg);
+}
+
+.grammar-practice-choice-result-icon-wrong {
+  border-radius: 50%;
+  background: var(--grammar-practice-choice-danger);
+}
+
+.grammar-practice-choice-result-icon-wrong::before,
+.grammar-practice-choice-result-icon-wrong::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 7px;
+  width: 8px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--dojeon-color-surface);
+}
+
+.grammar-practice-choice-result-icon-wrong::before {
+  transform: rotate(45deg);
+}
+
+.grammar-practice-choice-result-icon-wrong::after {
+  transform: rotate(-45deg);
+}
+
+.grammar-practice-choice-result-text {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.grammar-practice-choice-result-art {
+  position: absolute;
+  right: 20px;
+  bottom: 75px;
+  width: 134px;
+  height: 118px;
+}
+
+.grammar-practice-choice-result-art img {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+  z-index: 2;
+}
+
+.grammar-practice-choice-result-art-mark {
+  position: absolute;
+  right: 31px;
+  bottom: 3px;
+  width: 78px;
+  height: 78px;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.grammar-practice-choice-result-panel-correct .grammar-practice-choice-result-art-mark {
+  border: 18px solid var(--grammar-practice-choice-success);
+  border-radius: 999px;
+}
+
+.grammar-practice-choice-result-panel-wrong .grammar-practice-choice-result-art-mark::before,
+.grammar-practice-choice-result-panel-wrong .grammar-practice-choice-result-art-mark::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 99px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--grammar-practice-choice-danger-mark);
+  transform-origin: center;
+}
+
+.grammar-practice-choice-result-panel-wrong .grammar-practice-choice-result-art-mark::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.grammar-practice-choice-result-panel-wrong .grammar-practice-choice-result-art-mark::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .grammar-practice-reading-screen {
@@ -1027,7 +2188,7 @@
 .grammar-practice-next-grammar-rules-screen {
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - 132px);
+  min-height: calc(100dvh - 88px);
   box-sizing: border-box;
 }
 
@@ -1091,7 +2252,7 @@
 }
 
 .grammar-practice-next-grammar-rules-heading {
-  margin: 32px 0 0;
+  margin: 24px 0 0;
   color: var(--dojeon-color-gray-900);
   font-size: 18px;
   font-weight: 700;
@@ -1173,16 +2334,16 @@
 .grammar-practice-next-grammar-grid {
   margin-top: 16px;
   display: grid;
-  grid-template-columns: 134px 214px;
+  width: 100%;
+  grid-template-columns: minmax(96px, 0.7fr) minmax(0, 1.3fr);
   gap: 2px;
-  justify-content: flex-start;
 }
 
 .grammar-practice-next-grammar-grid-box {
   width: 100%;
   height: 30px;
   border-radius: 0;
-  background: var(--dojeon-color-gray-100);
+  background: var(--dojeon-color-primary-50);
   color: var(--dojeon-color-gray-900);
   font-size: 14px;
   line-height: 1.2;
@@ -1201,7 +2362,7 @@
 .grammar-practice-next-grammar-grid-box:nth-child(2),
 .grammar-practice-next-grammar-grid-box:nth-child(5),
 .grammar-practice-next-grammar-grid-box:nth-child(6) {
-  background: var(--dojeon-color-gray-200);
+  background: var(--dojeon-color-primary-container);
 }
 
 .grammar-practice-next-grammar-grid-box-semibold {
@@ -1221,12 +2382,6 @@
   display: flex;
   align-items: flex-start;
   gap: 1px;
-}
-
-.grammar-practice-next-grammar-people-icon {
-  width: 40px;
-  height: 40px;
-  display: block;
 }
 
 .grammar-practice-next-grammar-chat {
@@ -1252,13 +2407,25 @@
   gap: 1px;
 }
 
-.grammar-practice-next-grammar-avatar {
-  width: 40px;
+.grammar-practice-next-grammar-example-avatar {
+  width: 48px;
   height: 40px;
+  overflow: hidden;
   display: block;
   flex: 0 0 auto;
   align-self: flex-start;
+}
+
+.grammar-practice-next-grammar-example-avatar img {
+  width: 48px;
+  height: 48px;
+  display: block;
   object-fit: contain;
+  object-position: top center;
+}
+
+.grammar-practice-next-grammar-example-avatar-left img {
+  transform: scaleX(-1);
 }
 
 .grammar-practice-next-grammar-bubble-stack {
@@ -1289,7 +2456,7 @@
   min-height: 40px;
   padding: 10px 16px;
   border-radius: 10px;
-  background: var(--dojeon-color-gray-200);
+  background: var(--dojeon-color-primary-container-soft);
   color: var(--dojeon-color-gray-900);
   font-size: 14px;
   font-weight: 500;
@@ -1310,7 +2477,7 @@
   top: 6px;
   width: 9px;
   height: 18px;
-  background: var(--dojeon-color-gray-200);
+  background: var(--dojeon-color-primary-container-soft);
 }
 
 .grammar-practice-next-grammar-hero-row .grammar-practice-next-grammar-bubble::after,
@@ -1329,7 +2496,7 @@
   height: 24px;
   border: 0;
   border-radius: 50%;
-  background: var(--dojeon-color-gray-700);
+  background: var(--dojeon-color-primary-action);
   color: var(--dojeon-color-surface);
   display: inline-flex;
   align-items: center;
@@ -1370,10 +2537,8 @@
 }
 
 .grammar-practice-next-grammar-mark-button.is-selected {
-  position: relative;
-  z-index: 31;
-  color: var(--dojeon-color-surface);
-  text-decoration-color: var(--dojeon-color-surface);
+  color: inherit;
+  text-decoration-color: currentColor;
 }
 
 .grammar-practice-next-grammar-bubble-vocab-mark {
@@ -1438,6 +2603,11 @@
   box-shadow: 0 14px 32px var(--dojeon-color-primary-focus-ring);
 }
 
+.grammar-practice-next-grammar-note-dialog-vocab {
+  width: min(286px, 100%);
+  min-height: 112px;
+}
+
 .grammar-practice-next-grammar-note-header {
   display: flex;
   align-items: flex-start;
@@ -1454,12 +2624,30 @@
   text-align: left;
 }
 
-.grammar-practice-next-grammar-note-icon {
+.grammar-practice-next-grammar-note-plus {
+  position: relative;
   width: 22px;
-  height: 24px;
-  display: block;
-  object-fit: contain;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--dojeon-color-primary-container);
   flex: 0 0 auto;
+}
+
+.grammar-practice-next-grammar-note-plus::before,
+.grammar-practice-next-grammar-note-plus::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--dojeon-color-primary-action);
+  transform: translate(-50%, -50%);
+}
+
+.grammar-practice-next-grammar-note-plus::after {
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 .grammar-practice-next-grammar-note-description {
@@ -1481,8 +2669,8 @@
   margin-top: 24px;
   border: 0;
   border-radius: 8px;
-  background: var(--dojeon-color-gray-800);
-  color: var(--dojeon-color-gray-100);
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -1494,10 +2682,13 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
+  width: 100%;
 }
 
 .grammar-practice-next-grammar-action-button {
-  width: 167px;
+  width: auto;
+  min-width: 0;
+  flex: 1 1 0;
   height: 54px;
   border: 0;
   border-radius: 10px;
@@ -1511,4 +2702,21 @@
 .grammar-practice-next-grammar-action-button-back {
   background: var(--dojeon-color-gray-100);
   color: var(--dojeon-color-gray-900);
+}
+
+.grammar-practice-next-grammar-rules-character-wrap {
+  flex: 1 1 auto;
+  min-height: 176px;
+  padding: 18px 0 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  box-sizing: border-box;
+}
+
+.grammar-practice-next-grammar-rules-character {
+  width: 118px;
+  height: auto;
+  display: block;
+  object-fit: contain;
 }

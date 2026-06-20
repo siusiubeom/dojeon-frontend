@@ -75,8 +75,12 @@
   --dojeon-color-disabled-bg: var(--dojeon-color-gray-400);
   --dojeon-color-disabled-border: var(--dojeon-color-gray-500);
   --dojeon-color-disabled-text: var(--dojeon-color-gray-900);
+  --dojeon-color-success: #08a83f;
+  --dojeon-color-success-surface: #e7f8ec;
   --dojeon-color-error-light: #fbe8e7;
   --dojeon-color-error: #d3362b;
+  --dojeon-color-error-strong: #ff1f2d;
+  --dojeon-color-error-mark: #f47f83;
   --dojeon-color-error-surface: var(--dojeon-color-error-light);
   --dojeon-type-headline-large: 400 32px / 1.3 var(--dojeon-font-en);
   --dojeon-type-headline-medium: 600 28px / 1.3 var(--dojeon-font-en);
