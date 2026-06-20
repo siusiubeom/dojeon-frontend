@@ -15,6 +15,12 @@ interface VocabularyLessonPageProps {
 }
 
 type VocabularyLessonView = 'intro' | 'card' | 'table' | 'flashcards'
+type PersonalListPromptSource = 'card' | 'table'
+
+interface PersonalListPrompt {
+  wordId: number
+  source: PersonalListPromptSource
+}
 
 const swipeThreshold = 40
 const cardWidth = 278
@@ -62,7 +68,7 @@ function VocabularyLessonPage({
   const [optimisticRemoved, setOptimisticRemoved] = useState<number[]>([])
   const [optimisticScrapIds, setOptimisticScrapIds] = useState<Record<number, string>>({})
   const [pendingScrapWordIds, setPendingScrapWordIds] = useState<number[]>([])
-  const [personalListPromptWordId, setPersonalListPromptWordId] = useState<number | null>(null)
+  const [personalListPrompt, setPersonalListPrompt] = useState<PersonalListPrompt | null>(null)
   const [expandedTableWordIds, setExpandedTableWordIds] = useState<number[]>([])
   const pointerStartXRef = useRef<number | null>(null)
 
@@ -137,6 +143,7 @@ function VocabularyLessonPage({
       setView('card')
       return
     }
+
     onBack()
   }
 
@@ -258,11 +265,19 @@ function VocabularyLessonPage({
         : 'This lesson’s words'
 
   const promptWord =
-    personalListPromptWordId === null
+    personalListPrompt === null
       ? null
-      : vocabularyItems.find((item) => item.id === personalListPromptWordId) ?? null
+      : vocabularyItems.find((item) => item.id === personalListPrompt.wordId) ?? null
   const promptWordSaved = promptWord ? personalListIds.includes(promptWord.id) : false
   const isPromptWordPending = promptWord ? pendingScrapWordIds.includes(promptWord.id) : false
+  const promptCopy =
+    personalListPrompt?.source === 'card'
+      ? promptWordSaved
+        ? 'Do you want to remove this word from your personal list?'
+        : 'Do you want to add this word to your personal list?'
+      : promptWordSaved
+        ? 'Do you want to remove it from your personal list?'
+        : 'Do you want to add it to your personal list?'
 
   const renderPersonalListIcon = (isSaved: boolean) => {
     if (isSaved) {
@@ -521,29 +536,28 @@ function VocabularyLessonPage({
                                   </div>
                                 </div>
                               </div>
-                              {isFlipped ? (
-                                <button
-                                  type="button"
-                                  className="vocabulary-lesson-main-card-note-button"
-                                  onPointerDown={(event) => {
-                                    event.stopPropagation()
-                                  }}
-                                  onPointerUp={(event) => {
-                                    event.stopPropagation()
-                                  }}
-                                  onClick={(event) => {
-                                    event.stopPropagation()
-                                    setPersonalListPromptWordId(entry.item.id)
-                                  }}
-                                  aria-label={
-                                    isSaved
-                                      ? `Remove ${entry.item.word} from personal list`
-                                      : `Add ${entry.item.word} to personal list`
-                                  }
-                                >
-                                  {renderPersonalListIcon(isSaved)}
-                                </button>
-                              ) : null}
+                              <button
+                                type="button"
+                                className="vocabulary-lesson-main-card-note-button"
+                                onPointerDown={(event) => {
+                                  event.stopPropagation()
+                                }}
+                                onPointerUp={(event) => {
+                                  event.stopPropagation()
+                                }}
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  setPersonalListPrompt({ wordId: entry.item.id, source: 'card' })
+                                }}
+                                aria-label={
+                                  isSaved
+                                    ? `Remove ${entry.item.word} from personal list`
+                                    : `Add ${entry.item.word} to personal list`
+                                }
+                                title={isSaved ? 'Remove from personal list' : 'Add to personal list'}
+                              >
+                                {renderPersonalListIcon(isSaved)}
+                              </button>
                             </>
                           ) : null}
                         </article>
@@ -606,7 +620,7 @@ function VocabularyLessonPage({
                             }`}
                             onClick={(event) => {
                               event.stopPropagation()
-                              setPersonalListPromptWordId(item.id)
+                              setPersonalListPrompt({ wordId: item.id, source: 'table' })
                             }}
                             aria-label={
                               isSaved
@@ -710,15 +724,13 @@ function VocabularyLessonPage({
             }
           >
             <p className="vocabulary-lesson-modal-copy">
-              {promptWordSaved ? 'Do you want to remove it' : 'Do you want to add it'}
-              <br />
-              {promptWordSaved ? 'from your personal list?' : 'to your personal list?'}
+              {promptCopy}
             </p>
             <div className="vocabulary-lesson-modal-actions">
               <button
                 type="button"
                 className="vocabulary-lesson-modal-button vocabulary-lesson-modal-button-secondary"
-                onClick={() => setPersonalListPromptWordId(null)}
+                onClick={() => setPersonalListPrompt(null)}
               >
                 NO
               </button>
@@ -729,7 +741,7 @@ function VocabularyLessonPage({
                 onClick={() => {
                   if (isPromptWordPending) return
                   void handleTogglePersonalList(promptWord.id)
-                  setPersonalListPromptWordId(null)
+                  setPersonalListPrompt(null)
                 }}
               >
                 YES
