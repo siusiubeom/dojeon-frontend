@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
   ]
 
   return {
+    base: '/dojeon-frontend/',
     plugins: [react()],
     server: {
       proxy: Object.fromEntries(
