@@ -1,8 +1,13 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './GrammarPracticePage.css'
-import checkIconWhite from '../assets/check_icon_white.svg'
-import noteAddIcon from '../assets/hugeicons_note-add.png'
-import peopleIcon from '../assets/icon-park-solid_people.png'
+import exampleRightImage from '../assets/7.png'
+import exampleLeftImage from '../assets/10.png'
+import rulesImage from '../assets/5.png'
+import choiceCorrectImage from '../assets/1.png'
+import choiceWrongImage from '../assets/11.png'
+import reviewEasyImage from '../assets/2.png'
+import reviewNormalImage from '../assets/10.png'
+import reviewHardImage from '../assets/11.png'
 import vectorIcon from '../assets/Vector1.png'
 import { useSectionQuestions } from '../hooks/useSectionQuestioins.ts'
 import { useSectionMaterials } from '../hooks/useSectionMaterials.ts'
@@ -12,7 +17,9 @@ import { useCreateScrap } from '../hooks/useCreateScrap.ts'
 
 export type PracticeStep =
   | 'choice'
+  | 'fill-intro'
   | 'fill'
+  | 'make-intro'
   | 'make'
   | 'review'
   | 'reading'
@@ -31,6 +38,7 @@ interface PracticeStateSnapshot {
   practiceStep: PracticeStep
   selectedAnswer: string
   revealedAnswers: string[]
+  choiceFeedback: ChoiceFeedback | null
   typedAnswer: string
   submittedTypedAnswer: string
   makeSentenceAnswer: string
@@ -52,7 +60,26 @@ type NextGrammarDialogState =
   | { kind: 'grammar'; id: NextGrammarNoteId }
   | { kind: 'vocab'; id: NextGrammarVocabId }
 
+interface NextGrammarExampleToken {
+  text: string
+  grammarId?: NextGrammarNoteId
+  vocabId?: NextGrammarVocabId
+  emphasis?: 'medium' | 'semibold'
+}
+
+interface NextGrammarExampleMessage {
+  id: string
+  side: 'left' | 'right'
+  translation: string
+  tokens: NextGrammarExampleToken[]
+}
+
 type ReviewDifficulty = 'EASY' | 'NORMAL' | 'HARD'
+type ChoiceFeedback = {
+  answer: string
+  result: 'correct' | 'wrong'
+  phase: 'flash' | 'settled'
+}
 
 function GrammarPracticePage({
   onBack,
@@ -89,6 +116,7 @@ function GrammarPracticePage({
   const [practiceStep, setPracticeStep] = useState<PracticeStep>(initialPracticeStep)
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [revealedAnswers, setRevealedAnswers] = useState<string[]>([])
+  const [choiceFeedback, setChoiceFeedback] = useState<ChoiceFeedback | null>(null)
   const [typedAnswer, setTypedAnswer] = useState('')
   const [submittedTypedAnswer, setSubmittedTypedAnswer] = useState('')
   const [makeSentenceAnswer, setMakeSentenceAnswer] = useState('')
@@ -108,7 +136,7 @@ function GrammarPracticePage({
   const [readingDragOffset, setReadingDragOffset] = useState(0)
   const [isReadingDragging, setIsReadingDragging] = useState(false)
 
-  const [reviewDifficulty, setReviewDifficulty] = useState<ReviewDifficulty | null>(null)
+  const [reviewDifficulty, setReviewDifficulty] = useState<ReviewDifficulty>('NORMAL')
   const [reviewMarkComplete, setReviewMarkComplete] = useState<boolean | null>(null)
   const [reviewSaveScrap, setReviewSaveScrap] = useState<boolean | null>(null)
 
@@ -118,14 +146,19 @@ function GrammarPracticePage({
   const nextGrammarLessonRef = useRef<HTMLElement | null>(null)
 
   const isFillStep = practiceStep === 'fill'
+  const isFillIntroStep = practiceStep === 'fill-intro'
+  const isMakeIntroStep = practiceStep === 'make-intro'
   const isMakeStep = practiceStep === 'make'
+  const isChoiceStep = practiceStep === 'choice'
   const isReviewStep = practiceStep === 'review'
   const isReadingStep = practiceStep === 'reading'
   const isListeningStep = practiceStep === 'listening'
   const isNextGrammarStep = practiceStep === 'next-grammar'
   const isNextGrammarRulesStep = practiceStep === 'next-grammar-rules'
 
-  const currentAnswer = isReviewStep
+  const currentAnswer = isFillIntroStep || isMakeIntroStep
+    ? ''
+    : isReviewStep
     ? ''
     : isReadingStep
     ? ''
@@ -146,7 +179,7 @@ function GrammarPracticePage({
 
   let isCorrectAnswer: boolean
   let isWrongAnswer: boolean
-  if (isReviewStep || isReadingStep || isListeningStep || isNextGrammarStep || isNextGrammarRulesStep) {
+  if (isFillIntroStep || isMakeIntroStep || isReviewStep || isReadingStep || isListeningStep || isNextGrammarStep || isNextGrammarRulesStep) {
     isCorrectAnswer = false
     isWrongAnswer = false
   } else if (!isFillStep && !isMakeStep) {
@@ -156,7 +189,21 @@ function GrammarPracticePage({
     isCorrectAnswer = currentAnswer === correctAnswer
     isWrongAnswer = isAnswered && !isCorrectAnswer
   }
-  const canMoveToNextPracticeStep = isCorrectAnswer && !checkAnswer.isPending
+  const shouldShowChoiceFeedback =
+    isChoiceStep &&
+    choiceFeedback !== null &&
+    choiceFeedback.answer === selectedAnswer &&
+    serverGradedAnswers[selectedAnswer] !== undefined
+  const showChoiceFeedbackFlash = shouldShowChoiceFeedback && choiceFeedback.phase === 'flash'
+  const showChoiceFeedbackPanel = shouldShowChoiceFeedback && choiceFeedback.phase === 'settled'
+  const isChoiceCorrectFeedback = shouldShowChoiceFeedback && choiceFeedback?.result === 'correct'
+  const choiceFeedbackImage = isChoiceCorrectFeedback ? choiceCorrectImage : choiceWrongImage
+  const showFillResultPanel = isFillStep && isAnswered && (isCorrectAnswer || isWrongAnswer)
+  const fillResultImage = isCorrectAnswer ? choiceCorrectImage : choiceWrongImage
+  const showMakeResultPanel = isMakeStep && isAnswered && (isCorrectAnswer || isWrongAnswer)
+  const makeResultImage = isCorrectAnswer ? choiceCorrectImage : choiceWrongImage
+  const canMoveToNextPracticeStep =
+    isCorrectAnswer && !checkAnswer.isPending && (!isChoiceStep || showChoiceFeedbackPanel)
 
   const readingQuestions = [
     {
@@ -182,29 +229,52 @@ function GrammarPracticePage({
   const listeningElapsedSeconds = Math.round(listeningTotalSeconds * listeningProgress)
   const listeningRemainingSeconds = Math.max(listeningTotalSeconds - listeningElapsedSeconds, 0)
   const isListeningTranscriptReady = listeningProgress >= 0.995
+  const progressDotPositions = [3, 21.8, 40.6, 59.4, 78.2, 97]
   const normalizedLanguage = language.trim().toLowerCase()
   const isTranslationRtl = normalizedLanguage === 'hebrew'
-  const nextGrammarExamples =
-    normalizedLanguage === 'hebrew'
-      ? [
-          { text: '같이 점심을 먹을까요?', translation: 'האם נאכל יחד צהריים?', side: 'left' as const },
-          { text: '네, 같이 먹어요.', translation: 'כן, בוא/י נאכל יחד.', side: 'right' as const },
-        ]
-      : [
-          { text: '같이 점심을 먹을까요?', translation: 'Shall we eat lunch together?', side: 'left' as const },
-          { text: '네, 같이 먹어요.', translation: "Yes, let's eat together.", side: 'right' as const },
-        ]
+  const nextGrammarExamples: NextGrammarExampleMessage[] = [
+    {
+      id: 'proposal',
+      side: 'left',
+      translation:
+        normalizedLanguage === 'hebrew'
+          ? 'האם נאכל יחד צהריים?'
+          : 'Shall we eat lunch together?',
+      tokens: [
+        { text: '같이', vocabId: 'together' },
+        { text: ' ', emphasis: 'medium' },
+        { text: '점심', vocabId: 'lunch' },
+        { text: '을 ', emphasis: 'medium' },
+        { text: '먹을까요?', grammarId: 'future-proposal', vocabId: 'eat', emphasis: 'semibold' },
+      ],
+    },
+    {
+      id: 'reply',
+      side: 'right',
+      translation:
+        normalizedLanguage === 'hebrew'
+          ? 'כן, בוא/י נאכל יחד.'
+          : 'Yes, let’s eat together.',
+      tokens: [
+        { text: '네', vocabId: 'yes' },
+        { text: ', ', emphasis: 'medium' },
+        { text: '같이', vocabId: 'together' },
+        { text: ' ', emphasis: 'medium' },
+        { text: '먹어요.', grammarId: 'polite-ending', vocabId: 'eat' },
+      ],
+    },
+  ]
   const nextGrammarGridItems = ['', 'V -ㄹ까요?', '가다', '갈까요?', '', 'V-을까요?', '먹다', '먹을까요?']
   const nextGrammarNotes: Record<NextGrammarNoteId, { title: string; description: string }> = {
     'future-proposal': {
       title: '-(으)ㄹ까요?',
       description:
-        "-(으)ㄹ까요? is used to suggest doing something together or to ask someone's opinion in a polite way. Use -ㄹ까요? after a vowel or ㄹ, and -을까요? after other final consonants.",
+        '-(으)ㄹ까요? is used to suggest doing something together or to ask someone’s opinion in a polite way. Use -ㄹ까요? after a vowel or ㄹ, and -을까요? after other final consonants.',
     },
     'polite-ending': {
       title: '-아/어/해요',
       description:
-        "아요/어요/해요 is a polite informal sentence ending used in everyday conversations with people you're not very close to, but in casual settings. Use -아요 after ㅏ/ㅗ vowels, -어요 after other vowels, and -해요 with 하다 verbs.",
+        '아요/어요/해요 is a polite informal sentence ending used in everyday conversations with people you’re not very close to, but in casual settings. Use -아요 after ㅏ/ㅗ vowels, -어요 after other vowels, and -해요 with 하다 verbs.',
     },
   }
   const nextGrammarVocabNotes: Record<NextGrammarVocabId, { title: string; description: string }> = {
@@ -264,6 +334,7 @@ function GrammarPracticePage({
   const resetPracticeFlow = () => {
     setSelectedAnswer('')
     setRevealedAnswers([])
+    setChoiceFeedback(null)
     setTypedAnswer('')
     setSubmittedTypedAnswer('')
     setMakeSentenceAnswer('')
@@ -308,38 +379,32 @@ function GrammarPracticePage({
     }
     return <span className={weightClass}>{text}</span>
   }
-  const renderNextGrammarHeroText = () => (
-    <>
-      {renderNextGrammarExampleMark('같이', 'grammar-practice-next-grammar-bubble-medium', { vocabId: 'together' })}{' '}
-      {renderNextGrammarExampleMark('점심', 'grammar-practice-next-grammar-bubble-medium', { vocabId: 'lunch' })}
-      을{' '}
-      {renderNextGrammarExampleMark('먹을까요?', 'grammar-practice-next-grammar-bubble-semibold', {
-        grammarId: 'future-proposal',
-        vocabId: 'eat',
-      })}
-    </>
-  )
-  const renderNextGrammarChatText = (text: string, index: number) => {
-    if (index === 0 && text === '네, 같이 먹어요.') {
+  const renderNextGrammarExampleTokens = (tokens: NextGrammarExampleToken[]) =>
+    tokens.map((token, index) => {
+      const weightClass =
+        token.emphasis === 'semibold'
+          ? 'grammar-practice-next-grammar-bubble-semibold'
+          : 'grammar-practice-next-grammar-bubble-medium'
+
+      if (!token.grammarId && !token.vocabId) {
+        return <span key={`${token.text}-${index}`} className={weightClass}>{token.text}</span>
+      }
+
       return (
-        <>
-          {renderNextGrammarExampleMark('네', 'grammar-practice-next-grammar-bubble-medium', { vocabId: 'yes' })}
-          ,{' '}
-          {renderNextGrammarExampleMark('같이', 'grammar-practice-next-grammar-bubble-medium', { vocabId: 'together' })}{' '}
-          {renderNextGrammarExampleMark('먹어요.', 'grammar-practice-next-grammar-bubble-medium', {
-            grammarId: 'polite-ending',
-            vocabId: 'eat',
+        <span key={`${token.text}-${index}`}>
+          {renderNextGrammarExampleMark(token.text, weightClass, {
+            grammarId: token.grammarId,
+            vocabId: token.vocabId,
           })}
-        </>
+        </span>
       )
-    }
-    return text
-  }
+    })
 
   const currentSnapshot: PracticeStateSnapshot = {
     practiceStep,
     selectedAnswer,
     revealedAnswers,
+    choiceFeedback,
     typedAnswer,
     submittedTypedAnswer,
     makeSentenceAnswer,
@@ -354,6 +419,7 @@ function GrammarPracticePage({
     setPracticeStep(snapshot.practiceStep)
     setSelectedAnswer(snapshot.selectedAnswer)
     setRevealedAnswers(snapshot.revealedAnswers)
+    setChoiceFeedback(snapshot.choiceFeedback)
     setTypedAnswer(snapshot.typedAnswer)
     setSubmittedTypedAnswer(snapshot.submittedTypedAnswer)
     setMakeSentenceAnswer(snapshot.makeSentenceAnswer)
@@ -388,13 +454,16 @@ function GrammarPracticePage({
   const handleChoiceOptionClick = async (option: string) => {
     pushHistory()
     setSelectedAnswer(option)
+    setChoiceFeedback(null)
     setRevealedAnswers((prev) => (prev.includes(option) ? prev : [...prev, option]))
 
     if (!firstMcq) {
+      const isCorrectChoice = option === fallbackCorrectChoice
       setServerGradedAnswers((prev) => ({
         ...prev,
-        [option]: option === fallbackCorrectChoice,
+        [option]: isCorrectChoice,
       }))
+      setChoiceFeedback({ answer: option, result: isCorrectChoice ? 'correct' : 'wrong', phase: 'flash' })
       return
     }
 
@@ -405,47 +474,149 @@ function GrammarPracticePage({
         sectionId,
         payload: { questionId: firstMcq.id, userAnswer: option },
       })
+      const isCorrectChoice = Boolean(result?.correct)
       setServerGradedAnswers((prev) => ({
         ...prev,
-        [option]: Boolean(result?.correct),
+        [option]: isCorrectChoice,
       }))
+      setChoiceFeedback({ answer: option, result: isCorrectChoice ? 'correct' : 'wrong', phase: 'flash' })
     } catch {
       // Keep network/server failures separate from graded wrong answers.
     }
   }
 
+  useEffect(() => {
+    if (choiceFeedback?.phase !== 'flash') return
+
+    const feedbackTimer = window.setTimeout(() => {
+      setChoiceFeedback((prev) =>
+        prev?.answer === choiceFeedback.answer && prev.result === choiceFeedback.result
+          ? { ...prev, phase: 'settled' }
+          : prev,
+      )
+    }, 1000)
+
+    return () => window.clearTimeout(feedbackTimer)
+  }, [choiceFeedback])
+
   const handleReviewSubmit = async (nextStep: 'next-grammar' | 'reading') => {
-    if (sectionId === null) return
-
-    await saveProgress
-      .mutateAsync({
-        sectionId,
-        payload: {
-          currentPage: 1,
-          stayTimeSeconds: 0,
-          forceComplete: reviewMarkComplete === true,
-          difficulty: reviewDifficulty ?? 'NORMAL',
-        },
-      })
-      .catch(() => {})
-
-    if (reviewSaveScrap === true && grammarMaterialId !== null) {
-      await createScrap
+    if (sectionId !== null) {
+      await saveProgress
         .mutateAsync({
-          type: 'GRAMMAR',
-          materialId: grammarMaterialId,
           sectionId,
-        } as never)
+          payload: {
+            currentPage: 1,
+            stayTimeSeconds: 0,
+            forceComplete: reviewMarkComplete === true,
+            difficulty: reviewDifficulty ?? 'NORMAL',
+          },
+        })
         .catch(() => {})
+
+      if (reviewSaveScrap === true && grammarMaterialId !== null) {
+        await createScrap
+          .mutateAsync({
+            type: 'GRAMMAR',
+            materialId: grammarMaterialId,
+            sectionId,
+          } as never)
+          .catch(() => {})
+      }
     }
 
     pushHistory()
     setPracticeStep(nextStep)
   }
 
+  if (isFillIntroStep) {
+    return (
+      <main className="grammar-practice-fill-intro-page">
+        <section className="grammar-practice-fill-intro-content" aria-label="word typing intro">
+          <button
+            type="button"
+            className="grammar-practice-fill-intro-back"
+            onClick={handleBackPress}
+            aria-label="뒤로 가기"
+          >
+            <svg className="grammar-practice-fill-intro-back-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div className="grammar-practice-fill-intro-center">
+            <div className="grammar-practice-fill-intro-copy">
+              <h1 className="grammar-practice-fill-intro-title">Well done!</h1>
+              <p className="grammar-practice-fill-intro-subtitle">Now let&apos;s try something harder</p>
+            </div>
+            <img
+              src={rulesImage}
+              alt=""
+              className="grammar-practice-fill-intro-character"
+              aria-hidden="true"
+            />
+          </div>
+          <button
+            type="button"
+            className="grammar-practice-fill-intro-start"
+            onClick={() => {
+              pushHistory()
+              setPracticeStep('fill')
+              setTypedAnswer('')
+              setSubmittedTypedAnswer('')
+            }}
+          >
+            START
+          </button>
+        </section>
+      </main>
+    )
+  }
+
+  if (isMakeIntroStep) {
+    return (
+      <main className="grammar-practice-make-intro-page">
+        <section className="grammar-practice-make-intro-content" aria-label="sentence typing intro">
+          <button
+            type="button"
+            className="grammar-practice-make-intro-back"
+            onClick={handleBackPress}
+            aria-label="뒤로 가기"
+          >
+            <svg className="grammar-practice-make-intro-back-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div className="grammar-practice-make-intro-center">
+            <div className="grammar-practice-make-intro-copy">
+              <h1 className="grammar-practice-make-intro-title">Well done!</h1>
+              <p className="grammar-practice-make-intro-subtitle">Now try to make the sentence on your own!</p>
+            </div>
+            <img
+              src={rulesImage}
+              alt=""
+              className="grammar-practice-make-intro-character"
+              aria-hidden="true"
+            />
+          </div>
+          <button
+            type="button"
+            className="grammar-practice-make-intro-start"
+            onClick={() => {
+              pushHistory()
+              setPracticeStep('make')
+              setMakeSentenceAnswer('')
+              setSubmittedMakeSentenceAnswer('')
+            }}
+          >
+            START
+          </button>
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="grammar-practice-screen">
-      <section className="grammar-practice-content">
+      <section className={`grammar-practice-content grammar-practice-content-${practiceStep}`}>
         {isReviewStep ? (
           <header className="grammar-practice-header grammar-practice-header-review">
             <button type="button" className="grammar-practice-close" onClick={onBack} aria-label="닫기">
@@ -474,7 +645,7 @@ function GrammarPracticePage({
           </header>
         )}
 
-        {isReviewStep || isReadingStep || isListeningStep || isNextGrammarStep || isNextGrammarRulesStep ? null : (
+        {isFillIntroStep || isMakeIntroStep || isReviewStep || isReadingStep || isListeningStep || isNextGrammarStep || isNextGrammarRulesStep ? null : (
           <div className="grammar-practice-progress" role="list" aria-label="grammar practice progress">
             <span className="grammar-practice-progress-track" aria-hidden="true" />
             <span className="grammar-practice-progress-fill" style={{ width: '17.5%' }} aria-hidden="true" />
@@ -484,7 +655,7 @@ function GrammarPracticePage({
                 className={`grammar-practice-progress-dot ${
                   index <= 0 ? 'grammar-practice-progress-dot-past' : 'grammar-practice-progress-dot-upcoming'
                 }`}
-                style={{ left: `${((index + 1) / 7) * 100}%` }}
+                style={{ left: `${progressDotPositions[index]}%` }}
                 role="listitem"
                 aria-current={index === 0 ? 'step' : undefined}
               />
@@ -492,124 +663,133 @@ function GrammarPracticePage({
           </div>
         )}
 
-        {isReviewStep || isReadingStep || isListeningStep || isNextGrammarStep || isNextGrammarRulesStep ? null : (
+        {isFillIntroStep || isMakeIntroStep || isReviewStep || isReadingStep || isListeningStep || isNextGrammarStep || isNextGrammarRulesStep ? null : (
           <p className="grammar-practice-guide">
-            {isMakeStep ? 'Make your own sentance.' : isFillStep ? 'Fill in the blanks.' : 'Choose the correct answer.'}
+            {isMakeStep ? 'Make your own sentence.' : isFillStep ? 'Fill in the blanks.' : 'Choose the correct answer.'}
           </p>
         )}
 
         {isReviewStep ? (
           <section className="grammar-practice-review-screen">
-            <section className="grammar-practice-review-section">
-              <h2 className="grammar-practice-review-question">How was this class?</h2>
-              <div className="grammar-practice-review-choice-row" role="list" aria-label="class difficulty">
-                <button
-                  type="button"
-                  className={`grammar-practice-review-choice-button ${reviewDifficulty === 'EASY' ? 'is-selected' : ''}`}
-                  role="listitem"
-                  aria-label="Easy"
-                  aria-pressed={reviewDifficulty === 'EASY'}
-                  onClick={() => setReviewDifficulty('EASY')}
-                />
-                <button
-                  type="button"
-                  className={`grammar-practice-review-choice-button ${reviewDifficulty === 'NORMAL' ? 'is-selected' : ''}`}
-                  role="listitem"
-                  aria-label="Normal"
-                  aria-pressed={reviewDifficulty === 'NORMAL'}
-                  onClick={() => setReviewDifficulty('NORMAL')}
-                />
-                <button
-                  type="button"
-                  className={`grammar-practice-review-choice-button ${reviewDifficulty === 'HARD' ? 'is-selected' : ''}`}
-                  role="listitem"
-                  aria-label="Hard"
-                  aria-pressed={reviewDifficulty === 'HARD'}
-                  onClick={() => setReviewDifficulty('HARD')}
-                />
-              </div>
-              <div className="grammar-practice-review-label-row grammar-practice-review-label-row-three">
-                <span>easy</span>
-                <span>normal</span>
-                <span>hard</span>
-              </div>
-            </section>
+            <div className="grammar-practice-review-main">
+              <section className="grammar-practice-review-hero" aria-label="lesson completion">
+                <h2 className="grammar-practice-review-hero-title">Well done!</h2>
+                <p className="grammar-practice-review-hero-subtitle">You&apos;ve finished grammar</p>
+              </section>
 
-            <section className="grammar-practice-review-section grammar-practice-review-section-complete">
-              <h2 className="grammar-practice-review-subtitle">Mark has complete?</h2>
-              <div className="grammar-practice-review-choice-row grammar-practice-review-choice-row-binary" role="list" aria-label="mark complete">
-                <button
-                  type="button"
-                  className={`grammar-practice-review-choice-button ${reviewMarkComplete === true ? 'is-selected' : ''}`}
-                  role="listitem"
-                  aria-label="Yes"
-                  aria-pressed={reviewMarkComplete === true}
-                  onClick={() => setReviewMarkComplete(true)}
-                />
-                <button
-                  type="button"
-                  className={`grammar-practice-review-choice-button ${reviewMarkComplete === false ? 'is-selected' : ''}`}
-                  role="listitem"
-                  aria-label="No"
-                  aria-pressed={reviewMarkComplete === false}
-                  onClick={() => setReviewMarkComplete(false)}
-                />
-              </div>
-              <div className="grammar-practice-review-label-row grammar-practice-review-label-row-binary">
-                <span>YES</span>
-                <span>NO</span>
-              </div>
-            </section>
+              <section className="grammar-practice-review-section">
+                <h2 className="grammar-practice-review-question">How was this class?</h2>
+                <div className="grammar-practice-review-choice-row" role="list" aria-label="class difficulty">
+                  <button
+                    type="button"
+                    className={`grammar-practice-review-choice-button ${reviewDifficulty === 'EASY' ? 'is-selected' : ''}`}
+                    role="listitem"
+                    aria-label="Easy"
+                    aria-pressed={reviewDifficulty === 'EASY'}
+                    onClick={() => setReviewDifficulty('EASY')}
+                  >
+                    <img src={reviewEasyImage} alt="" className="grammar-practice-review-choice-image" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className={`grammar-practice-review-choice-button ${reviewDifficulty === 'NORMAL' ? 'is-selected' : ''}`}
+                    role="listitem"
+                    aria-label="Normal"
+                    aria-pressed={reviewDifficulty === 'NORMAL'}
+                    onClick={() => setReviewDifficulty('NORMAL')}
+                  >
+                    <img src={reviewNormalImage} alt="" className="grammar-practice-review-choice-image" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className={`grammar-practice-review-choice-button ${reviewDifficulty === 'HARD' ? 'is-selected' : ''}`}
+                    role="listitem"
+                    aria-label="Hard"
+                    aria-pressed={reviewDifficulty === 'HARD'}
+                    onClick={() => setReviewDifficulty('HARD')}
+                  >
+                    <img src={reviewHardImage} alt="" className="grammar-practice-review-choice-image" aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="grammar-practice-review-label-row grammar-practice-review-label-row-three">
+                  <span>easy</span>
+                  <span>normal</span>
+                  <span>hard</span>
+                </div>
+              </section>
 
-            <section className="grammar-practice-review-section grammar-practice-review-section-notebook">
-              <h2 className="grammar-practice-review-question">Save grammer to personal notebook?</h2>
-              <div className="grammar-practice-review-choice-row grammar-practice-review-choice-row-binary" role="list" aria-label="save grammar to personal notebook">
-                <button
-                  type="button"
-                  className={`grammar-practice-review-choice-button ${reviewSaveScrap === true ? 'is-selected' : ''}`}
-                  role="listitem"
-                  aria-label="Yes"
-                  aria-pressed={reviewSaveScrap === true}
-                  disabled={grammarMaterialId === null}
-                  onClick={() => setReviewSaveScrap(true)}
-                />
-                <button
-                  type="button"
-                  className={`grammar-practice-review-choice-button ${reviewSaveScrap === false ? 'is-selected' : ''}`}
-                  role="listitem"
-                  aria-label="No"
-                  aria-pressed={reviewSaveScrap === false}
-                  onClick={() => setReviewSaveScrap(false)}
-                />
-              </div>
-              <div className="grammar-practice-review-label-row grammar-practice-review-label-row-binary">
-                <span>YES</span>
-                <span>NO</span>
-              </div>
-            </section>
+              <section className="grammar-practice-review-section grammar-practice-review-section-complete">
+                <h2 className="grammar-practice-review-subtitle">Mark as complete?</h2>
+                <div className="grammar-practice-review-pill-row" role="list" aria-label="mark complete">
+                  <button
+                    type="button"
+                    className={`grammar-practice-review-pill-button ${reviewMarkComplete === true ? 'is-selected' : ''}`}
+                    role="listitem"
+                    aria-label="Yes"
+                    aria-pressed={reviewMarkComplete === true}
+                    onClick={() => setReviewMarkComplete(true)}
+                  >
+                    <span className="grammar-practice-review-pill-mark grammar-practice-review-pill-mark-yes" aria-hidden="true" />
+                    <span>Yes</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`grammar-practice-review-pill-button ${reviewMarkComplete === false ? 'is-selected' : ''}`}
+                    role="listitem"
+                    aria-label="No"
+                    aria-pressed={reviewMarkComplete === false}
+                    onClick={() => setReviewMarkComplete(false)}
+                  >
+                    <span className="grammar-practice-review-pill-mark grammar-practice-review-pill-mark-no" aria-hidden="true" />
+                    <span>No</span>
+                  </button>
+                </div>
+              </section>
 
-            {(saveProgress.error || createScrap.error) && (
-              <p className="grammar-practice-review-error">
-                {saveProgress.error?.message || createScrap.error?.message}
-              </p>
-            )}
+              <section className="grammar-practice-review-section grammar-practice-review-section-notebook">
+                <h2 className="grammar-practice-review-question">Save grammar to personal notebook?</h2>
+                <div className="grammar-practice-review-pill-row" role="list" aria-label="save grammar to personal notebook">
+                  <button
+                    type="button"
+                    className={`grammar-practice-review-pill-button ${reviewSaveScrap === true ? 'is-selected' : ''}`}
+                    role="listitem"
+                    aria-label="Yes"
+                    aria-pressed={reviewSaveScrap === true}
+                    disabled={grammarMaterialId === null}
+                    onClick={() => setReviewSaveScrap(true)}
+                  >
+                    <span className="grammar-practice-review-pill-mark grammar-practice-review-pill-mark-yes" aria-hidden="true" />
+                    <span>Yes</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`grammar-practice-review-pill-button ${reviewSaveScrap === false ? 'is-selected' : ''}`}
+                    role="listitem"
+                    aria-label="No"
+                    aria-pressed={reviewSaveScrap === false}
+                    onClick={() => setReviewSaveScrap(false)}
+                  >
+                    <span className="grammar-practice-review-pill-mark grammar-practice-review-pill-mark-no" aria-hidden="true" />
+                    <span>No</span>
+                  </button>
+                </div>
+              </section>
+
+              {(saveProgress.error || createScrap.error) && (
+                <p className="grammar-practice-review-error">
+                  {saveProgress.error?.message || createScrap.error?.message}
+                </p>
+              )}
+            </div>
 
             <div className="grammar-practice-review-action-row">
               <button
                 type="button"
-                className="grammar-practice-review-action-button"
+                className="grammar-practice-review-action-button grammar-practice-review-action-button-primary"
                 disabled={saveProgress.isPending || createScrap.isPending}
                 onClick={() => void handleReviewSubmit('next-grammar')}
               >
-                {saveProgress.isPending || createScrap.isPending ? 'Saving…' : 'Next grammer'}
-              </button>
-              <button
-                type="button"
-                className="grammar-practice-review-action-button"
-                disabled={saveProgress.isPending || createScrap.isPending}
-                onClick={() => void handleReviewSubmit('reading')}
-              >
-                To reading
+                {saveProgress.isPending || createScrap.isPending ? 'SAVING...' : 'CONTINUE'}
               </button>
             </div>
           </section>
@@ -619,25 +799,25 @@ function GrammarPracticePage({
           <section className="grammar-practice-next-grammar-screen">
             <div className="grammar-practice-reading-toggle-row">
               <div className="grammar-practice-reading-toggle-group">
-                <span className="grammar-practice-reading-toggle-label">Show Grammar</span>
+                <span className="grammar-practice-reading-toggle-label">Mark Grammar</span>
                 <button
                   type="button"
                   className={`grammar-practice-reading-switch ${showGrammar ? 'grammar-practice-reading-switch-active' : ''}`}
                   onClick={toggleShowGrammar}
                   aria-pressed={showGrammar}
-                  aria-label="Show Grammar"
+                  aria-label="Mark Grammar"
                 >
                   <span className="grammar-practice-reading-switch-thumb" />
                 </button>
               </div>
               <div className="grammar-practice-reading-toggle-group">
-                <span className="grammar-practice-reading-toggle-label">Show Vocab</span>
+                <span className="grammar-practice-reading-toggle-label">Mark Vocab</span>
                 <button
                   type="button"
                   className={`grammar-practice-reading-switch ${showVocab ? 'grammar-practice-reading-switch-active' : ''}`}
                   onClick={toggleShowVocab}
                   aria-pressed={showVocab}
-                  aria-label="Show Vocab"
+                  aria-label="Mark Vocab"
                 >
                   <span className="grammar-practice-reading-switch-thumb" />
                 </button>
@@ -645,7 +825,7 @@ function GrammarPracticePage({
             </div>
 
             <section className="grammar-practice-next-grammar-section" ref={nextGrammarLessonRef}>
-              <h2 className="grammar-practice-next-grammar-heading">Grammar explation</h2>
+              <h2 className="grammar-practice-next-grammar-heading">Grammar explanation</h2>
               <div className="grammar-practice-next-grammar-description" dir="rtl">
                 <p className="grammar-practice-next-grammar-description-line">הזמנה לפעולה.</p>
                 <p className="grammar-practice-next-grammar-description-line">"שנעשה (משהו)?"</p>
@@ -673,12 +853,14 @@ function GrammarPracticePage({
             <section className="grammar-practice-next-grammar-examples-section">
               <h2 className="grammar-practice-next-grammar-heading">Examples</h2>
               <div className="grammar-practice-next-grammar-hero-row">
-                <img src={peopleIcon} alt="" className="grammar-practice-next-grammar-people-icon" aria-hidden="true" />
+                <span className="grammar-practice-next-grammar-example-avatar grammar-practice-next-grammar-example-avatar-left" aria-hidden="true">
+                  <img src={exampleLeftImage} alt="" />
+                </span>
                 <div className="grammar-practice-next-grammar-bubble-stack">
                   <div className="grammar-practice-next-grammar-bubble-row">
                     <div className="grammar-practice-next-grammar-bubble">
-                      <div>{renderNextGrammarHeroText()}</div>
-                      {visibleExampleTranslations.hero ? (
+                      <div>{renderNextGrammarExampleTokens(nextGrammarExamples[0].tokens)}</div>
+                      {visibleExampleTranslations[nextGrammarExamples[0].id] ? (
                         <div
                           className="grammar-practice-next-grammar-translation grammar-practice-next-grammar-translation-left"
                           dir={isTranslationRtl ? 'rtl' : 'ltr'}
@@ -691,7 +873,10 @@ function GrammarPracticePage({
                       type="button"
                       className="grammar-practice-next-grammar-translation-toggle"
                       onClick={() =>
-                        setVisibleExampleTranslations((prev) => ({ ...prev, hero: !prev.hero }))
+                        setVisibleExampleTranslations((prev) => ({
+                          ...prev,
+                          [nextGrammarExamples[0].id]: !prev[nextGrammarExamples[0].id],
+                        }))
                       }
                       aria-label="번역 보기"
                     >
@@ -701,17 +886,19 @@ function GrammarPracticePage({
                 </div>
               </div>
               <div className="grammar-practice-next-grammar-chat">
-                {nextGrammarExamples.slice(1).map((example, index) => (
+                {nextGrammarExamples.slice(1).map((example) => (
                   <div
-                    key={`${example.text}-${index}`}
+                    key={example.id}
                     className={`grammar-practice-next-grammar-message grammar-practice-next-grammar-message-${example.side}`}
                   >
-                    <img src={peopleIcon} alt="" className="grammar-practice-next-grammar-avatar" aria-hidden="true" />
+                    <span className="grammar-practice-next-grammar-example-avatar grammar-practice-next-grammar-example-avatar-right" aria-hidden="true">
+                      <img src={exampleRightImage} alt="" />
+                    </span>
                     <div className="grammar-practice-next-grammar-bubble-stack">
                       <div className="grammar-practice-next-grammar-bubble-row">
                         <div className="grammar-practice-next-grammar-bubble">
-                          <div>{renderNextGrammarChatText(example.text, index)}</div>
-                          {visibleExampleTranslations[`chat-${index}`] ? (
+                          <div>{renderNextGrammarExampleTokens(example.tokens)}</div>
+                          {visibleExampleTranslations[example.id] ? (
                             <div
                               className={`grammar-practice-next-grammar-translation grammar-practice-next-grammar-translation-${example.side}`}
                               dir={isTranslationRtl ? 'rtl' : 'ltr'}
@@ -726,7 +913,7 @@ function GrammarPracticePage({
                           onClick={() =>
                             setVisibleExampleTranslations((prev) => ({
                               ...prev,
-                              [`chat-${index}`]: !prev[`chat-${index}`],
+                              [example.id]: !prev[example.id],
                             }))
                           }
                           aria-label="번역 보기"
@@ -764,7 +951,7 @@ function GrammarPracticePage({
             {activeNextGrammarDialog ? (
               <div className="grammar-practice-next-grammar-note-backdrop" role="presentation" onClick={() => setActiveNextGrammarDialog(null)}>
                 <div
-                  className="grammar-practice-next-grammar-note-dialog"
+                  className={`grammar-practice-next-grammar-note-dialog grammar-practice-next-grammar-note-dialog-${activeNextGrammarDialog.kind}`}
                   role="dialog"
                   aria-modal="true"
                   aria-labelledby="next-grammar-note-title"
@@ -776,7 +963,7 @@ function GrammarPracticePage({
                         ? nextGrammarNotes[activeNextGrammarDialog.id].title
                         : nextGrammarVocabNotes[activeNextGrammarDialog.id].title}
                     </h3>
-                    <img src={noteAddIcon} alt="" className="grammar-practice-next-grammar-note-icon" aria-hidden="true" />
+                    <span className="grammar-practice-next-grammar-note-plus" aria-hidden="true" />
                   </div>
                   <p
                     className={`grammar-practice-next-grammar-note-description ${
@@ -798,15 +985,7 @@ function GrammarPracticePage({
           </section>
         ) : isNextGrammarRulesStep ? (
           <section className="grammar-practice-next-grammar-rules-screen">
-            <p className="grammar-practice-next-grammar-rules-intro" dir="rtl">(תיבה 1) חוקי הצורה:</p>
-            <div className="grammar-practice-next-grammar-rules-points" dir="rtl">
-              <p className="grammar-practice-next-grammar-rules-point">* צורה אך ורק של דיבור</p>
-              <p className="grammar-practice-next-grammar-rules-point">* כאשר הצורה מופיעה, בהכרח מדובר על שני אנשים</p>
-              <p className="grammar-practice-next-grammar-rules-point">* ההברה 까 מופיעה בצורות שאלה, ועל כן זוהי צורת<br />שאלה בלבד</p>
-              <p className="grammar-practice-next-grammar-rules-point">* מצורפת לפעלים בלבד (לעשות משהו ביחד)</p>
-              <p className="grammar-practice-next-grammar-rules-point">* ניתן להוסיף את המילה 같이 (ביחד) וניתן להשמיט<br />אותה והמשמעות תהיה זהה</p>
-            </div>
-            <h2 className="grammar-practice-next-grammar-rules-heading">Grammar explation</h2>
+            <h2 className="grammar-practice-next-grammar-rules-heading">Grammar explanation</h2>
             <div className="grammar-practice-next-grammar-rules-english">
               <div className="grammar-practice-next-grammar-rules-english-row">
                 <span className="grammar-practice-next-grammar-rules-bullet" aria-hidden="true">•</span>
@@ -828,6 +1007,9 @@ function GrammarPracticePage({
                 <span className="grammar-practice-next-grammar-rules-bullet" aria-hidden="true">•</span>
                 <p className="grammar-practice-next-grammar-rules-english-line">The word 같이 ("together") can be added or omitted, and the meaning remains the same</p>
               </div>
+            </div>
+            <div className="grammar-practice-next-grammar-rules-character-wrap" aria-hidden="true">
+              <img src={rulesImage} alt="" className="grammar-practice-next-grammar-rules-character" />
             </div>
             <div className="grammar-practice-next-grammar-actions">
               <button
@@ -854,25 +1036,25 @@ function GrammarPracticePage({
           <section className="grammar-practice-listening-screen">
             <div className="grammar-practice-reading-toggle-row">
               <div className="grammar-practice-reading-toggle-group">
-                <span className="grammar-practice-reading-toggle-label">Show Grammar</span>
+                <span className="grammar-practice-reading-toggle-label">Mark Grammar</span>
                 <button
                   type="button"
                   className={`grammar-practice-reading-switch ${showGrammar ? 'grammar-practice-reading-switch-active' : ''}`}
                   onClick={toggleShowGrammar}
                   aria-pressed={showGrammar}
-                  aria-label="Show Grammar"
+                  aria-label="Mark Grammar"
                 >
                   <span className="grammar-practice-reading-switch-thumb" />
                 </button>
               </div>
               <div className="grammar-practice-reading-toggle-group">
-                <span className="grammar-practice-reading-toggle-label">Show Vocab</span>
+                <span className="grammar-practice-reading-toggle-label">Mark Vocab</span>
                 <button
                   type="button"
                   className={`grammar-practice-reading-switch ${showVocab ? 'grammar-practice-reading-switch-active' : ''}`}
                   onClick={toggleShowVocab}
                   aria-pressed={showVocab}
-                  aria-label="Show Vocab"
+                  aria-label="Mark Vocab"
                 >
                   <span className="grammar-practice-reading-switch-thumb" />
                 </button>
@@ -1000,25 +1182,25 @@ function GrammarPracticePage({
           <section className="grammar-practice-reading-screen">
             <div className="grammar-practice-reading-toggle-row">
               <div className="grammar-practice-reading-toggle-group">
-                <span className="grammar-practice-reading-toggle-label">Show Grammar</span>
+                <span className="grammar-practice-reading-toggle-label">Mark Grammar</span>
                 <button
                   type="button"
                   className={`grammar-practice-reading-switch ${showGrammar ? 'grammar-practice-reading-switch-active' : ''}`}
                   onClick={toggleShowGrammar}
                   aria-pressed={showGrammar}
-                  aria-label="Show Grammar"
+                  aria-label="Mark Grammar"
                 >
                   <span className="grammar-practice-reading-switch-thumb" />
                 </button>
               </div>
               <div className="grammar-practice-reading-toggle-group">
-                <span className="grammar-practice-reading-toggle-label">Show Vocab</span>
+                <span className="grammar-practice-reading-toggle-label">Mark Vocab</span>
                 <button
                   type="button"
                   className={`grammar-practice-reading-switch ${showVocab ? 'grammar-practice-reading-switch-active' : ''}`}
                   onClick={toggleShowVocab}
                   aria-pressed={showVocab}
-                  aria-label="Show Vocab"
+                  aria-label="Mark Vocab"
                 >
                   <span className="grammar-practice-reading-switch-thumb" />
                 </button>
@@ -1179,28 +1361,10 @@ function GrammarPracticePage({
           <>
             <section
               className={`grammar-practice-question-card grammar-practice-question-card-make ${
-                isCorrectAnswer ? 'grammar-practice-question-card-correct' : ''
-              } ${isWrongAnswer ? 'grammar-practice-question-card-wrong' : ''}`}
+                isWrongAnswer ? 'is-wrong' : ''
+              }`}
             >
               <div className="grammar-practice-question-stack grammar-practice-question-stack-make">
-                {isCorrectAnswer ? (
-                  <div className="grammar-practice-correct-feedback grammar-practice-correct-feedback-make">
-                    <span className="grammar-practice-correct-icon">
-                      <img src={checkIconWhite} alt="" className="grammar-practice-correct-icon-mark" aria-hidden="true" />
-                    </span>
-                    <span className="grammar-practice-correct-text">잘했어요!</span>
-                  </div>
-                ) : null}
-                {isWrongAnswer ? (
-                  <div className="grammar-practice-wrong-feedback">
-                    <span className="grammar-practice-wrong-icon" aria-hidden="true">
-                      <svg className="grammar-practice-wrong-icon-mark" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="M8 2L2 8M2 2L8 8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </span>
-                    <span className="grammar-practice-wrong-text">틀렸어요!</span>
-                  </div>
-                ) : null}
                 <div className="grammar-practice-make-row" aria-label="sentence building prompt">
                   <span className="grammar-practice-make-token">준호</span>
                   <span className="grammar-practice-make-divider" aria-hidden="true" />
@@ -1215,7 +1379,10 @@ function GrammarPracticePage({
                       className="grammar-practice-answer-input"
                       value={makeSentenceAnswer}
                       enterKeyHint="done"
-                      onChange={(e) => setMakeSentenceAnswer(e.target.value)}
+                      onChange={(e) => {
+                        setMakeSentenceAnswer(e.target.value)
+                        setSubmittedMakeSentenceAnswer('')
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
@@ -1232,35 +1399,46 @@ function GrammarPracticePage({
               </div>
             </section>
             <div className="grammar-practice-learn-more-wrap">
-              <button type="button" className="grammar-practice-learn-more-button">Learn more</button>
+              <button type="button" className="grammar-practice-learn-more-button">Show hint</button>
             </div>
+            {showMakeResultPanel ? (
+              <aside
+                className={`grammar-practice-result-panel grammar-practice-make-result-panel ${
+                  isCorrectAnswer
+                    ? 'grammar-practice-result-panel-correct'
+                    : 'grammar-practice-result-panel-wrong'
+                }`}
+                role="status"
+                aria-live="polite"
+              >
+                <span
+                    className={`grammar-practice-result-icon ${
+                      isCorrectAnswer
+                        ? 'grammar-practice-result-icon-correct'
+                        : 'grammar-practice-result-icon-wrong'
+                    }`}
+                    aria-hidden="true"
+                  />
+                <span className="grammar-practice-result-text">
+                  {isCorrectAnswer ? 'Good Job!' : 'Wrong'}
+                </span>
+                <span className="grammar-practice-result-art" aria-hidden="true">
+                  <span className="grammar-practice-result-art-mark" />
+                  <img src={makeResultImage} alt="" />
+                </span>
+              </aside>
+            ) : null}
           </>
         ) : !isReviewStep ? (
           <>
             <section
               className={`grammar-practice-question-card ${
-                isCorrectAnswer ? 'grammar-practice-question-card-correct' : ''
-              } ${isWrongAnswer ? 'grammar-practice-question-card-wrong' : ''}`}
+                isFillStep ? 'grammar-practice-question-card-fill' : ''
+              } ${!isChoiceStep && !isFillStep && isCorrectAnswer ? 'grammar-practice-question-card-correct' : ''} ${
+                !isChoiceStep && !isFillStep && isWrongAnswer ? 'grammar-practice-question-card-wrong' : ''
+              }`}
             >
               <div className="grammar-practice-question-stack">
-                {isCorrectAnswer ? (
-                  <div className="grammar-practice-correct-feedback">
-                    <span className="grammar-practice-correct-icon">
-                      <img src={checkIconWhite} alt="" className="grammar-practice-correct-icon-mark" aria-hidden="true" />
-                    </span>
-                    <span className="grammar-practice-correct-text">잘했어요!</span>
-                  </div>
-                ) : null}
-                {isWrongAnswer ? (
-                  <div className="grammar-practice-wrong-feedback">
-                    <span className="grammar-practice-wrong-icon" aria-hidden="true">
-                      <svg className="grammar-practice-wrong-icon-mark" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="M8 2L2 8M2 2L8 8" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </span>
-                    <span className="grammar-practice-wrong-text">틀렸어요!</span>
-                  </div>
-                ) : null}
                 <div className="grammar-practice-question-row">
                   <p className="grammar-practice-question-text">{choicePrompt}</p>
                   <div className="grammar-practice-answer-column">
@@ -1292,14 +1470,43 @@ function GrammarPracticePage({
             </section>
 
             {isFillStep ? (
-              <div className="grammar-practice-learn-more-wrap">
-                <button type="button" className="grammar-practice-learn-more-button">Learn more</button>
-              </div>
+              <>
+                <div className="grammar-practice-learn-more-wrap">
+                  <button type="button" className="grammar-practice-learn-more-button">Show hint</button>
+                </div>
+                {showFillResultPanel ? (
+                  <aside
+                    className={`grammar-practice-fill-result-panel ${
+                      isCorrectAnswer
+                        ? 'grammar-practice-fill-result-panel-correct'
+                        : 'grammar-practice-fill-result-panel-wrong'
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span
+                      className={`grammar-practice-choice-result-icon ${
+                        isCorrectAnswer
+                          ? 'grammar-practice-choice-result-icon-correct'
+                          : 'grammar-practice-choice-result-icon-wrong'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className="grammar-practice-fill-result-text">
+                      {isCorrectAnswer ? 'Good Job!' : 'Wrong'}
+                    </span>
+                    <span className="grammar-practice-fill-result-art" aria-hidden="true">
+                      <span className="grammar-practice-fill-result-art-mark" />
+                      <img src={fillResultImage} alt="" />
+                    </span>
+                  </aside>
+                ) : null}
+              </>
             ) : (
               <>
                 <div className="grammar-practice-options" role="list">
                   {questionsLoading && !firstMcq ? (
-                    <p className="grammar-practice-status">Loading…</p>
+                    <p className="grammar-practice-status">Loading...</p>
                   ) : (
                     choiceOptions.map((option) => {
                       const wasRevealed = revealedAnswers.includes(option)
@@ -1310,6 +1517,8 @@ function GrammarPracticePage({
                           key={option}
                           type="button"
                           className={`grammar-practice-option-button ${
+                            selectedAnswer === option ? 'grammar-practice-option-button-selected' : ''
+                          } ${
                             wasRevealed && wasCorrect
                               ? 'grammar-practice-option-button-correct'
                               : wasRevealed && wasWrong
@@ -1332,12 +1541,57 @@ function GrammarPracticePage({
                 <div className="grammar-practice-hint-wrap">
                   <button type="button" className="grammar-practice-hint-button">Show hint</button>
                 </div>
+                {showChoiceFeedbackPanel ? (
+                  <aside
+                    className={`grammar-practice-choice-result-panel ${
+                      isChoiceCorrectFeedback
+                        ? 'grammar-practice-choice-result-panel-correct'
+                        : 'grammar-practice-choice-result-panel-wrong'
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span
+                      className={`grammar-practice-choice-result-icon ${
+                        isChoiceCorrectFeedback
+                          ? 'grammar-practice-choice-result-icon-correct'
+                          : 'grammar-practice-choice-result-icon-wrong'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className="grammar-practice-choice-result-text">
+                      {isChoiceCorrectFeedback ? 'Good Job!' : 'Wrong'}
+                    </span>
+                    <span className="grammar-practice-choice-result-art" aria-hidden="true">
+                      <span className="grammar-practice-choice-result-art-mark" />
+                      <img src={choiceFeedbackImage} alt="" />
+                    </span>
+                  </aside>
+                ) : null}
               </>
             )}
           </>
         ) : null}
 
-        {isReviewStep || isReadingStep || isListeningStep || isNextGrammarStep || isNextGrammarRulesStep ? null : (
+        {showChoiceFeedbackFlash ? (
+          <div
+            className={`grammar-practice-choice-flash ${
+              isChoiceCorrectFeedback
+                ? 'grammar-practice-choice-flash-correct'
+                : 'grammar-practice-choice-flash-wrong'
+            }`}
+            role="alert"
+            aria-live="assertive"
+          >
+            <span className="grammar-practice-choice-flash-mark" aria-hidden="true" />
+            <img src={choiceFeedbackImage} alt="" className="grammar-practice-choice-flash-character" />
+            <span className="grammar-practice-choice-flash-text">
+              {isChoiceCorrectFeedback ? '잘했어요!' : '틀렸어요!'}
+            </span>
+          </div>
+        ) : null}
+
+        {isFillIntroStep || isMakeIntroStep || isReviewStep || isReadingStep || isListeningStep || isNextGrammarStep || isNextGrammarRulesStep ? null : (
           <button
             type="button"
             className={`grammar-practice-next-button ${isFillStep || isMakeStep ? 'grammar-practice-next-button-fill' : ''}`}
@@ -1346,14 +1600,12 @@ function GrammarPracticePage({
               if (!canMoveToNextPracticeStep) return
               if (practiceStep === 'choice') {
                 pushHistory()
-                setPracticeStep('fill')
-                setTypedAnswer('')
-                setSubmittedTypedAnswer('')
+                setPracticeStep('fill-intro')
                 return
               }
               if (practiceStep === 'fill') {
                 pushHistory()
-                setPracticeStep('make')
+                setPracticeStep('make-intro')
                 setMakeSentenceAnswer('')
                 setSubmittedMakeSentenceAnswer('')
                 return
