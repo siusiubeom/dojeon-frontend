@@ -1035,30 +1035,34 @@ function GrammarPracticePage({
             </div>
           </section>
         ) : isListeningStep ? (
-          <section className="grammar-practice-listening-screen">
-            <div className="grammar-practice-reading-toggle-row">
-              <div className="grammar-practice-reading-toggle-group">
-                <span className="grammar-practice-reading-toggle-label">Mark Grammar</span>
+          <section
+            className={`grammar-practice-listening-screen ${
+              showListeningText ? 'grammar-practice-listening-screen-script-visible' : ''
+            }`}
+          >
+            <div className="grammar-practice-listening-toggle-row">
+              <div className="grammar-practice-listening-toggle-group">
+                <span className="grammar-practice-listening-toggle-label">Mark Grammar</span>
                 <button
                   type="button"
-                  className={`grammar-practice-reading-switch ${showGrammar ? 'grammar-practice-reading-switch-active' : ''}`}
+                  className={`grammar-practice-listening-switch ${showGrammar ? 'grammar-practice-listening-switch-active' : ''}`}
                   onClick={toggleShowGrammar}
                   aria-pressed={showGrammar}
                   aria-label="Mark Grammar"
                 >
-                  <span className="grammar-practice-reading-switch-thumb" />
+                  <span className="grammar-practice-listening-switch-thumb" />
                 </button>
               </div>
-              <div className="grammar-practice-reading-toggle-group">
-                <span className="grammar-practice-reading-toggle-label">Mark Vocab</span>
+              <div className="grammar-practice-listening-toggle-group">
+                <span className="grammar-practice-listening-toggle-label">Mark Vocab</span>
                 <button
                   type="button"
-                  className={`grammar-practice-reading-switch ${showVocab ? 'grammar-practice-reading-switch-active' : ''}`}
+                  className={`grammar-practice-listening-switch ${showVocab ? 'grammar-practice-listening-switch-active' : ''}`}
                   onClick={toggleShowVocab}
                   aria-pressed={showVocab}
                   aria-label="Mark Vocab"
                 >
-                  <span className="grammar-practice-reading-switch-thumb" />
+                  <span className="grammar-practice-listening-switch-thumb" />
                 </button>
               </div>
             </div>
@@ -1142,16 +1146,16 @@ function GrammarPracticePage({
             </div>
             <div className="grammar-practice-listening-question-viewport">
               <div className="grammar-practice-listening-question-track">
-                <section className="grammar-practice-reading-question-card grammar-practice-listening-question-card">
-                  <p className="grammar-practice-reading-question-title">Question 1</p>
-                  <p className="grammar-practice-reading-question-prompt">두 사람은 몇시에 만나요?</p>
-                  <div className="grammar-practice-reading-options grammar-practice-listening-options">
+                <section className="grammar-practice-listening-question-card">
+                  <p className="grammar-practice-listening-question-title">Question 1</p>
+                  <p className="grammar-practice-listening-question-prompt">두 사람은 몇시에 만나요?</p>
+                  <div className="grammar-practice-listening-options">
                     {['2:00', '2:30', '3:00', '3:30'].map((option) => (
                       <button
                         key={option}
                         type="button"
-                        className={`grammar-practice-reading-option-button grammar-practice-listening-option-button ${
-                          listeningAnswer === option ? 'grammar-practice-reading-option-button-selected' : ''
+                        className={`grammar-practice-listening-option-button ${
+                          listeningAnswer === option ? 'grammar-practice-listening-option-button-selected' : ''
                         }`}
                         onClick={() => setListeningAnswer(option)}
                       >
@@ -1161,20 +1165,20 @@ function GrammarPracticePage({
                   </div>
                 </section>
                 <section
-                  className="grammar-practice-reading-question-card grammar-practice-listening-question-card grammar-practice-listening-question-card-peek"
+                  className="grammar-practice-listening-question-card grammar-practice-listening-question-card-peek"
                   aria-hidden="true"
                 >
-                  <p className="grammar-practice-reading-question-title">Question 2</p>
+                  <p className="grammar-practice-listening-question-title">Question 2</p>
                 </section>
               </div>
             </div>
-            <div className="grammar-practice-reading-dots" aria-label="listening question progress">
-              <span className="grammar-practice-reading-dot grammar-practice-reading-dot-active" />
-              <span className="grammar-practice-reading-dot" />
+            <div className="grammar-practice-listening-dots" aria-label="listening question progress">
+              <span className="grammar-practice-listening-dot grammar-practice-listening-dot-active" />
+              <span className="grammar-practice-listening-dot" />
             </div>
             <button
               type="button"
-              className={`grammar-practice-reading-next-button ${isListeningComplete ? 'grammar-practice-reading-next-button-active' : ''}`}
+              className={`grammar-practice-listening-next-button ${isListeningComplete ? 'grammar-practice-listening-next-button-active' : ''}`}
               disabled={!isListeningComplete}
             >
               Next
