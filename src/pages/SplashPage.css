@@ -2,7 +2,7 @@
   width: 100%;
   height: 100svh;
   min-height: 100svh;
-  background: #edd9f2;
+  background: var(--dojeon-color-splash-background);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,6 +10,8 @@
   padding: 0;
   margin: 0;
   gap: 30px;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .splash-character {
@@ -20,9 +22,44 @@
 
 .splash-title {
   margin: 0;
-  color: #162f57;
+  color: var(--dojeon-color-primary-900);
   font-size: 40px;
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: normal;
+}
+
+.splash-loading {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(42px, 8svh, 68px);
+  transform: translateX(-50%);
+  width: min(260px, calc(100% - 72px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.splash-loading-text {
+  margin: 0;
+  color: var(--dojeon-color-splash-text);
+  font: var(--dojeon-type-caption);
+  text-align: center;
+}
+
+.splash-progress-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--dojeon-color-gray-100);
+  overflow: hidden;
+}
+
+.splash-progress-fill {
+  display: block;
+  width: 68%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dojeon-color-primary-700);
 }

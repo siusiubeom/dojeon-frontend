@@ -2,14 +2,14 @@
   min-height: 100svh;
   width: min(390px, 100%);
   margin: 0 auto;
-  background: #ffffff;
+  background: var(--dojeon-color-background);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding-bottom: 94px;
   position: relative;
   text-align: left;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  font-family: var(--dojeon-font-en);
 }
 
 .profile-main-content {
@@ -21,11 +21,11 @@
 
 .profile-main-hero {
   position: relative;
-  background: #ececec;
-  border-radius: 0 0 10px 10px;
-  /* 프로필 블록 아래 ~ 회색 영역 하단 = 28px */
+  background: var(--dojeon-color-primary-container-soft);
+  border-radius: 0 0 8px 8px;
   padding: 20px 20px 28px;
   box-sizing: border-box;
+  border-bottom: 1px solid var(--dojeon-color-primary-border);
 }
 
 .profile-main-setting-button {
@@ -49,7 +49,6 @@
 }
 
 .profile-main-identity {
-  /* 설정 버튼 bottom(8.5+25) → 프로필 이미지 top = 13px; 히어로 padding-top 20px 반영 */
   margin-top: 26.5px;
   display: flex;
   align-items: center;
@@ -61,7 +60,8 @@
   width: 92px;
   height: 92px;
   border-radius: 50%;
-  background: #d9d9d9;
+  background: var(--dojeon-color-primary-100);
+  border: 1px solid var(--dojeon-color-primary-border);
   flex: 0 0 auto;
   overflow: hidden;
 }
@@ -81,24 +81,24 @@
 
 .profile-main-greeting {
   margin: 0;
-  color: #000000;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-900);
+  font-family: var(--dojeon-font-en);
   font-size: 20px;
   font-weight: 600;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   word-break: keep-all;
   text-align: left;
 }
 
 .profile-main-meta {
   margin: 7px 0 0;
-  color: #000000;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-700);
+  font-family: var(--dojeon-font-en);
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -115,12 +115,12 @@
 
 .profile-main-section-title {
   margin: 0;
-  color: #000000;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-900);
+  font-family: var(--dojeon-font-en);
   font-size: 20px;
   font-weight: 600;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   text-align: left;
 }
 
@@ -135,18 +135,19 @@
   border: 0;
   background: transparent;
   padding: 0;
-  color: #979797;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-500);
+  font-family: var(--dojeon-font-en);
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   cursor: pointer;
 }
 
 .profile-main-card {
-  background: #ececec;
+  background: var(--dojeon-color-surface);
   border-radius: 8px;
+  border: 1px solid var(--dojeon-color-gray-200);
   box-sizing: border-box;
   text-align: left;
 }
@@ -159,12 +160,12 @@
 
 .profile-main-card-label {
   margin: 0;
-  color: #000000;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-900);
+  font-family: var(--dojeon-font-en);
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   text-align: left;
 }
 
@@ -173,23 +174,23 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
-  color: #525252;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-600);
+  font-family: var(--dojeon-font-en);
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   white-space: nowrap;
   text-align: left;
 }
 
 .profile-main-last-copy strong {
   min-width: 0;
-  color: #000000;
+  color: var(--dojeon-color-primary-900);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left;
@@ -197,12 +198,12 @@
 
 .profile-main-empty-text {
   margin: 12px 0 0;
-  color: #707070;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-500);
+  font-family: var(--dojeon-font-en);
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   text-align: left;
 }
 
@@ -224,19 +225,20 @@
 .profile-main-stat-card strong {
   margin-top: auto;
   align-self: flex-end;
-  color: #000000;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-primary-900);
+  font-family: var(--dojeon-font-en);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   text-align: right;
 }
 
 .profile-main-calendar {
   margin-top: 12px;
-  background: #d9d9d9;
+  background: var(--dojeon-color-surface);
   border-radius: 8px;
+  border: 1px solid var(--dojeon-color-gray-200);
   padding: 18px 18px 22px;
   box-sizing: border-box;
   text-align: left;
@@ -244,12 +246,12 @@
 
 .profile-main-calendar-title {
   margin: 0;
-  color: #000000;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-900);
+  font-family: var(--dojeon-font-en);
   font-size: 16px;
   font-weight: 500;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   text-align: left;
 }
 
@@ -262,23 +264,23 @@
 
 .profile-main-weekdays {
   margin-top: 22px;
-  color: #9f9f9f;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-400);
+  font-family: var(--dojeon-font-en);
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
 }
 
 .profile-main-calendar-grid {
   margin-top: 14px;
   row-gap: 16px;
-  color: #2c2c2c;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-800);
+  font-family: var(--dojeon-font-en);
   font-size: 14px;
   font-weight: 500;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
 }
 
 .profile-main-calendar-day,
@@ -292,7 +294,8 @@
 
 .profile-main-calendar-day-active {
   border-radius: 50%;
-  background: #a3a3a3;
+  background: var(--dojeon-color-primary-300);
+  color: var(--dojeon-color-surface);
 }
 
 .profile-main-achievement-row {
@@ -313,7 +316,8 @@
   aspect-ratio: 1;
   margin: 0 auto;
   border-radius: 50%;
-  background: #d9d9d9;
+  background: var(--dojeon-color-primary-100);
+  border: 1px solid var(--dojeon-color-primary-border);
   overflow: hidden;
 }
 
@@ -327,7 +331,7 @@
 .profile-main-achievement-date,
 .profile-main-achievement-title {
   margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--dojeon-font-en);
   font-weight: 400;
   line-height: normal;
   overflow-wrap: anywhere;
@@ -335,12 +339,12 @@
 
 .profile-main-achievement-date {
   margin-top: 6px;
-  color: #b3b3b3;
+  color: var(--dojeon-color-gray-400);
   font-size: 10px;
 }
 
 .profile-main-achievement-title {
-  color: #000000;
+  color: var(--dojeon-color-gray-900);
   font-size: 12px;
 }
 
@@ -354,9 +358,9 @@
 
 .profile-main-subscription-card {
   margin-top: 12px;
-  min-height: 122px;
   border-radius: 10px;
-  background: #d9d9d9;
+  background: var(--dojeon-color-surface);
+  border: 1px solid var(--dojeon-color-gray-200);
   padding: 24px 10px 10px;
   box-sizing: border-box;
   display: flex;
@@ -366,12 +370,12 @@
 
 .profile-main-subscription-placeholder {
   margin: 0 0 0 12px;
-  color: #707070;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-600);
+  font-family: var(--dojeon-font-en);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
   text-align: left;
 }
 
@@ -380,13 +384,94 @@
   min-height: 48px;
   border: 0;
   border-radius: 10px;
-  background: #b3b3b3;
-  color: #000000;
-  font-family: 'Noto Sans', 'Noto Sans KR', system-ui, sans-serif;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  font-family: var(--dojeon-font-en);
   font-size: 16px;
   font-weight: 500;
   line-height: normal;
-  letter-spacing: -0.28px;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.profile-main-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-main-plan-card {
+  border-radius: 8px;
+  background: var(--dojeon-color-primary-50);
+  border: 1px solid var(--dojeon-color-primary-border);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.profile-main-plan-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.profile-main-plan-title,
+.profile-main-plan-price,
+.profile-main-plan-subtext,
+.profile-main-plan-status,
+.profile-main-plan-benefits {
+  margin: 0;
+  font-family: var(--dojeon-font-en);
+  line-height: normal;
+}
+
+.profile-main-plan-title {
+  color: var(--dojeon-color-gray-900);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.profile-main-plan-price {
+  color: var(--dojeon-color-primary-action);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.profile-main-plan-subtext {
+  margin-top: 6px;
+  color: var(--dojeon-color-gray-500);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.profile-main-plan-benefits {
+  margin-top: 8px;
+  padding-left: 18px;
+  color: var(--dojeon-color-gray-700);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.profile-main-plan-benefits li + li {
+  margin-top: 4px;
+}
+
+.profile-main-plan-status {
+  color: var(--dojeon-color-gray-500);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.profile-main-plan-status button {
+  margin-top: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--dojeon-color-primary-action);
+  font: var(--dojeon-type-button-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
 }
 
@@ -399,7 +484,8 @@
   height: 80px;
   padding: 0 20px env(safe-area-inset-bottom);
   box-sizing: border-box;
-  background: #cfcfcf;
+  background: var(--dojeon-color-surface);
+  border-top: 1px solid var(--dojeon-color-gray-200);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -413,7 +499,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: #000000;
+  color: var(--dojeon-color-gray-300);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -429,14 +515,19 @@
 }
 
 .profile-main-tab-label {
-  color: #000000;
-  font-family: 'Pretendard', 'Noto Sans', system-ui, sans-serif;
+  color: var(--dojeon-color-gray-300);
+  font-family: var(--dojeon-font-en);
   font-size: 8px;
   font-weight: 400;
   line-height: normal;
 }
 
+.profile-main-tab-active {
+  color: var(--dojeon-color-gray-800);
+}
+
 .profile-main-tab-active .profile-main-tab-label {
+  color: var(--dojeon-color-gray-800);
   font-weight: 700;
 }
 

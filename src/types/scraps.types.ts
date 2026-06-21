@@ -26,6 +26,7 @@ export interface ScrapDashboardResponse {
     code: string;
     message: string;
     data: ScrapDashboardData | null;
+    errorCode?: string;
     timestamp: string;
 }
 
@@ -53,12 +54,14 @@ export interface GrammarScrapListData {
     nextCursor: string | null;
 }
 
+export type CardLocales = Record<string, { back?: string; notes?: string }> | null;
+
 export interface VocabScrapCardData {
     id: number;
     wordFront: string;
     wordBack: string;
     notes?: string;
-    locales?: Record<string, { back: string; notes?: string }>;
+    locales?: CardLocales;
     audioUrl: string | null;
     sequence: number;
 }
@@ -66,6 +69,8 @@ export interface VocabScrapCardData {
 export interface VocabScrapItem {
     scrapId: string;
     cardId: number;
+    lessonId?: number;
+    lessonTitle?: string;
     createdAt: string;
     card: VocabScrapCardData | null;
 }
@@ -103,7 +108,10 @@ export interface ScrapCard {
     id: number;
     wordFront: string;
     wordBack: string;
+    notes?: string;
+    locales?: CardLocales;
     audioUrl: string | null;
+    sequence?: number;
 }
 
 export interface CreateScrapData {

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import './ProfileMainPage.css'
 import homeIcon from '../assets/home.svg'
 import editIcon from '../assets/edit.svg'
@@ -5,6 +6,9 @@ import fileIcon from '../assets/file.svg'
 import bookOpenIcon from '../assets/book-open.svg'
 import profileIcon from '../assets/user.svg'
 import settingIcon from '../assets/setting_icon.svg'
+import { useUserMe } from '../hooks/useUserMe.ts'
+import { useSubscriptionPlans } from '../hooks/useSubscriptionPlans.ts'
+import type { UserMeData } from '../types/user.types.ts'
 
 const tabs = [
   { icon: homeIcon, label: 'HOME' },
@@ -15,8 +19,9 @@ const tabs = [
 ]
 
 interface ProfileUser {
-  userId: number
+  userId: string
   email: string
+  hasPassword: boolean
   username: string
   nickname: string
   phoneNumber: string | null
@@ -24,6 +29,9 @@ interface ProfileUser {
   profileImgUrl: string | null
   joinedYear: number
   subscriptionTier: string
+  subscriptionPlanId: string | null
+  subscriptionExpiresAt: string | null
+  isOnboarded: boolean
 }
 
 interface ProfileSettings {
@@ -75,8 +83,9 @@ interface ProfileMainData {
 
 const profileMainMockData: ProfileMainData = {
   user: {
-    userId: 100,
+    userId: '100',
     email: 'example@email.com',
+    hasPassword: true,
     username: 'username',
     nickname: 'nickname',
     phoneNumber: '010-0000-0000',
@@ -84,6 +93,9 @@ const profileMainMockData: ProfileMainData = {
     profileImgUrl: null,
     joinedYear: 2026,
     subscriptionTier: 'FREE',
+    subscriptionPlanId: null,
+    subscriptionExpiresAt: null,
+    isOnboarded: true,
   },
   settings: {
     motherLanguage: 'EN',
@@ -127,6 +139,64 @@ const profileMainMockData: ProfileMainData = {
     },
   ],
 }
+
+const getJoinedYear = (createdAt: string) => {
+  const date = new Date(createdAt)
+  return Number.isNaN(date.getTime()) ? new Date().getFullYear() : date.getFullYear()
+}
+
+const mapUserMeToProfileData = (data: UserMeData): ProfileMainData => ({
+  user: {
+    userId: data.profile.userId,
+    email: data.profile.email,
+    hasPassword: data.profile.hasPassword ?? true,
+    username: data.profile.username ?? data.profile.email.split('@')[0],
+    nickname: data.profile.nickname ?? data.profile.username ?? 'Dojeon',
+    phoneNumber: data.profile.phoneNumber,
+    birthday: data.profile.birthday,
+    profileImgUrl: data.profile.profileImgUrl,
+    joinedYear: getJoinedYear(data.profile.createdAt),
+    subscriptionTier: data.profile.subscriptionTier,
+    subscriptionPlanId: data.profile.subscriptionPlanId,
+    subscriptionExpiresAt: data.profile.subscriptionExpiresAt,
+    isOnboarded: data.profile.isOnboarded ?? false,
+  },
+  settings: {
+    motherLanguage: data.profile.motherLanguage,
+    proficiencyLevel: data.profile.proficiencyLevel,
+    dailyGoalMin: data.profile.dailyGoalMin,
+    learningGoal: data.profile.learningGoal,
+    isPushNotificationOn: data.profile.isPushNotificationOn,
+    isMarketingAgreed: data.profile.isMarketingAgreed,
+  },
+  recentCourse: data.recentCourse
+    ? {
+      courseId: data.recentCourse.courseId,
+      lessonId: data.recentCourse.lessonId,
+      sectionId: data.recentCourse.sectionId,
+      courseTitle: data.recentCourse.courseTitle,
+      lessonTitle: data.recentCourse.lessonTitle,
+      sectionSubtitle: data.recentCourse.grammarPreview ?? data.recentCourse.sectionTitle,
+    }
+    : null,
+  stats: {
+    totalCompletedLessons: data.stats.totalCompletedLessons,
+    totalStudyMin: data.stats.totalStudyMin,
+    currentStreak: data.stats.currentStreak,
+    bestStreak: data.stats.bestStreak,
+  },
+  attendance: {
+    year: data.attendance.year,
+    month: data.attendance.month,
+    activeDays: data.attendance.activeDays,
+  },
+  recentAchievements: data.recentAchievements.map((achievement) => ({
+    badgeId: achievement.badgeId,
+    title: achievement.title,
+    imageUrl: achievement.imageUrl,
+    earnedAt: achievement.earnedAt,
+  })),
+})
 
 const monthNames = [
   'January',
@@ -204,18 +274,31 @@ function ProfileMainPage({
   onOpenNotebook,
   onOpenSetting,
 }: ProfileMainPageProps) {
+  const { data: userMeData } = useUserMe()
+  const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false)
+  const {
+    data: subscriptionPlanData,
+    loading: subscriptionPlansLoading,
+    error: subscriptionPlansError,
+    refetch: refetchSubscriptionPlans,
+  } = useSubscriptionPlans(showSubscriptionPlans)
+  const apiProfileData = userMeData ? mapUserMeToProfileData(userMeData) : null
   const profileData = {
-    ...profileMainMockData,
+    ...(apiProfileData ?? profileMainMockData),
     user: {
-      ...profileMainMockData.user,
-      nickname: nickname.trim() || profileMainMockData.user.nickname,
-      username: username.trim() || profileMainMockData.user.username,
+      ...(apiProfileData?.user ?? profileMainMockData.user),
+      nickname: apiProfileData?.user.nickname ?? (nickname.trim() || profileMainMockData.user.nickname),
+      username: apiProfileData?.user.username ?? (username.trim() || profileMainMockData.user.username),
     },
   }
   const { user, recentCourse, stats, attendance, recentAchievements } = profileData
   const calendarDays = getCalendarDays(attendance.year, attendance.month)
   const calendarTitle = `${monthNames[attendance.month - 1]} ${attendance.year}`
-  const visibleAchievements = recentAchievements.slice(0, 4)
+  const [showAllAchievements, setShowAllAchievements] = useState(false)
+  const visibleAchievements = showAllAchievements
+    ? recentAchievements
+    : recentAchievements.slice(0, 4)
+  const canToggleAchievements = recentAchievements.length > 4
   const subscriptionCopy =
     user.subscriptionTier === 'FREE'
       ? 'Upgrade your plan for more learning features.'
@@ -229,7 +312,7 @@ function ProfileMainPage({
             type="button"
             className="profile-main-setting-button"
             onClick={onOpenSetting}
-            aria-label="설정 열기"
+            aria-label="Open settings"
           >
             <img src={settingIcon} alt="" aria-hidden="true" />
           </button>
@@ -242,12 +325,12 @@ function ProfileMainPage({
             </div>
             <div className="profile-main-copy">
               <h1 className="profile-main-greeting">
-                안녕하세요!
+                Hello!
                 <br />
-                {user.nickname}님!
+                {user.nickname}!
               </h1>
               <p className="profile-main-meta">
-                @{user.username} <span aria-hidden="true">·</span> joined {user.joinedYear}
+                @{user.username} <span aria-hidden="true">/</span> joined {user.joinedYear}
               </p>
             </div>
           </div>
@@ -323,9 +406,15 @@ function ProfileMainPage({
         <section className="profile-main-section">
           <div className="profile-main-section-header">
             <h2 className="profile-main-section-title">Achievements</h2>
-            <button type="button" className="profile-main-section-link">
-              see more
-            </button>
+            {canToggleAchievements ? (
+              <button
+                type="button"
+                className="profile-main-section-link"
+                onClick={() => setShowAllAchievements((current) => !current)}
+              >
+                {showAllAchievements ? 'see less' : 'see more'}
+              </button>
+            ) : null}
           </div>
           <div className="profile-main-achievement-row">
             {visibleAchievements.length > 0 ? (
@@ -358,9 +447,49 @@ function ProfileMainPage({
           <h2 className="profile-main-section-title">Subscriptions</h2>
           <article className="profile-main-subscription-card">
             <p className="profile-main-subscription-placeholder">{subscriptionCopy}</p>
-            <button type="button" className="profile-main-subscribe-button">
+            <button
+              type="button"
+              className="profile-main-subscribe-button"
+              onClick={() => setShowSubscriptionPlans((current) => !current)}
+            >
               {user.subscriptionTier === 'FREE' ? 'Subscribe now' : 'Manage subscription'}
             </button>
+
+            {showSubscriptionPlans ? (
+              <div className="profile-main-plan-list">
+                {subscriptionPlansLoading ? (
+                  <p className="profile-main-plan-status">Loading plans...</p>
+                ) : subscriptionPlansError ? (
+                  <div className="profile-main-plan-status">
+                    <p>{subscriptionPlansError.message}</p>
+                    <button type="button" onClick={() => void refetchSubscriptionPlans()}>
+                      Retry
+                    </button>
+                  </div>
+                ) : subscriptionPlanData?.plans.length ? (
+                  subscriptionPlanData.plans.map((plan) => (
+                    <article key={plan.planId} className="profile-main-plan-card">
+                      <div className="profile-main-plan-head">
+                        <p className="profile-main-plan-title">{plan.title}</p>
+                        <p className="profile-main-plan-price">{plan.priceText}</p>
+                      </div>
+                      {plan.subText ? (
+                        <p className="profile-main-plan-subtext">{plan.subText}</p>
+                      ) : null}
+                      {plan.benefits.length > 0 ? (
+                        <ul className="profile-main-plan-benefits">
+                          {plan.benefits.map((benefit) => (
+                            <li key={benefit}>{benefit}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </article>
+                  ))
+                ) : (
+                  <p className="profile-main-plan-status">No plans available.</p>
+                )}
+              </div>
+            ) : null}
           </article>
         </section>
       </section>
