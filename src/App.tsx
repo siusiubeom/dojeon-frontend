@@ -584,6 +584,7 @@ function App() {
         <GrammarPracticePage
           initialPracticeStep={grammarPracticeInitialStep}
           language={language}
+          sectionId={selectedSectionId!}
           onBack={() => {
             setScreen(grammarPracticeBackScreen)
           }}
