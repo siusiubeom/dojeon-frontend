@@ -47,12 +47,14 @@ export interface SectionMaterialResponse {
     timestamp: string;
 }
 
+export type CardLocales = Record<string, { back?: string; notes?: string }> | null;
+
 export interface SectionCard {
     id: number;
     wordFront: string;
     wordBack: string;
     notes?: string;
-    locales?: Record<string, { back: string; notes?: string }>;
+    locales?: CardLocales;
     audioUrl: string | null;
     sequence: number;
     isScraped: boolean;

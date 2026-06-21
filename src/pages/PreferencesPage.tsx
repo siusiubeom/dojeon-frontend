@@ -8,9 +8,12 @@ interface PreferencesPageProps {
   koreanGoal: string
   onSave: (values: {
     language: string
+    koreanLevel: string
     dailyGoal: string
     koreanGoal: string
-  }) => void
+  }) => void | Promise<void>
+  isSaving?: boolean
+  saveError?: string | null
   onBack: () => void
 }
 
@@ -20,25 +23,48 @@ function PreferencesPage({
   dailyGoal,
   koreanGoal,
   onSave,
+  isSaving = false,
+  saveError = null,
   onBack,
 }: PreferencesPageProps) {
   const koreanGoalOptions = ['Travel', 'Hobby', 'Study Abroad', 'Career']
   const [draftLanguage, setDraftLanguage] = useState(language)
+  const [draftKoreanLevel, setDraftKoreanLevel] = useState(koreanLevel)
   const [draftDailyGoal, setDraftDailyGoal] = useState(dailyGoal)
   const [draftKoreanGoal, setDraftKoreanGoal] = useState(koreanGoal)
   const [editing, setEditing] = useState({
     language: false,
+    koreanLevel: false,
     dailyGoal: false,
   })
   const [isKoreanGoalSheetOpen, setIsKoreanGoalSheetOpen] = useState(false)
 
   const hasPendingChanges =
     draftLanguage !== language ||
+    draftKoreanLevel !== koreanLevel ||
     draftDailyGoal !== dailyGoal ||
     draftKoreanGoal !== koreanGoal
 
-  const toggleEditing = (key: 'language' | 'dailyGoal') => {
+  const toggleEditing = (key: 'language' | 'koreanLevel' | 'dailyGoal') => {
     setEditing((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const handleSave = async () => {
+    try {
+      await onSave({
+        language: draftLanguage,
+        koreanLevel: draftKoreanLevel,
+        dailyGoal: draftDailyGoal,
+        koreanGoal: draftKoreanGoal,
+      })
+      setEditing({
+        language: false,
+        koreanLevel: false,
+        dailyGoal: false,
+      })
+    } catch {
+      // The parent mutation exposes the error message through saveError.
+    }
   }
 
   const items = [
@@ -53,8 +79,12 @@ function PreferencesPage({
     },
     {
       label: 'Korean Level',
-      value: koreanLevel || '-',
-      editable: false,
+      value: draftKoreanLevel || '-',
+      editable: true,
+      isEditing: editing.koreanLevel,
+      onEdit: () => toggleEditing('koreanLevel'),
+      onChange: (value: string) => setDraftKoreanLevel(value),
+      inputValue: draftKoreanLevel,
     },
     {
       label: 'Daily Goal',
@@ -82,7 +112,7 @@ function PreferencesPage({
             type="button"
             className="preferences-back"
             onClick={onBack}
-            aria-label="뒤로 가기"
+            aria-label="Go back"
           >
             <svg
               className="preferences-back-icon"
@@ -137,23 +167,21 @@ function PreferencesPage({
         </section>
 
         {hasPendingChanges ? (
-          <button
-            type="button"
-            className="preferences-save-button"
-            onClick={() => {
-              onSave({
-                language: draftLanguage,
-                dailyGoal: draftDailyGoal,
-                koreanGoal: draftKoreanGoal,
-              })
-              setEditing({
-                language: false,
-                dailyGoal: false,
-              })
-            }}
-          >
-            Save
-          </button>
+          <>
+            <button
+              type="button"
+              className="preferences-save-button"
+              disabled={isSaving}
+              onClick={() => void handleSave()}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+            {saveError ? (
+              <p className="preferences-save-error" role="alert">
+                {saveError}
+              </p>
+            ) : null}
+          </>
         ) : null}
       </section>
 

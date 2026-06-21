@@ -2,9 +2,10 @@
   min-height: 100svh;
   width: min(390px, 100%);
   margin: 0 auto;
-  background: #ffffff;
+  background: var(--dojeon-color-background);
   display: flex;
   justify-content: center;
+  font-family: var(--dojeon-font-en);
 }
 
 .preferences-content {
@@ -33,7 +34,7 @@
   padding: 0;
   border-radius: 50%;
   background: transparent;
-  color: #111111;
+  color: var(--dojeon-color-gray-800);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -47,11 +48,9 @@
 
 .preferences-title {
   margin: 0;
-  color: #000000;
-  font-size: 20px;
-  font-weight: 500;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-subtitle-large);
   letter-spacing: 0.05em;
-  line-height: 1.2;
 }
 
 .preferences-list {
@@ -67,7 +66,8 @@
   min-height: 79px;
   padding: 14px 18px;
   border-radius: 8px;
-  background: #ececec;
+  background: var(--dojeon-color-surface);
+  border: 1px solid var(--dojeon-color-gray-200);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -84,10 +84,8 @@
 
 .preferences-label {
   margin: 0;
-  color: #707070;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.2;
+  color: var(--dojeon-color-gray-500);
+  font: var(--dojeon-type-button-medium);
   text-align: left;
 }
 
@@ -102,10 +100,8 @@
 
 .preferences-value {
   margin: 0;
-  color: #000000;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.2;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-subtitle-medium);
   text-align: left;
   word-break: break-word;
   flex: 1;
@@ -115,7 +111,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: #898989;
+  color: var(--dojeon-color-gray-500);
   font-size: 16px;
   font-weight: 400;
   line-height: 1.2;
@@ -131,17 +127,17 @@
   border-radius: 6px;
   padding: 0 10px;
   box-sizing: border-box;
-  background: #ffffff;
-  color: #000000;
+  background: var(--dojeon-color-primary-50);
+  color: var(--dojeon-color-gray-900);
   font-size: 16px;
   font-weight: 500;
   line-height: 1.2;
   text-align: left;
-  caret-color: #000000;
+  caret-color: var(--dojeon-color-primary-action);
 }
 
 .preferences-input:focus {
-  outline: 1px solid #c6c6c6;
+  outline: 1px solid var(--dojeon-color-primary-border);
 }
 
 .preferences-save-button {
@@ -150,18 +146,29 @@
   margin-top: 88px;
   border: 0;
   border-radius: 10px;
-  background: #d9d9d9;
-  color: #000000;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.2;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  font: var(--dojeon-type-button-large);
   cursor: pointer;
+}
+
+.preferences-save-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.preferences-save-error {
+  width: min(350px, 100%);
+  margin: 12px 0 0;
+  color: var(--dojeon-color-error);
+  font: var(--dojeon-type-body-medium);
+  text-align: left;
 }
 
 .preferences-bottom-sheet-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--dojeon-color-dim);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -170,8 +177,8 @@
 
 .preferences-bottom-sheet {
   width: min(390px, 100%);
-  background: #ececec;
-  background-color: #ececec;
+  background: var(--dojeon-color-surface);
+  border: 1px solid var(--dojeon-color-gray-200);
   border-radius: 18px 18px 0 0;
   padding: 28px 24px calc(32px + env(safe-area-inset-bottom));
   box-sizing: border-box;
@@ -179,7 +186,7 @@
 
 .preferences-bottom-sheet-title {
   margin: 0;
-  color: #707070;
+  color: var(--dojeon-color-gray-700);
   font-size: 18px;
   font-weight: 700;
   line-height: 1.2;
@@ -197,7 +204,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: #000000;
+  color: var(--dojeon-color-gray-900);
   font-size: 16px;
   font-weight: 400;
   line-height: 1.2;

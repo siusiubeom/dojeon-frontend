@@ -5,6 +5,8 @@ import editIcon from '../assets/edit.svg'
 import fileIcon from '../assets/file.svg'
 import bookOpenIcon from '../assets/book-open.svg'
 import profileIcon from '../assets/user.svg'
+import lessonCharacterImage from '../assets/9.png'
+import practiceComingSoonImage from '../assets/2.png'
 import type { LastLesson } from '../types/home.types.ts'
 import { useHomeResume } from '../hooks/useHomeResume.ts'
 
@@ -22,7 +24,6 @@ interface HomePageProps {
   onOpenNotebook: () => void
   onOpenProfile: () => void
   onOpenPractice: () => void
-  onOpenGrammarPractice: () => void
   onStartLesson?: (lesson: LastLesson) => void
 }
 
@@ -49,7 +50,6 @@ function HomePage({
   onOpenNotebook,
   onOpenProfile,
   onOpenPractice,
-  onOpenGrammarPractice,
   onStartLesson,
 }: HomePageProps) {
   const [selectedGoalType, setSelectedGoalType] = useState<'today' | 'week'>('today')
@@ -58,11 +58,25 @@ function HomePage({
   const displayName = data?.userFirstName ?? userName ?? ''
   const dailyStreak = data?.dailyStreak ?? 0
   const lastLesson = data?.lastLesson ?? null
+  const weeklyAttendance = data?.weeklyAttendance ?? []
+  const lessonPreview = lastLesson
+    ? {
+        course: `Course ${lastLesson.courseId} lesson ${lastLesson.lessonId}`,
+        title: lastLesson.lessonTitle,
+        firstLine: lastLesson.sectionTitle,
+        secondLine: getLessonPreview(lastLesson),
+      }
+    : {
+        course: 'Course 1 lesson 5',
+        title: '-을까요?',
+        firstLine: '같이 점심',
+        secondLine: '먹을까요?',
+      }
 
   const activeGoal = useMemo(() => {
     if (selectedGoalType === 'today') {
       return {
-        title: "Today's Goal",
+        title: 'Today’s Goal',
         current: data?.todayGoal.studiedMin ?? 0,
         total: data?.todayGoal.targetMin ?? 0,
       }
@@ -85,20 +99,7 @@ function HomePage({
     return (
       <main className="home-screen">
         <section className="home-content">
-          <p className="home-loading">Loading…</p>
-        </section>
-      </main>
-    )
-  }
-
-  if (error && !data) {
-    return (
-      <main className="home-screen">
-        <section className="home-content">
-          <p className="home-error">{error.message}</p>
-          <button type="button" onClick={() => void refetch()}>
-            Retry
-          </button>
+          <p className="home-loading">Loading...</p>
         </section>
       </main>
     )
@@ -107,10 +108,65 @@ function HomePage({
   return (
     <main className="home-screen">
       <section className="home-content">
+        {error && !data ? (
+          <button type="button" className="home-sync-status" onClick={() => void refetch()}>
+            Sync unavailable
+          </button>
+        ) : null}
+
         <header className="home-greeting">
-          <p className="home-greeting-hi">Hi, {displayName}</p>
+          <p className="home-greeting-hi">Hi, {displayName || 'Lior'}</p>
           <p className="home-greeting-welcome">Welcome back</p>
         </header>
+
+        <section className="home-card lesson-card">
+          <div className="lesson-head">
+            <h3 className="lesson-title">Today’s lesson</h3>
+            <p className="lesson-subtitle">{lessonPreview.course}</p>
+          </div>
+          <div className="lesson-main">
+            <div className="lesson-body">
+              <p className="lesson-sentence primary">{lessonPreview.title}</p>
+              <p className="lesson-sentence secondary">
+                <span className="lesson-word">{lessonPreview.firstLine}</span>
+                <span className="lesson-apply">{lessonPreview.secondLine}</span>
+              </p>
+            </div>
+            <img className="lesson-character" src={lessonCharacterImage} alt="" aria-hidden="true" />
+          </div>
+          <button
+            className="start-btn"
+            type="button"
+            disabled={!lastLesson || !onStartLesson}
+            onClick={() => {
+              if (lastLesson) onStartLesson?.(lastLesson)
+            }}
+          >
+            START
+          </button>
+        </section>
+
+        <section className="home-card streak-card">
+          <h2 className="streak-title">{dailyStreak} days in a row !</h2>
+          <div className="streak-indicators" role="list" aria-label="Daily streak progress">
+            <div className="streak-track">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
+                const isComplete = weeklyAttendance[index] ?? index < dailyStreak
+
+                return (
+                  <span
+                    key={`${day}-${index}`}
+                    className={`streak-dot ${isComplete ? 'filled' : ''}`}
+                    role="listitem"
+                    aria-label={`${day} ${isComplete ? 'completed' : 'not completed'}`}
+                  >
+                    {isComplete ? day : null}
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+        </section>
 
         <section className="home-card goal-card">
           <div className="goal-segmented" role="tablist" aria-label="Goal period">
@@ -121,7 +177,7 @@ function HomePage({
               className={`goal-tab goal-tab-left ${selectedGoalType === 'today' ? 'selected' : ''}`}
               onClick={() => setSelectedGoalType('today')}
             >
-              Today&apos;s Goal
+              Today’s Goal
             </button>
             <button
               type="button"
@@ -135,7 +191,7 @@ function HomePage({
           </div>
 
           <section className="goal-card-body">
-            <section className="goal-progress" aria-label={`${activeGoal.title} 진행 상태`}>
+            <section className="goal-progress" aria-label={`${activeGoal.title} progress`}>
               <div className="goal-progress-row">
                 <div className="goal-progress-track-wrap">
                   <div
@@ -164,63 +220,16 @@ function HomePage({
           </section>
         </section>
 
-        <section className="home-card streak-card">
-          <h2 className="streak-title">{dailyStreak} days in a row !</h2>
-          <div className="streak-indicators" role="region" aria-label="연속 학습 진행 상태">
-            <div className="streak-track">
-              {Array.from({ length: 20 }).map((_, index) => (
-                <span
-                  key={index}
-                  className={`streak-dot ${index < dailyStreak ? 'filled' : ''}`}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {lastLesson && (
-          <section className="home-card lesson-card">
-            <div className="lesson-head">
-              <h3 className="lesson-title">Today&apos;s lesson</h3>
-              <p className="lesson-subtitle">
-                Course {lastLesson.courseId} lesson {lastLesson.lessonId}
-              </p>
-            </div>
-            <div className="lesson-body">
-              <p className="lesson-sentence primary">{lastLesson.lessonTitle}</p>
-              <p className="lesson-sentence secondary">
-                <span className="lesson-word">{lastLesson.sectionTitle}</span>
-                <span className="lesson-apply">{getLessonPreview(lastLesson)}</span>
-              </p>
-              <p className="lesson-sentence secondary">
-                <span className="lesson-word">Progress</span>
-                <span className="lesson-apply">{lastLesson.overallProgressPercent}%</span>
-              </p>
-            </div>
-            <button
-              className="start-btn"
-              type="button"
-              disabled={!onStartLesson}
-              onClick={() => onStartLesson?.(lastLesson)}
-            >
-              START
-            </button>
-          </section>
-        )}
-
-        <button
-          type="button"
-          className="home-card practice-card practice-card-button"
-          onClick={onOpenGrammarPractice}
-        >
+        <button type="button" className="home-card practice-card" onClick={onOpenPractice}>
           <h3 className="practice-title">Practice</h3>
-          <div className="practice-content" role="list">
-            <p className="practice-item" role="listitem">Practice 1: Grammar basics</p>
-            <p className="practice-item" role="listitem">Practice 2: Sentence ending patterns</p>
-            <p className="practice-item" role="listitem">Practice 3: Q&amp;A with honorifics</p>
-            <p className="practice-item" role="listitem">Practice 4: Everyday conversation</p>
-            <p className="practice-item" role="listitem">Practice 5: Listening check</p>
-            <p className="practice-item" role="listitem">Practice 6: Speaking repeats</p>
+          <div className="practice-coming-soon">
+            <img
+              className="practice-coming-soon-character"
+              src={practiceComingSoonImage}
+              alt=""
+              aria-hidden="true"
+            />
+            <p className="practice-coming-soon-text">Comming Soon</p>
           </div>
         </button>
       </section>

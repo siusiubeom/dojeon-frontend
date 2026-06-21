@@ -39,6 +39,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
     false,
     false,
     false,
+    false,
   ])
   const [errors, setErrors] = useState<{
     email: string
@@ -98,7 +99,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
 
   const termItems = [
     {
-      text: 'I agree to the Terms of Service.',
+      text: 'I agree to the Terms of Service and Privacy Policy.',
       required: true,
     },
     {
@@ -113,12 +114,16 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
       text: 'I agree to receive marketing updates and exclusive offers.',
       required: false,
     },
+    {
+      text: 'I agree to receive learning reminders.',
+      required: false,
+    },
   ]
 
   const passwordRules = [
     {
       id: 'length',
-      message: '8 charaters required.',
+      message: '8 characters required.',
       isSatisfied: password.length >= 8,
     },
     {
@@ -202,7 +207,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
   return (
     <main className="signup-screen">
       <header className="signup-header">
-        <button type="button" className="back-btn" onClick={onBack} aria-label="뒤로 가기">
+        <button type="button" className="back-btn" onClick={onBack} aria-label="Go back">
           <svg
             className="back-icon"
             width="24"
@@ -260,7 +265,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
                     setPassword(e.target.value)
                     setErrors((prev) => ({ ...prev, password: '' }))
                   }}
-                  placeholder="must be 8 charaters"
+                  placeholder="must be 8 characters"
                   className={`field password-input ${isPasswordInvalid ? 'field-error-state' : ''}`}
                   onFocus={() => setIsPasswordFocused(true)}
                   onBlur={() => {
@@ -274,7 +279,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
                   className="password-visibility-toggle"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setIsPasswordVisible((prev) => !prev)}
-                  aria-label={isPasswordVisible ? '비밀번호 숨기기' : '비밀번호 보기'}
+                  aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
                   disabled={isSubmitting}
                 >
                   <img
@@ -286,7 +291,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
                 </button>
               </div>
               {(isPasswordTouched || isPasswordFocused) ? (
-                <ul className="password-requirements" aria-label="비밀번호 조건">
+                <ul className="password-requirements" aria-label="Password requirements">
                   {passwordRules.map((rule) => (
                   <li
                     key={rule.id}
@@ -330,7 +335,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setIsConfirmPasswordVisible((prev) => !prev)}
                   aria-label={
-                    isConfirmPasswordVisible ? '비밀번호 숨기기' : '비밀번호 보기'
+                    isConfirmPasswordVisible ? 'Hide password' : 'Show password'
                   }
                   disabled={isSubmitting}
                 >
@@ -364,7 +369,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
                 type="button"
                 className="terms-check-toggle"
                 onClick={handleToggleAllTerms}
-                aria-label="모든 약관 동의"
+                aria-label="Accept all terms"
                 aria-pressed={isAllAccepted}
                 disabled={isSubmitting}
               >
@@ -384,7 +389,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
 
             <div className="terms-divider" />
 
-              <div className="terms-list" aria-label="약관 동의 항목">
+              <div className="terms-list" aria-label="Terms agreement items">
                 {termItems.map((item, index) => (
                 <div className="terms-list-item" key={item.text}>
                   <button
@@ -421,7 +426,7 @@ function SignupPage({ onBack, onSignupSuccess }: SignupPageProps) {
             className="btn register-btn signup-btn"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Sending...' : 'Register'}
+            {isSubmitting ? 'SENDING...' : 'REGISTER'}
           </button>
         </form>
       </section>

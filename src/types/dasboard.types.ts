@@ -6,8 +6,12 @@ export interface ResumeBanner {
     sectionId: number;
     sectionTitle: string;
     sectionType: string;
-    grammarPreview: string;
     overallProgressPercent: number;
+    grammarPreview?: string;
+    vocabPreview?: string;
+    listeningPreview?: string;
+    speakingPreview?: string;
+    readingPreview?: string;
 }
 
 export interface DashboardLesson {
@@ -44,5 +48,6 @@ export interface DashboardResponse {
     code: string;
     message: string;
     data: DashboardData | null;
+    errorCode?: string;
     timestamp: string;
 }

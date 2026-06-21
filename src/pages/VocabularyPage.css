@@ -2,14 +2,14 @@
   min-height: 100svh;
   width: min(390px, 100%);
   margin: 0 auto;
-  background: #ffffff;
+  background: var(--dojeon-color-background);
   display: flex;
   justify-content: center;
 }
 
 .vocabulary-content {
   width: 100%;
-  padding: 0 20px 32px;
+  padding: 0 20px 112px;
   box-sizing: border-box;
 }
 
@@ -33,7 +33,7 @@
   padding: 0;
   border-radius: 50%;
   background: transparent;
-  color: #111111;
+  color: var(--dojeon-color-gray-800);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -47,11 +47,9 @@
 
 .vocabulary-title {
   margin: 0;
-  color: #000000;
-  font-size: 20px;
-  font-weight: 500;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-subtitle-large);
   letter-spacing: 0.05em;
-  line-height: 1.2;
 }
 
 .vocabulary-sort-row {
@@ -64,10 +62,8 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: #979797;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.2;
+  color: var(--dojeon-color-gray-800);
+  font: var(--dojeon-type-button-large);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -75,7 +71,7 @@
 }
 
 .vocabulary-sort-icon {
-  color: #979797;
+  color: var(--dojeon-color-gray-800);
   transition: transform 0.2s ease;
 }
 
@@ -91,26 +87,48 @@
 }
 
 .vocabulary-card {
-  width: 350px;
-  max-width: 100%;
-  min-height: 208px;
+  width: 100%;
+  min-height: 190px;
+  border: 1px solid var(--dojeon-color-gray-200);
   border-radius: 10px;
-  background: #d9d9d9;
-  padding: 16px 20px 16px;
+  background: var(--dojeon-color-surface);
+  padding: 16px 18px;
   box-sizing: border-box;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+.vocabulary-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
 }
 
 .vocabulary-card-title {
   margin: 0;
-  color: #555555;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.2;
+  color: var(--dojeon-color-primary-600);
+  font: var(--dojeon-type-subtitle-medium);
+  text-transform: uppercase;
+}
+
+.vocabulary-lesson-tag {
+  min-height: 24px;
+  border-radius: 4px;
+  background: var(--dojeon-color-primary-container);
+  color: var(--dojeon-color-primary-action);
+  font: var(--dojeon-type-button-small);
+  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .vocabulary-card-items {
-  margin-top: 10px;
+  margin-top: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -118,25 +136,347 @@
 
 .vocabulary-card-items p {
   margin: 0;
-  color: #000000;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.2;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-body-medium);
+}
+
+.vocabulary-card-link {
+  margin-top: auto;
+  align-self: flex-end;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--dojeon-color-gray-500);
+  font: var(--dojeon-type-button-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.vocabulary-word-list {
+  margin-top: 18px;
+}
+
+.vocabulary-word-list-head {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.vocabulary-word-list-head .vocabulary-lesson-tag {
+  border-radius: 999px;
+}
+
+.vocabulary-table {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.vocabulary-table-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) 34px;
+  align-items: center;
+  width: 100%;
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 0 9px;
+}
+
+.vocabulary-table-header {
+  background: var(--dojeon-color-primary-container);
+  border-radius: 8px;
+  color: var(--dojeon-color-primary-900);
+  font: var(--dojeon-type-button-medium);
+  text-align: left;
+}
+
+.vocabulary-word-entry {
+  border-radius: 8px;
+  background: var(--dojeon-color-vocabulary-row);
+  overflow: hidden;
+}
+
+.vocabulary-word-row {
+  background: var(--dojeon-color-vocabulary-row);
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-body-medium);
+  text-align: center;
+}
+
+.vocabulary-word-row > span:not(.vocabulary-row-icon) {
+  justify-self: center;
+}
+
+.vocabulary-word-row.is-expanded {
+  box-shadow: none;
+}
+
+.vocabulary-row-icon {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--dojeon-color-primary-100);
+  color: var(--dojeon-color-primary-300);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  cursor: pointer;
+}
+
+.vocabulary-row-icon svg {
+  display: block;
+}
+
+.vocabulary-row-chevron {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--dojeon-color-primary-900);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  cursor: pointer;
+}
+
+.vocabulary-row-chevron svg {
+  display: block;
+}
+
+.vocabulary-notes-panel {
+  border-top: 1px solid var(--dojeon-color-gray-100);
+  background: var(--dojeon-color-vocabulary-row);
+  padding: 12px 14px 8px 22px;
+  text-align: left;
+}
+
+.vocabulary-note-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-body-medium);
+}
+
+.vocabulary-note-tag {
+  border: 1px solid var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-primary-action);
+  font: var(--dojeon-type-caption);
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.vocabulary-example-line {
+  margin-top: 12px;
+  min-height: 34px;
+  border-left: 2px solid var(--dojeon-color-primary-action);
+  padding-left: 10px;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-body-medium);
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.vocabulary-translate-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--dojeon-color-primary-300);
+  color: var(--dojeon-color-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.vocabulary-translate-icon svg {
+  display: block;
+}
+
+.vocabulary-detail-link {
+  margin-top: 10px;
+  display: block;
+  margin-left: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--dojeon-color-gray-500);
+  font: var(--dojeon-type-button-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.vocabulary-practice-bar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 18px);
+  transform: translateX(-50%);
+  width: min(390px, 100%);
+  padding: 0 20px;
+  box-sizing: border-box;
+  z-index: 12;
 }
 
 .vocabulary-practice-button {
-  width: 310px;
-  max-width: 100%;
-  height: 42px;
-  margin: 16px auto 0;
+  width: 100%;
+  height: 50px;
   border: 0;
   border-radius: 10px;
-  background: #b3b3b3;
-  color: #000000;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.2;
-  display: block;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
+  font: var(--dojeon-type-button-large);
   cursor: pointer;
   text-align: center;
+}
+
+.vocabulary-practice-button:disabled {
+  background: var(--dojeon-color-gray-300);
+  cursor: default;
+}
+
+.vocabulary-detail {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vocabulary-detail-hero {
+  border-radius: 8px;
+  background: var(--dojeon-color-vocabulary-row);
+  padding: 15px 14px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.vocabulary-detail-word-row {
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vocabulary-detail-word-row h2 {
+  margin: 0;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-subtitle-large);
+}
+
+.vocabulary-detail-minus {
+  width: 18px;
+  height: 18px;
+}
+
+.vocabulary-detail-translation {
+  margin: 8px 0 0;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-body-medium);
+}
+
+.vocabulary-detail-pronunciation {
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dojeon-color-gray-100);
+  color: var(--dojeon-color-gray-400);
+  font: var(--dojeon-type-body-medium);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vocabulary-audio-button {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--dojeon-color-primary-300);
+  color: var(--dojeon-color-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.vocabulary-audio-button svg {
+  display: block;
+}
+
+.vocabulary-detail-notes {
+  text-align: left;
+}
+
+.vocabulary-detail-numbered {
+  margin: 0;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-body-medium);
+}
+
+.vocabulary-detail-notes .vocabulary-note-line {
+  margin-top: 11px;
+}
+
+.vocabulary-example-stack {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vocabulary-example-stack .vocabulary-example-line {
+  margin-top: 0;
+}
+
+.vocabulary-loading,
+.vocabulary-error {
+  margin: 24px 0 0;
+  color: var(--dojeon-color-gray-400);
+  font: var(--dojeon-type-body-medium);
+  text-align: center;
+}
+
+.notebook-empty-state {
+  margin-top: 28px;
+  min-height: 144px;
+  border: 1px solid var(--dojeon-color-gray-200);
+  border-radius: 10px;
+  background: var(--dojeon-color-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.notebook-empty-state p {
+  margin: 0;
+  color: var(--dojeon-color-gray-400);
+  font: var(--dojeon-type-body-medium);
+}
+
+.notebook-empty-state button {
+  border: 0;
+  background: transparent;
+  color: var(--dojeon-color-primary-action);
+  font: var(--dojeon-type-button-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.vocabulary-error {
+  color: var(--dojeon-color-error);
 }

@@ -11,7 +11,9 @@ interface AccountInfoPageProps {
     nickname: string
     phoneNumber: string
     ageGroupOrBirthday: string
-  }) => void
+  }) => void | Promise<void>
+  isSaving?: boolean
+  saveError?: string | null
   onBack: () => void
 }
 
@@ -22,6 +24,8 @@ function AccountInfoPage({
   phoneNumber,
   ageGroupOrBirthday,
   onSave,
+  isSaving = false,
+  saveError = null,
   onBack,
 }: AccountInfoPageProps) {
   const [draftNickname, setDraftNickname] = useState(nickname)
@@ -40,6 +44,23 @@ function AccountInfoPage({
     key: 'nickname' | 'phoneNumber' | 'ageGroupOrBirthday',
   ) => {
     setEditing((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const handleSave = async () => {
+    try {
+      await onSave({
+        nickname: draftNickname,
+        phoneNumber: draftPhoneNumber,
+        ageGroupOrBirthday: draftAgeGroupOrBirthday,
+      })
+      setEditing({
+        nickname: false,
+        phoneNumber: false,
+        ageGroupOrBirthday: false,
+      })
+    } catch {
+      // The parent mutation exposes the error message through saveError.
+    }
   }
 
   const items = [
@@ -89,7 +110,7 @@ function AccountInfoPage({
             type="button"
             className="account-info-back"
             onClick={onBack}
-            aria-label="뒤로 가기"
+            aria-label="Go back"
           >
             <svg
               className="account-info-back-icon"
@@ -144,24 +165,21 @@ function AccountInfoPage({
         </section>
 
         {hasPendingChanges ? (
-          <button
-            type="button"
-            className="account-info-save-button"
-            onClick={() => {
-              onSave({
-                nickname: draftNickname,
-                phoneNumber: draftPhoneNumber,
-                ageGroupOrBirthday: draftAgeGroupOrBirthday,
-              })
-              setEditing({
-                nickname: false,
-                phoneNumber: false,
-                ageGroupOrBirthday: false,
-              })
-            }}
-          >
-            Save
-          </button>
+          <>
+            <button
+              type="button"
+              className="account-info-save-button"
+              disabled={isSaving}
+              onClick={() => void handleSave()}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+            {saveError ? (
+              <p className="account-info-save-error" role="alert">
+                {saveError}
+              </p>
+            ) : null}
+          </>
         ) : null}
       </section>
     </main>

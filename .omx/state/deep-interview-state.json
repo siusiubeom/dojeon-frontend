@@ -1,0 +1,58 @@
+{
+  "active": false,
+  "current_phase": "complete",
+  "interview_id": "listening-ui-20260620T171906Z",
+  "profile": "standard",
+  "type": "brownfield",
+  "initial_idea": "Listening 화면 UI 수정",
+  "rounds": [
+    {
+      "round": 1,
+      "target": "scope",
+      "question": "Listening 화면은 첨부 이미지 기준으로 어디까지 맞출까요?",
+      "answer": "3. 색상/배치 + Show text/Next 상태 + Listening 전용 클래스 분리까지 포함",
+      "source": "from-user"
+    },
+    {
+      "round": 2,
+      "target": "non-goals",
+      "question": "이번 Listening UI 수정에서 기존 동작 로직은 유지할까요?",
+      "answer": "로직은 대부분 유지하고 UI만 바꾼다.",
+      "source": "from-user"
+    },
+    {
+      "round": 3,
+      "target": "success-criteria",
+      "question": "첨부 이미지의 기본 상태, Show text 버튼 상태, 지문 카드+답 선택+Next 활성 상태를 모두 맞추고 정답/오답 피드백은 제외할까요?",
+      "answer": "예.",
+      "source": "from-user"
+    },
+    {
+      "round": 4,
+      "target": "decision-boundaries",
+      "question": "정확한 색상/픽셀 값이 없는 부분은 기존 디자인 토큰과 현재 모바일 350px 카드 구조 안에서 가장 가까운 값으로 맞춰도 될까요?",
+      "answer": "예.",
+      "source": "from-user"
+    }
+  ],
+  "current_ambiguity": 0.14,
+  "threshold": 0.2,
+  "max_rounds": 12,
+  "challenge_modes_used": [
+    "contrarian",
+    "pressure-pass"
+  ],
+  "codebase_context": {
+    "screen": "src/pages/GrammarPracticePage.tsx practiceStep listening",
+    "styles": "src/pages/GrammarPracticePage.css grammar-practice-listening-* plus reused reading classes",
+    "rule": "AGENTS.md and docs/design-system.md require --dojeon-color-* CSS variables"
+  },
+  "current_stage": "intent-first",
+  "current_focus": "crystallized",
+  "context_snapshot_path": ".omx/context/listening-ui-20260620T171906Z.md",
+  "spec_path": ".omx/specs/deep-interview-listening-ui.md",
+  "transcript_path": ".omx/interviews/listening-ui-20260620T171906Z.md",
+  "run_outcome": "finish",
+  "lifecycle_outcome": "finished",
+  "completed_at": "2026-06-20T17:33:51.270Z"
+}
