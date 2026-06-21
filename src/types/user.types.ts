@@ -1,3 +1,12 @@
+export interface ApiResponse<T> {
+  isSuccess: boolean
+  code: string
+  message: string
+  data: T | null
+  errorCode?: string
+  timestamp: string
+}
+
 export interface UserProfile {
   userId: string
   email: string
@@ -49,8 +58,10 @@ export interface UserRecentCourse {
 export interface UserAchievement {
   badgeId: number
   title: string
+  description?: string
   imageUrl: string | null
-  earnedAt: string
+  isEarned?: boolean
+  earnedAt: string | null
 }
 
 export interface UserMeData {
@@ -68,6 +79,11 @@ export interface UserMeResponse {
   data: UserMeData | null
   errorCode?: string
   timestamp: string
+}
+
+export interface UserAchievementsData {
+  totalEarned: number
+  badges: UserAchievement[]
 }
 
 export interface PatchUserRequest {
@@ -98,4 +114,27 @@ export interface PatchUserResponse {
   data: PatchUserData | null
   errorCode?: string
   timestamp: string
+}
+
+export interface ChangePasswordPayload {
+  newPassword: string
+}
+
+export interface ChangePasswordData {
+  updated: boolean
+}
+
+export interface DeleteUserMeData {
+  deleted: boolean
+}
+
+export interface PresignedProfileImagePayload {
+  contentType: string
+  fileExtension: 'jpg' | 'jpeg' | 'png' | 'webp'
+}
+
+export interface PresignedProfileImageResult {
+  uploadUrl: string
+  key: string
+  fileUrl: string
 }

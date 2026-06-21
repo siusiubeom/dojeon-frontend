@@ -20,6 +20,8 @@ import GrammarNotebookPage from './pages/GrammarNotebookPage'
 import LessonDetailPage from './pages/LessonDetailPage'
 import VocabularyLessonPage from './pages/VocabularyLessonPage'
 import ProfileMainPage from './pages/ProfileMainPage'
+import ProfileAchievementsPage from './pages/ProfileAchievementsPage'
+import { useChangeUserPassword } from './hooks/useChangeUserPassword.ts'
 import { useUpdateUserMe } from './hooks/useUpdateUserMe.ts'
 import { useUserMe } from './hooks/useUserMe.ts'
 import {
@@ -166,7 +168,7 @@ type Screen =
   | 'splash' | 'login' | 'signup' | 'verify-email' | 'verify-success'
   | 'onboarding' | 'home' | 'class' | 'practice' | 'grammar-practice' | 'setting'
   | 'account-info' | 'preferences' | 'notebook' | 'vocabulary' | 'notebook-grammar'
-  | 'lesson-detail' | 'vocabulary-lesson' | 'profile-main'
+  | 'lesson-detail' | 'vocabulary-lesson' | 'profile-main' | 'profile-achievements'
 
 const devPreviewScreens = new Set<Screen>([
   'splash',
@@ -188,6 +190,7 @@ const devPreviewScreens = new Set<Screen>([
   'lesson-detail',
   'vocabulary-lesson',
   'profile-main',
+  'profile-achievements',
 ])
 
 const devPreviewPracticeSteps = new Set<PracticeStep>([
@@ -272,6 +275,7 @@ const getDevPreviewLessonModuleOrder = () => {
 function App() {
   const queryClient = useQueryClient()
   const updateUserMe = useUpdateUserMe()
+  const changeUserPassword = useChangeUserPassword()
   const [screen, setScreen] = useState<Screen>(getInitialScreen)
   const [authSession, setAuthSession] = useState<AuthSession | null>(getStoredAuthSession)
   const [pendingSignup, setPendingSignup] = useState<SignupSubmission | null>(null)
@@ -323,6 +327,7 @@ function App() {
     queryClient.removeQueries({ queryKey: ['section'] })
     queryClient.removeQueries({ queryKey: ['scrap'] })
     queryClient.removeQueries({ queryKey: ['subscription'] })
+    queryClient.removeQueries({ queryKey: ['user', 'me', 'achievement'] })
   }, [queryClient])
 
   const hasCompletedOnboarding =
@@ -661,6 +666,7 @@ function App() {
           email={authSession?.email ?? ''}
           username={currentUsername}
           nickname={userName}
+          hasPassword={userMeData?.profile.hasPassword ?? true}
           phoneNumber={phoneNumber}
           ageGroupOrBirthday={ageRange}
           onSave={async (values) => {
@@ -681,9 +687,13 @@ function App() {
             saveOnboardingUsername(nextNickname)
             writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
             writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, nextAgeGroupOrBirthday)
+
+            if (values.passwordChange) {
+              await changeUserPassword.mutateAsync(values.passwordChange)
+            }
           }}
-          isSaving={updateUserMe.isPending}
-          saveError={updateUserMe.error?.message ?? null}
+          isSaving={updateUserMe.isPending || changeUserPassword.isPending}
+          saveError={updateUserMe.error?.message ?? changeUserPassword.error?.message ?? null}
           onBack={() => {
             setScreen('setting')
           }}
@@ -789,6 +799,15 @@ function App() {
           onOpenSetting={() => {
             setSettingBackScreen('profile-main')
             setScreen('setting')
+          }}
+          onOpenAchievements={() => {
+            setScreen('profile-achievements')
+          }}
+        />
+      ) : screen === 'profile-achievements' ? (
+        <ProfileAchievementsPage
+          onBack={() => {
+            setScreen('profile-main')
           }}
         />
       ) : screen === 'grammar-practice' ? (

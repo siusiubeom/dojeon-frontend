@@ -5,12 +5,16 @@ interface AccountInfoPageProps {
   email: string
   username: string
   nickname: string
+  hasPassword: boolean
   phoneNumber: string
   ageGroupOrBirthday: string
   onSave: (values: {
     nickname: string
     phoneNumber: string
     ageGroupOrBirthday: string
+    passwordChange?: {
+      newPassword: string
+    }
   }) => void | Promise<void>
   isSaving?: boolean
   saveError?: string | null
@@ -21,6 +25,7 @@ function AccountInfoPage({
   email,
   username,
   nickname,
+  hasPassword,
   phoneNumber,
   ageGroupOrBirthday,
   onSave,
@@ -29,32 +34,87 @@ function AccountInfoPage({
   onBack,
 }: AccountInfoPageProps) {
   const [draftNickname, setDraftNickname] = useState(nickname)
+  const [newPassword, setNewPassword] = useState('')
+  const [passwordMessage, setPasswordMessage] = useState('')
   const [draftPhoneNumber, setDraftPhoneNumber] = useState(phoneNumber)
   const [draftAgeGroupOrBirthday, setDraftAgeGroupOrBirthday] = useState(ageGroupOrBirthday)
   const [editing, setEditing] = useState({
     nickname: false,
+    password: false,
     phoneNumber: false,
     ageGroupOrBirthday: false,
   })
+  const passwordRules = [
+    {
+      id: 'length',
+      message: '8 characters required.',
+      isSatisfied: newPassword.length >= 8,
+    },
+    {
+      id: 'special',
+      message: '1 special character required.',
+      isSatisfied: /[^A-Za-z0-9]/.test(newPassword),
+    },
+    {
+      id: 'uppercase',
+      message: '1 uppercase required.',
+      isSatisfied: /[A-Z]/.test(newPassword),
+    },
+    {
+      id: 'lowercase',
+      message: '1 lowercase required.',
+      isSatisfied: /[a-z]/.test(newPassword),
+    },
+    {
+      id: 'number',
+      message: '1 number required.',
+      isSatisfied: /[0-9]/.test(newPassword),
+    },
+  ]
+  const isPasswordChangeReady = newPassword.trim().length > 0
+  const isPasswordRulesValid = passwordRules.every((rule) => rule.isSatisfied)
   const hasPendingChanges =
     draftNickname !== nickname ||
+    isPasswordChangeReady ||
     draftPhoneNumber !== phoneNumber ||
     draftAgeGroupOrBirthday !== ageGroupOrBirthday
   const toggleEditing = (
-    key: 'nickname' | 'phoneNumber' | 'ageGroupOrBirthday',
+    key: 'nickname' | 'password' | 'phoneNumber' | 'ageGroupOrBirthday',
   ) => {
+    if (key === 'password') {
+      setPasswordMessage('')
+    }
+
     setEditing((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
   const handleSave = async () => {
+    if (editing.password && !isPasswordChangeReady) {
+      setPasswordMessage('Enter a new password.')
+      return
+    }
+
+    if (isPasswordChangeReady && !isPasswordRulesValid) {
+      setPasswordMessage('Password does not meet all requirements.')
+      return
+    }
+
     try {
       await onSave({
         nickname: draftNickname,
         phoneNumber: draftPhoneNumber,
         ageGroupOrBirthday: draftAgeGroupOrBirthday,
+        passwordChange: isPasswordChangeReady
+          ? {
+              newPassword: newPassword.trim(),
+            }
+          : undefined,
       })
+      setNewPassword('')
+      setPasswordMessage('')
       setEditing({
         nickname: false,
+        password: false,
         phoneNumber: false,
         ageGroupOrBirthday: false,
       })
@@ -78,7 +138,11 @@ function AccountInfoPage({
     },
     {
       label: 'Password',
-      value: 'Hidden for security',
+      value: hasPassword ? '**********' : 'Not available',
+      editable: hasPassword,
+      isEditing: editing.password,
+      onEdit: () => toggleEditing('password'),
+      usesPasswordFields: true,
     },
     {
       label: 'Phone number',
@@ -140,13 +204,50 @@ function AccountInfoPage({
               </div>
               <div className="account-info-value-row">
                 {'editable' in item && item.editable && item.isEditing ? (
-                  <input
-                    type={item.inputType ?? 'text'}
-                    className="account-info-input"
-                    value={item.inputValue}
-                    onChange={(e) => item.onChange(e.target.value)}
-                    autoFocus
-                  />
+                  'usesPasswordFields' in item && item.usesPasswordFields ? (
+                    <div className="account-info-password-fields">
+                      <input
+                        type="password"
+                        className="account-info-input"
+                        value={newPassword}
+                        onChange={(e) => {
+                          setNewPassword(e.target.value)
+                          setPasswordMessage('')
+                        }}
+                        placeholder="New password"
+                        autoFocus
+                      />
+                      <ul className="account-info-password-requirements" aria-label="비밀번호 조건">
+                        {passwordRules.map((rule) => (
+                          <li
+                            key={rule.id}
+                            className={`account-info-password-requirement ${
+                              rule.isSatisfied
+                                ? 'account-info-password-requirement-satisfied'
+                                : 'account-info-password-requirement-unsatisfied'
+                            }`}
+                          >
+                            <span className="account-info-password-requirement-icon">
+                              {rule.isSatisfied ? '✓' : '×'}
+                            </span>
+                            <span>{rule.message}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <input
+                      type={item.inputType ?? 'text'}
+                      className="account-info-input"
+                      value={item.inputValue}
+                      onChange={(e) => {
+                        if (item.onChange) {
+                          item.onChange(e.target.value)
+                        }
+                      }}
+                      autoFocus
+                    />
+                  )
                 ) : (
                   <p className="account-info-value">{item.value}</p>
                 )}
@@ -160,6 +261,9 @@ function AccountInfoPage({
                   </button>
                 ) : null}
               </div>
+              {item.label === 'Password' && passwordMessage ? (
+                <p className="account-info-message">{passwordMessage}</p>
+              ) : null}
             </article>
           ))}
         </section>

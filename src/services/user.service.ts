@@ -1,8 +1,15 @@
 import { getAuthToken } from './session.ts'
 import type {
+  ApiResponse,
+  ChangePasswordData,
+  ChangePasswordPayload,
+  DeleteUserMeData,
   PatchUserData,
   PatchUserRequest,
   PatchUserResponse,
+  PresignedProfileImagePayload,
+  PresignedProfileImageResult,
+  UserAchievementsData,
   UserMeData,
   UserMeResponse,
 } from '../types/user.types.ts'
@@ -58,6 +65,65 @@ async function readPatchUserResponse(res: Response): Promise<PatchUserResponse |
       res.status,
     )
   }
+}
+
+async function readUserApiResponse<T>(
+  res: Response,
+  fallbackMessage: string,
+): Promise<ApiResponse<T> | null> {
+  const bodyText = await res.text()
+
+  if (!bodyText.trim()) {
+    if (!res.ok) {
+      throw new UserApiError(fallbackMessage, undefined, undefined, res.status)
+    }
+
+    return null
+  }
+
+  try {
+    return JSON.parse(bodyText) as ApiResponse<T>
+  } catch {
+    throw new UserApiError(fallbackMessage, undefined, undefined, res.status)
+  }
+}
+
+async function requestUserApi<T>(
+  path: string,
+  init: RequestInit,
+  fallbackMessage: string,
+): Promise<T | null> {
+  let res: Response
+
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: buildHeaders({
+        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+        ...init.headers,
+      }),
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
+    throw new UserApiError(fallbackMessage)
+  }
+
+  const body = await readUserApiResponse<T>(res, fallbackMessage)
+
+  if (!res.ok) {
+    throw new UserApiError(
+      body?.message ?? `${fallbackMessage} (HTTP ${res.status})`,
+      body?.code,
+      body?.errorCode,
+      res.status,
+    )
+  }
+
+  if (body && !body.isSuccess) {
+    throw new UserApiError(body.message ?? 'Request failed', body.code, body.errorCode, res.status)
+  }
+
+  return body?.data ?? null
 }
 
 export async function fetchUserMe(signal?: AbortSignal): Promise<UserMeData | null> {
@@ -127,4 +193,48 @@ export async function patchUserMe(payload: PatchUserRequest): Promise<PatchUserD
   }
 
   return body?.data ?? null
+}
+
+export async function deleteUserMe(): Promise<DeleteUserMeData | null> {
+  return requestUserApi<DeleteUserMeData>(
+    '/user/me',
+    { method: 'DELETE' },
+    'Failed to delete profile',
+  )
+}
+
+export async function changeUserPassword(
+  payload: ChangePasswordPayload,
+): Promise<ChangePasswordData | null> {
+  return requestUserApi<ChangePasswordData>(
+    '/user/me/password',
+    {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    },
+    'Failed to change password',
+  )
+}
+
+export async function fetchUserAchievements(
+  signal?: AbortSignal,
+): Promise<UserAchievementsData | null> {
+  return requestUserApi<UserAchievementsData>(
+    '/user/me/achievement',
+    { method: 'GET', signal },
+    'Failed to fetch achievements',
+  )
+}
+
+export async function createProfileImagePresignedUrl(
+  payload: PresignedProfileImagePayload,
+): Promise<PresignedProfileImageResult | null> {
+  return requestUserApi<PresignedProfileImageResult>(
+    '/user/me/profileImage/presignedUrl',
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    },
+    'Failed to create profile image upload URL',
+  )
 }

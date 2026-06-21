@@ -7,7 +7,7 @@ import bookOpenIcon from '../assets/book-open.svg'
 import profileIcon from '../assets/user.svg'
 import settingIcon from '../assets/setting_icon.svg'
 import { useUserMe } from '../hooks/useUserMe.ts'
-import { useSubscriptionPlans } from '../hooks/useSubscriptionPlans.ts'
+import SubscriptionBottomSheet from '../components/SubscriptionBottomSheet'
 import type { UserMeData } from '../types/user.types.ts'
 
 const tabs = [
@@ -69,7 +69,7 @@ interface ProfileAchievement {
   badgeId: number
   title: string
   imageUrl: string | null
-  earnedAt: string
+  earnedAt: string | null
 }
 
 interface ProfileMainData {
@@ -234,6 +234,7 @@ interface ProfileMainPageProps {
   onOpenPractice: () => void
   onOpenNotebook: () => void
   onOpenSetting: () => void
+  onOpenAchievements: () => void
 }
 
 const formatStudyTime = (totalMinutes: number) => {
@@ -251,7 +252,11 @@ const formatStudyTime = (totalMinutes: number) => {
   return `${hours}h ${minutes}m`
 }
 
-const formatAchievementDate = (date: string) => {
+const formatAchievementDate = (date: string | null) => {
+  if (!date) {
+    return 'Not earned yet'
+  }
+
   const parsedDate = new Date(date)
 
   if (Number.isNaN(parsedDate.getTime())) {
@@ -273,15 +278,10 @@ function ProfileMainPage({
   onOpenPractice,
   onOpenNotebook,
   onOpenSetting,
+  onOpenAchievements,
 }: ProfileMainPageProps) {
   const { data: userMeData } = useUserMe()
-  const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false)
-  const {
-    data: subscriptionPlanData,
-    loading: subscriptionPlansLoading,
-    error: subscriptionPlansError,
-    refetch: refetchSubscriptionPlans,
-  } = useSubscriptionPlans(showSubscriptionPlans)
+  const [isSubscriptionSheetOpen, setIsSubscriptionSheetOpen] = useState(false)
   const apiProfileData = userMeData ? mapUserMeToProfileData(userMeData) : null
   const profileData = {
     ...(apiProfileData ?? profileMainMockData),
@@ -294,10 +294,7 @@ function ProfileMainPage({
   const { user, recentCourse, stats, attendance, recentAchievements } = profileData
   const calendarDays = getCalendarDays(attendance.year, attendance.month)
   const calendarTitle = `${monthNames[attendance.month - 1]} ${attendance.year}`
-  const [showAllAchievements, setShowAllAchievements] = useState(false)
-  const visibleAchievements = showAllAchievements
-    ? recentAchievements
-    : recentAchievements.slice(0, 4)
+  const visibleAchievements = recentAchievements.slice(0, 4)
   const canToggleAchievements = recentAchievements.length > 4
   const subscriptionCopy =
     user.subscriptionTier === 'FREE'
@@ -410,9 +407,9 @@ function ProfileMainPage({
               <button
                 type="button"
                 className="profile-main-section-link"
-                onClick={() => setShowAllAchievements((current) => !current)}
+                onClick={onOpenAchievements}
               >
-                {showAllAchievements ? 'see less' : 'see more'}
+                see more
               </button>
             ) : null}
           </div>
@@ -450,46 +447,10 @@ function ProfileMainPage({
             <button
               type="button"
               className="profile-main-subscribe-button"
-              onClick={() => setShowSubscriptionPlans((current) => !current)}
+              onClick={() => setIsSubscriptionSheetOpen(true)}
             >
               {user.subscriptionTier === 'FREE' ? 'Subscribe now' : 'Manage subscription'}
             </button>
-
-            {showSubscriptionPlans ? (
-              <div className="profile-main-plan-list">
-                {subscriptionPlansLoading ? (
-                  <p className="profile-main-plan-status">Loading plans...</p>
-                ) : subscriptionPlansError ? (
-                  <div className="profile-main-plan-status">
-                    <p>{subscriptionPlansError.message}</p>
-                    <button type="button" onClick={() => void refetchSubscriptionPlans()}>
-                      Retry
-                    </button>
-                  </div>
-                ) : subscriptionPlanData?.plans.length ? (
-                  subscriptionPlanData.plans.map((plan) => (
-                    <article key={plan.planId} className="profile-main-plan-card">
-                      <div className="profile-main-plan-head">
-                        <p className="profile-main-plan-title">{plan.title}</p>
-                        <p className="profile-main-plan-price">{plan.priceText}</p>
-                      </div>
-                      {plan.subText ? (
-                        <p className="profile-main-plan-subtext">{plan.subText}</p>
-                      ) : null}
-                      {plan.benefits.length > 0 ? (
-                        <ul className="profile-main-plan-benefits">
-                          {plan.benefits.map((benefit) => (
-                            <li key={benefit}>{benefit}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </article>
-                  ))
-                ) : (
-                  <p className="profile-main-plan-status">No plans available.</p>
-                )}
-              </div>
-            ) : null}
           </article>
         </section>
       </section>
@@ -525,6 +486,13 @@ function ProfileMainPage({
           </button>
         ))}
       </nav>
+      {isSubscriptionSheetOpen ? (
+        <SubscriptionBottomSheet
+          currentSubscriptionPlanId={user.subscriptionPlanId}
+          currentSubscriptionTier={user.subscriptionTier}
+          onClose={() => setIsSubscriptionSheetOpen(false)}
+        />
+      ) : null}
     </main>
   )
 }
