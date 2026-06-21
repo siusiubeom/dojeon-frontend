@@ -74,6 +74,8 @@ function getDisplayCourses(apiCourses: DashboardCourse[]): DashboardCourse[] {
 }
 
 interface ClassPageProps {
+  preferFallbackContent?: boolean
+  defaultOpenCourseOrder?: number
   onOpenHome: () => void
   onOpenPractice: () => void
   onOpenNotebook: () => void
@@ -82,6 +84,8 @@ interface ClassPageProps {
 }
 
 function ClassPage({
+  preferFallbackContent = false,
+  defaultOpenCourseOrder,
   onOpenHome,
   onOpenPractice,
   onOpenNotebook,
@@ -115,12 +119,16 @@ function ClassPage({
 
   const openCourseIds = useMemo(() => {
     const open = new Set<number>()
+    if (defaultOpenCourseOrder !== undefined && !manuallyToggled.size) {
+      const defaultCourse = courses.find((course) => course.orderNum === defaultOpenCourseOrder)
+      if (defaultCourse) open.add(defaultCourse.courseId)
+    }
     for (const [courseId, isOpen] of manuallyToggled) {
       if (isOpen) open.add(courseId)
       else open.delete(courseId)
     }
     return open
-  }, [manuallyToggled])
+  }, [courses, defaultOpenCourseOrder, manuallyToggled])
 
   const toggleCourse = (courseId: number) => {
     const currentlyOpen = openCourseIds.has(courseId)
@@ -131,7 +139,7 @@ function ClassPage({
     })
   }
 
-  if (loading) {
+  if (loading && !preferFallbackContent) {
     return (
       <main className="class-screen">
         <section className="class-content">
@@ -141,7 +149,7 @@ function ClassPage({
     )
   }
 
-  if (error && !isUsingFallbackCourses) {
+  if (error && !isUsingFallbackCourses && !preferFallbackContent) {
     return (
       <main className="class-screen">
         <section className="class-content">

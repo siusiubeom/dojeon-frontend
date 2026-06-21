@@ -251,6 +251,24 @@ const getInitialVocabularyCardIndex = () => {
   return Number.isFinite(card) ? Math.max(0, card - 1) : undefined
 }
 
+const getDevPreviewCourseOrder = () => {
+  if (getDevPreviewScreen() !== 'class') {
+    return undefined
+  }
+
+  const course = Number.parseInt(getDevSearchParams().get('course') ?? '', 10)
+  return Number.isFinite(course) ? Math.max(1, course) : undefined
+}
+
+const getDevPreviewLessonModuleOrder = () => {
+  if (getDevPreviewScreen() !== 'lesson-detail') {
+    return undefined
+  }
+
+  const module = Number.parseInt(getDevSearchParams().get('module') ?? '', 10)
+  return Number.isFinite(module) ? Math.max(1, module) : undefined
+}
+
 function App() {
   const queryClient = useQueryClient()
   const updateUserMe = useUpdateUserMe()
@@ -563,6 +581,8 @@ function App() {
         />
       ) : screen === 'class' ? (
         <ClassPage
+          preferFallbackContent={isDevPreview}
+          defaultOpenCourseOrder={getDevPreviewCourseOrder()}
           onOpenHome={() => {
             setScreen('home')
           }}
@@ -584,6 +604,7 @@ function App() {
         <LessonDetailPage
           key={selectedLessonNumericId ?? 'none'}
           lessonId={selectedLessonNumericId}
+          initialSelectedModuleOrder={getDevPreviewLessonModuleOrder()}
           onSelectLesson={(lessonId) => {
             setSelectedLessonNumericId(lessonId)
           }}
