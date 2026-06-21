@@ -1,12 +1,12 @@
 :root {
-  --bg: #f4f2ef;
-  --surface: #ffffff;
-  --text: #1f2933;
-  --text-muted: #536175;
-  --line: #e7e2dc;
-  --accent: #0ea5e9;
-  --accent-strong: #0284c7;
-  --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  --bg: var(--dojeon-color-background);
+  --surface: var(--dojeon-color-surface);
+  --text: var(--dojeon-color-gray-900);
+  --text-muted: var(--dojeon-color-gray-600);
+  --line: var(--dojeon-color-gray-200);
+  --accent: var(--dojeon-color-primary-action);
+  --accent-strong: var(--dojeon-color-primary-700);
+  --shadow: 0 12px 32px var(--dojeon-color-primary-focus-ring);
 }
 
 * {
@@ -17,15 +17,30 @@
   margin: 0 auto;
   min-height: 100svh;
   display: block;
-  width: min(414px, 100%);
+  width: min(390px, 100%);
   border: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  background: var(--dojeon-color-background);
 }
 
 .app-root {
   min-height: 100svh;
   overflow-y: auto;
+}
+
+.app-dev-reset-button {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  padding: 8px 12px;
+  border: 1px solid var(--dojeon-color-gray-200);
+  border-radius: 8px;
+  background: var(--dojeon-color-surface);
+  color: var(--dojeon-color-gray-900);
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .btn {
@@ -40,7 +55,7 @@
 }
 
 .btn:focus-visible {
-  outline: 2px solid #0284c7;
+  outline: 2px solid var(--dojeon-color-primary-action);
   outline-offset: 2px;
 }
 
@@ -49,12 +64,12 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
-  color: #fff;
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-surface);
 }
 
 .btn-ghost {
-  background: #ffffff;
-  color: #0f172a;
-  border: 1px solid #d8dfe7;
+  background: var(--dojeon-color-surface);
+  color: var(--dojeon-color-gray-900);
+  border: 1px solid var(--dojeon-color-gray-200);
 }

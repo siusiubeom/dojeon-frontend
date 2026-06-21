@@ -63,7 +63,12 @@ function SubscriptionBottomSheet({
   currentSubscriptionTier,
   onClose,
 }: SubscriptionBottomSheetProps) {
-  const { data: subscriptionPlansData, isError, isLoading, refetch } = useSubscriptionPlans()
+  const {
+    data: subscriptionPlansData,
+    loading: isLoading,
+    error,
+    refetch,
+  } = useSubscriptionPlans(true)
   const [selectedPlanIdOverride, setSelectedPlanIdOverride] = useState('')
   const [selectedModeOverride, setSelectedModeOverride] =
     useState<SubscriptionSelectionMode | null>(null)
@@ -177,9 +182,9 @@ function SubscriptionBottomSheet({
 
           {isLoading ? (
             <p className="subscription-sheet-status">Loading plans...</p>
-          ) : isError ? (
+          ) : error ? (
             <div className="subscription-sheet-status" role="status">
-              <p>Unable to load plans.</p>
+              <p>{error.message || 'Unable to load plans.'}</p>
               <button
                 type="button"
                 className="subscription-sheet-retry"
@@ -322,7 +327,7 @@ function SubscriptionBottomSheet({
           <button
             type="button"
             className="subscription-sheet-action"
-            disabled={isLoading || isError || (selectedMode !== 'free' && !selectedBackendPlan)}
+            disabled={isLoading || Boolean(error) || (selectedMode !== 'free' && !selectedBackendPlan)}
             onClick={onClose}
           >
             {subscriptionActionText}

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import './OnboardingPage.css'
+import onboardingCharacter from '../assets/9.png'
+import onboardingCompleteCharacter from '../assets/6.png'
 
 interface OnboardingStep {
   id: string
@@ -75,7 +77,7 @@ const onboardingSteps: OnboardingStep[] = [
     progressStyle: 'medium',
     progressStep: 4,
     choices: [
-      { id: '0-17', label: 'Under 18' },
+      { id: '0-17', label: '0-17' },
       { id: '18-24', label: '18-24' },
       { id: '25-34', label: '25-34' },
       { id: '35-44', label: '35-44' },
@@ -141,12 +143,14 @@ const onboardingSteps: OnboardingStep[] = [
     question: '',
     type: 'complete',
     helper: 'Completion',
-    progressStep: 6,
+    progressStep: 7,
     validator: () => true,
   },
 ]
 
-const progressPointCount = 6
+const progressPointCount = 7
+const progressEdgeInsetPercent = 3
+const progressFillGapBeforeNextDotPercent = 1.5
 
 function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
   const [currentStep, setCurrentStep] = useState(0)
@@ -156,8 +160,21 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
   const step = onboardingSteps[currentStep]
   const currentProgressStep = Math.min(step.progressStep, progressPointCount)
   const currentDotPercent =
-    (currentProgressStep / (progressPointCount + 1)) * 100
-  const progressFillWidth = Math.min(100, currentDotPercent + 3)
+    progressPointCount > 1
+      ? progressEdgeInsetPercent +
+        ((currentProgressStep - 1) / (progressPointCount - 1)) *
+          (100 - progressEdgeInsetPercent * 2)
+      : 100
+  const nextDotPercent =
+    progressPointCount > 1
+      ? progressEdgeInsetPercent +
+        (Math.min(currentProgressStep, progressPointCount - 1) / (progressPointCount - 1)) *
+          (100 - progressEdgeInsetPercent * 2)
+      : 100
+  const progressFillWidth =
+    currentProgressStep >= progressPointCount
+      ? 100
+      : Math.max(currentDotPercent, nextDotPercent - progressFillGapBeforeNextDotPercent)
   const isCompletionStep = step.type === 'complete'
 
   const moveToStep = (nextStep: number) => {
@@ -169,6 +186,7 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
   }, [step, values])
 
   const currentValue = values[step.id] ?? ''
+  const shouldShowNameCharacter = step.id === 'name'
 
   const handleInputChange = (value: string) => {
     setValues((prev) => ({ ...prev, [step.id]: value }))
@@ -220,7 +238,7 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
   }
 
   return (
-    <main className="onboarding-screen">
+    <main className={`onboarding-screen ${step.id === 'name' ? 'onboarding-screen-name' : ''}`}>
       <section className="onboarding-content">
         {isCompletionStep ? null : (
           <>
@@ -230,7 +248,7 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                   type="button"
                   className="onboarding-back"
                   onClick={handleBack}
-                  aria-label="뒤로 가기"
+                  aria-label="Go back"
                 >
                   <svg
                     className="onboarding-back-icon"
@@ -242,7 +260,7 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                   >
                     <path
                       d="M15 18L9 12L15 6"
-                      stroke="#111111"
+                      stroke="currentColor"
                       strokeWidth="1"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -265,7 +283,7 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                         : ''
               }`}
               role="list"
-              aria-label="온보딩 진행 단계"
+              aria-label="Onboarding progress"
             >
               <span className="progress-track" aria-hidden="true" />
               <span
@@ -286,7 +304,13 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                         : 'progress-dot-upcoming'
                   }`}
                   style={{
-                    left: `${((index + 1) / (progressPointCount + 1)) * 100}%`,
+                    left: `${
+                      progressPointCount > 1
+                        ? progressEdgeInsetPercent +
+                          (index / (progressPointCount - 1)) *
+                            (100 - progressEdgeInsetPercent * 2)
+                        : 100
+                    }%`,
                   }}
                   role="listitem"
                   aria-current={index === currentProgressStep - 1 ? 'step' : undefined}
@@ -299,13 +323,18 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
         <section className="onboarding-body">
           {step.type === 'complete' ? (
             <div className="onboarding-complete">
-              <div className="onboarding-complete-circle" aria-hidden="true" />
               <h1 className="onboarding-complete-title">Congratulations!</h1>
               <p className="onboarding-complete-description">
                 Your account has been set up.
                 <br />
                 Log in to begin
               </p>
+              <img
+                className="onboarding-complete-character"
+                src={onboardingCompleteCharacter}
+                alt=""
+                aria-hidden="true"
+              />
               <button
                 type="button"
                 className="onboarding-complete-button"
@@ -323,6 +352,14 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
               >
                 {step.question}
               </h1>
+              {shouldShowNameCharacter ? (
+                <img
+                  className="onboarding-name-character"
+                  src={onboardingCharacter}
+                  alt=""
+                  aria-hidden="true"
+                />
+              ) : null}
 
               {step.type === 'text' ? (
             <>

@@ -1,15 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateUserMe, UserApiError } from '../services/user.service'
-import type { PatchUserPayload, UpdateUserMeData } from '../types/user.types'
+import { patchUserMe, UserApiError } from '../services/user.service.ts'
+import type { PatchUserData, PatchUserRequest } from '../types/user.types.ts'
 
 export function useUpdateUserMe() {
   const queryClient = useQueryClient()
 
-  return useMutation<UpdateUserMeData | null, UserApiError, PatchUserPayload>({
-    // PATCH /user/me
-    mutationFn: (payload) => updateUserMe(payload),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['user', 'me'] })
+  return useMutation<PatchUserData | null, UserApiError, PatchUserRequest>({
+    mutationFn: (payload) => patchUserMe(payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user', 'me'] }),
+        queryClient.invalidateQueries({ queryKey: ['home'] }),
+      ])
     },
   })
 }

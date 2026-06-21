@@ -1,14 +1,14 @@
-import './ProfileMainPage.css'
 import { useState } from 'react'
+import './ProfileMainPage.css'
 import homeIcon from '../assets/home.svg'
 import editIcon from '../assets/edit.svg'
 import fileIcon from '../assets/file.svg'
 import bookOpenIcon from '../assets/book-open.svg'
 import profileIcon from '../assets/user.svg'
 import settingIcon from '../assets/setting_icon.svg'
-import { useUserMe } from '../hooks/useUserMe'
+import { useUserMe } from '../hooks/useUserMe.ts'
 import SubscriptionBottomSheet from '../components/SubscriptionBottomSheet'
-import { formatAchievementDate, type ProfileMainData } from '../data/profile'
+import type { UserMeData } from '../types/user.types.ts'
 
 const tabs = [
   { icon: homeIcon, label: 'HOME' },
@@ -17,6 +17,186 @@ const tabs = [
   { icon: bookOpenIcon, label: 'NOTEBOOK' },
   { icon: profileIcon, label: 'PROFILE' },
 ]
+
+interface ProfileUser {
+  userId: string
+  email: string
+  hasPassword: boolean
+  username: string
+  nickname: string
+  phoneNumber: string | null
+  birthday: string | null
+  profileImgUrl: string | null
+  joinedYear: number
+  subscriptionTier: string
+  subscriptionPlanId: string | null
+  subscriptionExpiresAt: string | null
+  isOnboarded: boolean
+}
+
+interface ProfileSettings {
+  motherLanguage: string | null
+  proficiencyLevel: string | null
+  dailyGoalMin: number | null
+  learningGoal: string | null
+  isPushNotificationOn: boolean
+  isMarketingAgreed: boolean
+}
+
+interface ProfileRecentCourse {
+  courseId: number
+  lessonId: number
+  sectionId: number
+  courseTitle: string
+  lessonTitle: string
+  sectionSubtitle: string
+}
+
+interface ProfileStats {
+  totalCompletedLessons: number
+  totalStudyMin: number
+  currentStreak: number
+  bestStreak: number
+}
+
+interface ProfileAttendance {
+  year: number
+  month: number
+  activeDays: number[]
+}
+
+interface ProfileAchievement {
+  badgeId: number
+  title: string
+  imageUrl: string | null
+  earnedAt: string | null
+}
+
+interface ProfileMainData {
+  user: ProfileUser
+  settings: ProfileSettings
+  recentCourse: ProfileRecentCourse | null
+  stats: ProfileStats
+  attendance: ProfileAttendance
+  recentAchievements: ProfileAchievement[]
+}
+
+const profileMainMockData: ProfileMainData = {
+  user: {
+    userId: '100',
+    email: 'example@email.com',
+    hasPassword: true,
+    username: 'username',
+    nickname: 'nickname',
+    phoneNumber: '010-0000-0000',
+    birthday: '2000-03-10',
+    profileImgUrl: null,
+    joinedYear: 2026,
+    subscriptionTier: 'FREE',
+    subscriptionPlanId: null,
+    subscriptionExpiresAt: null,
+    isOnboarded: true,
+  },
+  settings: {
+    motherLanguage: 'EN',
+    proficiencyLevel: 'LEVEL_2',
+    dailyGoalMin: 15,
+    learningGoal: 'HOBBY',
+    isPushNotificationOn: true,
+    isMarketingAgreed: false,
+  },
+  recentCourse: {
+    courseId: 1,
+    lessonId: 105,
+    sectionId: 505,
+    courseTitle: 'Course 1',
+    lessonTitle: 'lesson 5',
+    sectionSubtitle: 'Grammar 3 을까요? 1)',
+  },
+  stats: {
+    totalCompletedLessons: 24,
+    totalStudyMin: 80,
+    currentStreak: 3,
+    bestStreak: 7,
+  },
+  attendance: {
+    year: 2026,
+    month: 3,
+    activeDays: [1, 2, 3],
+  },
+  recentAchievements: [
+    {
+      badgeId: 10,
+      title: 'Daily streak',
+      imageUrl: null,
+      earnedAt: '2026-03-28',
+    },
+    {
+      badgeId: 11,
+      title: 'Daily streak',
+      imageUrl: null,
+      earnedAt: '2026-03-28',
+    },
+  ],
+}
+
+const getJoinedYear = (createdAt: string) => {
+  const date = new Date(createdAt)
+  return Number.isNaN(date.getTime()) ? new Date().getFullYear() : date.getFullYear()
+}
+
+const mapUserMeToProfileData = (data: UserMeData): ProfileMainData => ({
+  user: {
+    userId: data.profile.userId,
+    email: data.profile.email,
+    hasPassword: data.profile.hasPassword ?? true,
+    username: data.profile.username ?? data.profile.email.split('@')[0],
+    nickname: data.profile.nickname ?? data.profile.username ?? 'Dojeon',
+    phoneNumber: data.profile.phoneNumber,
+    birthday: data.profile.birthday,
+    profileImgUrl: data.profile.profileImgUrl,
+    joinedYear: getJoinedYear(data.profile.createdAt),
+    subscriptionTier: data.profile.subscriptionTier,
+    subscriptionPlanId: data.profile.subscriptionPlanId,
+    subscriptionExpiresAt: data.profile.subscriptionExpiresAt,
+    isOnboarded: data.profile.isOnboarded ?? false,
+  },
+  settings: {
+    motherLanguage: data.profile.motherLanguage,
+    proficiencyLevel: data.profile.proficiencyLevel,
+    dailyGoalMin: data.profile.dailyGoalMin,
+    learningGoal: data.profile.learningGoal,
+    isPushNotificationOn: data.profile.isPushNotificationOn,
+    isMarketingAgreed: data.profile.isMarketingAgreed,
+  },
+  recentCourse: data.recentCourse
+    ? {
+      courseId: data.recentCourse.courseId,
+      lessonId: data.recentCourse.lessonId,
+      sectionId: data.recentCourse.sectionId,
+      courseTitle: data.recentCourse.courseTitle,
+      lessonTitle: data.recentCourse.lessonTitle,
+      sectionSubtitle: data.recentCourse.grammarPreview ?? data.recentCourse.sectionTitle,
+    }
+    : null,
+  stats: {
+    totalCompletedLessons: data.stats.totalCompletedLessons,
+    totalStudyMin: data.stats.totalStudyMin,
+    currentStreak: data.stats.currentStreak,
+    bestStreak: data.stats.bestStreak,
+  },
+  attendance: {
+    year: data.attendance.year,
+    month: data.attendance.month,
+    activeDays: data.attendance.activeDays,
+  },
+  recentAchievements: data.recentAchievements.map((achievement) => ({
+    badgeId: achievement.badgeId,
+    title: achievement.title,
+    imageUrl: achievement.imageUrl,
+    earnedAt: achievement.earnedAt,
+  })),
+})
 
 const monthNames = [
   'January',
@@ -72,17 +252,27 @@ const formatStudyTime = (totalMinutes: number) => {
   return `${hours}h ${minutes}m`
 }
 
-const getJoinedYear = (createdAt: string) => {
-  const parsedDate = new Date(createdAt)
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return new Date().getFullYear()
+const formatAchievementDate = (date: string | null) => {
+  if (!date) {
+    return 'Not earned yet'
   }
 
-  return parsedDate.getFullYear()
+  const parsedDate = new Date(date)
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return date
+  }
+
+  return parsedDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 function ProfileMainPage({
+  nickname,
+  username,
   onOpenHome,
   onOpenClass,
   onOpenPractice,
@@ -90,136 +280,26 @@ function ProfileMainPage({
   onOpenSetting,
   onOpenAchievements,
 }: ProfileMainPageProps) {
+  const { data: userMeData } = useUserMe()
   const [isSubscriptionSheetOpen, setIsSubscriptionSheetOpen] = useState(false)
-  const { data: userMe, isError, isLoading, refetch } = useUserMe()
-  const bottomNav = (
-    <nav className="profile-main-bottom-nav">
-      {tabs.map((tab) => (
-        <button
-          key={tab.label}
-          type="button"
-          className={`profile-main-tab ${
-            tab.label === 'PROFILE' ? 'profile-main-tab-active' : ''
-          }`}
-          onClick={() => {
-            if (tab.label === 'HOME') {
-              onOpenHome()
-            }
-
-            if (tab.label === 'CLASS') {
-              onOpenClass()
-            }
-
-            if (tab.label === 'PRACTICE') {
-              onOpenPractice()
-            }
-
-            if (tab.label === 'NOTEBOOK') {
-              onOpenNotebook()
-            }
-          }}
-        >
-          <img className="profile-main-tab-icon" src={tab.icon} alt="" aria-hidden="true" />
-          <span className="profile-main-tab-label">{tab.label}</span>
-        </button>
-      ))}
-    </nav>
-  )
-
-  if (isLoading) {
-    return (
-      <main className="profile-main-screen">
-        <section className="profile-main-status-panel">
-          <p className="profile-main-status-text">Loading profile...</p>
-        </section>
-        {bottomNav}
-      </main>
-    )
-  }
-
-  if (isError || !userMe) {
-    return (
-      <main className="profile-main-screen">
-        <section className="profile-main-status-panel">
-          <p className="profile-main-status-text">Unable to load profile.</p>
-          <button
-            type="button"
-            className="profile-main-status-button"
-            onClick={() => {
-              void refetch()
-            }}
-          >
-            Retry
-          </button>
-        </section>
-        {bottomNav}
-      </main>
-    )
-  }
-
-  const now = new Date()
-  const safeStats = userMe.stats ?? {
-    totalCompletedLessons: 0,
-    totalStudyMin: 0,
-    currentStreak: 0,
-    bestStreak: 0,
-  }
-  const safeAttendance = userMe.attendance ?? {
-    year: now.getFullYear(),
-    month: now.getMonth() + 1,
-    activeDays: [],
-  }
-  const safeRecentAchievements = userMe.recentAchievements ?? []
-
-  const profileData: ProfileMainData = {
+  const apiProfileData = userMeData ? mapUserMeToProfileData(userMeData) : null
+  const profileData = {
+    ...(apiProfileData ?? profileMainMockData),
     user: {
-      userId: Number(userMe.profile.userId),
-      email: userMe.profile.email,
-      username: userMe.profile.username,
-      nickname: userMe.profile.nickname,
-      phoneNumber: userMe.profile.phoneNumber,
-      birthday: userMe.profile.birthday,
-      profileImgUrl: userMe.profile.profileImgUrl,
-      joinedYear: getJoinedYear(userMe.profile.createdAt),
-      subscriptionTier: userMe.profile.subscriptionTier,
-      subscriptionPlanId: userMe.profile.subscriptionPlanId,
-      subscriptionExpiresAt: userMe.profile.subscriptionExpiresAt,
+      ...(apiProfileData?.user ?? profileMainMockData.user),
+      nickname: apiProfileData?.user.nickname ?? (nickname.trim() || profileMainMockData.user.nickname),
+      username: apiProfileData?.user.username ?? (username.trim() || profileMainMockData.user.username),
     },
-    settings: {
-      motherLanguage: userMe.profile.motherLanguage,
-      proficiencyLevel: userMe.profile.proficiencyLevel,
-      dailyGoalMin: userMe.profile.dailyGoalMin,
-      learningGoal: userMe.profile.learningGoal,
-      isPushNotificationOn: userMe.profile.isPushNotificationOn,
-      isMarketingAgreed: userMe.profile.isMarketingAgreed,
-    },
-    recentCourse: userMe.recentCourse
-      ? {
-          courseId: userMe.recentCourse.courseId,
-          lessonId: userMe.recentCourse.lessonId,
-          sectionId: userMe.recentCourse.sectionId,
-          courseTitle: userMe.recentCourse.courseTitle,
-          lessonTitle: userMe.recentCourse.lessonTitle,
-          sectionSubtitle: userMe.recentCourse.sectionTitle,
-      }
-      : null,
-    stats: safeStats,
-    attendance: {
-      ...safeAttendance,
-      activeDays: safeAttendance.activeDays ?? [],
-    },
-    recentAchievements: safeRecentAchievements,
   }
   const { user, recentCourse, stats, attendance, recentAchievements } = profileData
   const calendarDays = getCalendarDays(attendance.year, attendance.month)
   const calendarTitle = `${monthNames[attendance.month - 1]} ${attendance.year}`
   const visibleAchievements = recentAchievements.slice(0, 4)
+  const canToggleAchievements = recentAchievements.length > 4
   const subscriptionCopy =
     user.subscriptionTier === 'FREE'
       ? 'Upgrade your plan for more learning features.'
-      : `${user.subscriptionTier} plan is active${
-          user.subscriptionExpiresAt ? ` until ${formatAchievementDate(user.subscriptionExpiresAt)}` : ''
-        }.`
+      : `${user.subscriptionTier} plan is active.`
 
   return (
     <main className="profile-main-screen">
@@ -229,7 +309,7 @@ function ProfileMainPage({
             type="button"
             className="profile-main-setting-button"
             onClick={onOpenSetting}
-            aria-label="설정 열기"
+            aria-label="Open settings"
           >
             <img src={settingIcon} alt="" aria-hidden="true" />
           </button>
@@ -242,12 +322,12 @@ function ProfileMainPage({
             </div>
             <div className="profile-main-copy">
               <h1 className="profile-main-greeting">
-                안녕하세요!
+                Hello!
                 <br />
-                {user.nickname}님!
+                {user.nickname}!
               </h1>
               <p className="profile-main-meta">
-                @{user.username} <span aria-hidden="true">·</span> joined {user.joinedYear}
+                @{user.username} <span aria-hidden="true">/</span> joined {user.joinedYear}
               </p>
             </div>
           </div>
@@ -323,13 +403,15 @@ function ProfileMainPage({
         <section className="profile-main-section">
           <div className="profile-main-section-header">
             <h2 className="profile-main-section-title">Achievements</h2>
-            <button
-              type="button"
-              className="profile-main-section-link"
-              onClick={onOpenAchievements}
-            >
-              see more
-            </button>
+            {canToggleAchievements ? (
+              <button
+                type="button"
+                className="profile-main-section-link"
+                onClick={onOpenAchievements}
+              >
+                see more
+              </button>
+            ) : null}
           </div>
           <div className="profile-main-achievement-row">
             {visibleAchievements.length > 0 ? (
@@ -373,14 +455,44 @@ function ProfileMainPage({
         </section>
       </section>
 
-      {bottomNav}
-      {isSubscriptionSheetOpen && (
+      <nav className="profile-main-bottom-nav">
+        {tabs.map((tab) => (
+          <button
+            key={tab.label}
+            type="button"
+            className={`profile-main-tab ${
+              tab.label === 'PROFILE' ? 'profile-main-tab-active' : ''
+            }`}
+            onClick={() => {
+              if (tab.label === 'HOME') {
+                onOpenHome()
+              }
+
+              if (tab.label === 'CLASS') {
+                onOpenClass()
+              }
+
+              if (tab.label === 'PRACTICE') {
+                onOpenPractice()
+              }
+
+              if (tab.label === 'NOTEBOOK') {
+                onOpenNotebook()
+              }
+            }}
+          >
+            <img className="profile-main-tab-icon" src={tab.icon} alt="" aria-hidden="true" />
+            <span className="profile-main-tab-label">{tab.label}</span>
+          </button>
+        ))}
+      </nav>
+      {isSubscriptionSheetOpen ? (
         <SubscriptionBottomSheet
           currentSubscriptionPlanId={user.subscriptionPlanId}
           currentSubscriptionTier={user.subscriptionTier}
           onClose={() => setIsSubscriptionSheetOpen(false)}
         />
-      )}
+      ) : null}
     </main>
   )
 }

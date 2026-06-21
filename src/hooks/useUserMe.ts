@@ -1,11 +1,27 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchUserMe, UserApiError } from '../services/user.service'
-import type { UserMe } from '../types/user.types'
+import { fetchUserMe, UserApiError } from '../services/user.service.ts'
+import type { UserMeData } from '../types/user.types.ts'
 
-export function useUserMe() {
-  return useQuery<UserMe | null, UserApiError>({
+interface UseUserMeState {
+  data: UserMeData | null
+  loading: boolean
+  error: UserApiError | null
+  refetch: () => Promise<void>
+}
+
+export function useUserMe(enabled = true): UseUserMeState {
+  const { data, isPending, error, refetch } = useQuery<UserMeData | null, UserApiError>({
     queryKey: ['user', 'me'],
-    // GET /user/me
-    queryFn: ({ signal }) => fetchUserMe(undefined, signal),
+    queryFn: ({ signal }) => fetchUserMe(signal),
+    enabled,
   })
+
+  return {
+    data: data ?? null,
+    loading: enabled && isPending,
+    error: error ?? null,
+    refetch: async () => {
+      await refetch()
+    },
+  }
 }

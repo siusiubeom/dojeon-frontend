@@ -10,9 +10,9 @@ export interface ApiResponse<T> {
 export interface UserProfile {
   userId: string
   email: string
-  hasPassword: boolean
-  nickname: string
-  username: string
+  hasPassword?: boolean
+  nickname: string | null
+  username: string | null
   phoneNumber: string | null
   birthday: string | null
   profileImgUrl: string | null
@@ -26,7 +26,7 @@ export interface UserProfile {
   subscriptionExpiresAt: string | null
   isPushNotificationOn: boolean
   isMarketingAgreed: boolean
-  isOnboarded: boolean
+  isOnboarded?: boolean
   createdAt: string
 }
 
@@ -51,7 +51,7 @@ export interface UserRecentCourse {
   sectionId: number
   sectionTitle: string
   sectionType: string
-  grammarPreview: string | null
+  grammarPreview?: string | null
   overallProgressPercent: number
 }
 
@@ -64,12 +64,7 @@ export interface UserAchievement {
   earnedAt: string | null
 }
 
-export interface UserAchievementsData {
-  totalEarned: number
-  badges: UserAchievement[]
-}
-
-export interface UserMe {
+export interface UserMeData {
   profile: UserProfile
   stats: UserStats
   attendance: UserAttendance
@@ -77,9 +72,21 @@ export interface UserMe {
   recentAchievements: UserAchievement[]
 }
 
-export type UserMeResponse = ApiResponse<UserMe>
+export interface UserMeResponse {
+  isSuccess: boolean
+  code: string
+  message: string
+  data: UserMeData | null
+  errorCode?: string
+  timestamp: string
+}
 
-export interface PatchUserPayload {
+export interface UserAchievementsData {
+  totalEarned: number
+  badges: UserAchievement[]
+}
+
+export interface PatchUserRequest {
   nickname?: string
   username?: string
   phoneNumber?: string
@@ -96,8 +103,29 @@ export interface PatchUserPayload {
   isOnboarded?: boolean
 }
 
+export interface PatchUserData {
+  updated: boolean
+}
+
+export interface PatchUserResponse {
+  isSuccess: boolean
+  code: string
+  message: string
+  data: PatchUserData | null
+  errorCode?: string
+  timestamp: string
+}
+
 export interface ChangePasswordPayload {
   newPassword: string
+}
+
+export interface ChangePasswordData {
+  updated: boolean
+}
+
+export interface DeleteUserMeData {
+  deleted: boolean
 }
 
 export interface PresignedProfileImagePayload {
@@ -109,16 +137,4 @@ export interface PresignedProfileImageResult {
   uploadUrl: string
   key: string
   fileUrl: string
-}
-
-export type UpdateUserMeData = {
-  updated: boolean
-}
-
-export type DeleteUserMeData = {
-  deleted: boolean
-}
-
-export type ChangePasswordData = {
-  updated: boolean
 }

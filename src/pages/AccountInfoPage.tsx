@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import './AccountInfoPage.css'
 
 interface AccountInfoPageProps {
@@ -16,6 +16,8 @@ interface AccountInfoPageProps {
       newPassword: string
     }
   }) => void | Promise<void>
+  isSaving?: boolean
+  saveError?: string | null
   onBack: () => void
 }
 
@@ -27,37 +29,21 @@ function AccountInfoPage({
   phoneNumber,
   ageGroupOrBirthday,
   onSave,
+  isSaving = false,
+  saveError = null,
   onBack,
 }: AccountInfoPageProps) {
   const [draftNickname, setDraftNickname] = useState(nickname)
   const [newPassword, setNewPassword] = useState('')
+  const [passwordMessage, setPasswordMessage] = useState('')
   const [draftPhoneNumber, setDraftPhoneNumber] = useState(phoneNumber)
   const [draftAgeGroupOrBirthday, setDraftAgeGroupOrBirthday] = useState(ageGroupOrBirthday)
-  const [passwordMessage, setPasswordMessage] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
   const [editing, setEditing] = useState({
     nickname: false,
     password: false,
     phoneNumber: false,
     ageGroupOrBirthday: false,
   })
-  const resetDraftsToProps = () => {
-    setDraftNickname(nickname)
-    setDraftPhoneNumber(phoneNumber)
-    setDraftAgeGroupOrBirthday(ageGroupOrBirthday)
-    setNewPassword('')
-    setPasswordMessage('')
-  }
-
-  useEffect(() => {
-    setDraftNickname(nickname)
-    setDraftPhoneNumber(phoneNumber)
-    setDraftAgeGroupOrBirthday(ageGroupOrBirthday)
-    setNewPassword('')
-    setPasswordMessage('')
-  }, [nickname, phoneNumber, ageGroupOrBirthday])
-
-  const isPasswordChangeReady = newPassword.trim().length > 0
   const passwordRules = [
     {
       id: 'length',
@@ -85,6 +71,7 @@ function AccountInfoPage({
       isSatisfied: /[0-9]/.test(newPassword),
     },
   ]
+  const isPasswordChangeReady = newPassword.trim().length > 0
   const isPasswordRulesValid = passwordRules.every((rule) => rule.isSatisfied)
   const hasPendingChanges =
     draftNickname !== nickname ||
@@ -99,6 +86,41 @@ function AccountInfoPage({
     }
 
     setEditing((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const handleSave = async () => {
+    if (editing.password && !isPasswordChangeReady) {
+      setPasswordMessage('Enter a new password.')
+      return
+    }
+
+    if (isPasswordChangeReady && !isPasswordRulesValid) {
+      setPasswordMessage('Password does not meet all requirements.')
+      return
+    }
+
+    try {
+      await onSave({
+        nickname: draftNickname,
+        phoneNumber: draftPhoneNumber,
+        ageGroupOrBirthday: draftAgeGroupOrBirthday,
+        passwordChange: isPasswordChangeReady
+          ? {
+              newPassword: newPassword.trim(),
+            }
+          : undefined,
+      })
+      setNewPassword('')
+      setPasswordMessage('')
+      setEditing({
+        nickname: false,
+        password: false,
+        phoneNumber: false,
+        ageGroupOrBirthday: false,
+      })
+    } catch {
+      // The parent mutation exposes the error message through saveError.
+    }
   }
 
   const items = [
@@ -152,7 +174,7 @@ function AccountInfoPage({
             type="button"
             className="account-info-back"
             onClick={onBack}
-            aria-label="뒤로 가기"
+            aria-label="Go back"
           >
             <svg
               className="account-info-back-icon"
@@ -206,7 +228,7 @@ function AccountInfoPage({
                             }`}
                           >
                             <span className="account-info-password-requirement-icon">
-                              {rule.isSatisfied ? '✓' : '✕'}
+                              {rule.isSatisfied ? '✓' : '×'}
                             </span>
                             <span>{rule.message}</span>
                           </li>
@@ -215,11 +237,11 @@ function AccountInfoPage({
                     </div>
                   ) : (
                     <input
-                      type="text"
+                      type={item.inputType ?? 'text'}
                       className="account-info-input"
-                      value={'inputValue' in item ? item.inputValue : ''}
+                      value={item.inputValue}
                       onChange={(e) => {
-                        if ('onChange' in item && item.onChange) {
+                        if (item.onChange) {
                           item.onChange(e.target.value)
                         }
                       }}
@@ -233,7 +255,6 @@ function AccountInfoPage({
                   <button
                     type="button"
                     className="account-info-edit-button"
-                    disabled={isSaving}
                     onClick={item.onEdit}
                   >
                     EDIT
@@ -248,61 +269,21 @@ function AccountInfoPage({
         </section>
 
         {hasPendingChanges ? (
-          <button
-            type="button"
-            className="account-info-save-button"
-            disabled={isSaving}
-            onClick={async () => {
-              if (isSaving) {
-                return
-              }
-
-              if (editing.password && !isPasswordChangeReady) {
-                setPasswordMessage('Enter a new password.')
-                return
-              }
-
-              if (isPasswordChangeReady && !isPasswordRulesValid) {
-                setPasswordMessage('Password does not meet all requirements.')
-                return
-              }
-
-              setIsSaving(true)
-              try {
-                await onSave({
-                  nickname: draftNickname,
-                  phoneNumber: draftPhoneNumber,
-                  ageGroupOrBirthday: draftAgeGroupOrBirthday,
-                  passwordChange: isPasswordChangeReady
-                    ? {
-                        newPassword: newPassword.trim(),
-                      }
-                    : undefined,
-                })
-              } catch {
-                resetDraftsToProps()
-                setEditing({
-                  nickname: false,
-                  password: false,
-                  phoneNumber: false,
-                  ageGroupOrBirthday: false,
-                })
-                return
-              } finally {
-                setIsSaving(false)
-              }
-              setNewPassword('')
-              setPasswordMessage('')
-              setEditing({
-                nickname: false,
-                password: false,
-                phoneNumber: false,
-                ageGroupOrBirthday: false,
-              })
-            }}
-          >
-            {isSaving ? 'Saving...' : 'Save'}
-          </button>
+          <>
+            <button
+              type="button"
+              className="account-info-save-button"
+              disabled={isSaving}
+              onClick={() => void handleSave()}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+            {saveError ? (
+              <p className="account-info-save-error" role="alert">
+                {saveError}
+              </p>
+            ) : null}
+          </>
         ) : null}
       </section>
     </main>

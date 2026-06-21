@@ -1,5 +1,3 @@
-import type { ApiResponse } from './user.types'
-
 export interface SubscriptionPlan {
   planId: string
   title: string
@@ -10,8 +8,15 @@ export interface SubscriptionPlan {
   benefits: string[]
 }
 
-export interface SubscriptionPlansData {
+export interface SubscriptionPlanData {
   plans: SubscriptionPlan[]
 }
 
-export type SubscriptionPlansResponse = ApiResponse<SubscriptionPlansData>
+export interface SubscriptionPlanResponse {
+  isSuccess: boolean
+  code: string
+  message: string
+  data: SubscriptionPlanData | null
+  errorCode?: string
+  timestamp: string
+}

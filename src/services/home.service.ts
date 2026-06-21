@@ -2,6 +2,7 @@ import type { HomeResumeData, HomeResumeResponse } from '../types/home.types.ts'
 import { getAuthToken } from './session.ts'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+const HOME_RESUME_ENDPOINT = `${API_BASE_URL}/home/resume`
 
 export class HomeApiError extends Error {
     readonly code?: string
@@ -20,22 +21,37 @@ export async function fetchHomeResume(signal?: AbortSignal): Promise<HomeResumeD
     let res: Response
 
     try {
-        res = await fetch(`${API_BASE_URL}/home/resume`, {
+        res = await fetch(HOME_RESUME_ENDPOINT, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
+                Accept: 'application/json',
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             signal,
         })
     } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') throw error
-        throw new HomeApiError('Failed to fetch home resume')
+        const detail = error instanceof Error ? error.message : 'Unknown network error'
+        throw new HomeApiError(`Network error while requesting ${HOME_RESUME_ENDPOINT}: ${detail}`)
     }
 
     let body: HomeResumeResponse | null = null
+    const bodyText = await res.text()
+
+    if (!bodyText.trim()) {
+        if (!res.ok) {
+            throw new HomeApiError(
+                `Failed to fetch home resume (HTTP ${res.status})`,
+                undefined,
+                res.status,
+            )
+        }
+
+        return null
+    }
+
     try {
-        body = (await res.json()) as HomeResumeResponse
+        body = JSON.parse(bodyText) as HomeResumeResponse
     } catch {
         if (!res.ok) {
             throw new HomeApiError(
@@ -53,6 +69,10 @@ export async function fetchHomeResume(signal?: AbortSignal): Promise<HomeResumeD
     }
 
     if (!res.ok) {
+        if (res.status === 401) {
+            throw new HomeApiError('Your session has expired. Please log in again.', body?.code, res.status)
+        }
+
         throw new HomeApiError(
             body?.message ?? `Failed to fetch home resume (HTTP ${res.status})`,
             body?.code,

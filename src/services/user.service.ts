@@ -1,343 +1,240 @@
+import { getAuthToken } from './session.ts'
 import type {
   ApiResponse,
   ChangePasswordData,
   ChangePasswordPayload,
   DeleteUserMeData,
-  PatchUserPayload,
+  PatchUserData,
+  PatchUserRequest,
+  PatchUserResponse,
   PresignedProfileImagePayload,
   PresignedProfileImageResult,
   UserAchievementsData,
-  UpdateUserMeData,
-  UserMe,
-} from '../types/user.types'
+  UserMeData,
+  UserMeResponse,
+} from '../types/user.types.ts'
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') || ''
-const AUTH_SESSION_STORAGE_KEY = 'dojeon:auth.session'
-const ACCESS_TOKEN_STORAGE_KEY = 'accessToken'
-const isMockUserMode =
-  ((import.meta.env.VITE_MOCK_USER_API as string | undefined) || '').toLowerCase() === 'true'
-const mockUserDelayMs =
-  Number.parseInt((import.meta.env.VITE_MOCK_USER_DELAY_MS as string | undefined) || '300', 10) ||
-  300
-
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-const mockUserAchievements: UserAchievementsData = {
-  totalEarned: 2,
-  badges: [
-    {
-      badgeId: 1,
-      title: 'First step',
-      description: 'Completed the first section',
-      imageUrl: null,
-      isEarned: true,
-      earnedAt: '2026-03-28',
-    },
-    {
-      badgeId: 2,
-      title: 'Daily streak',
-      description: 'Studied for three days in a row',
-      imageUrl: null,
-      isEarned: true,
-      earnedAt: '2026-03-30',
-    },
-    {
-      badgeId: 3,
-      title: '7-day streak',
-      description: 'Study for seven days in a row',
-      imageUrl: null,
-      isEarned: false,
-      earnedAt: null,
-    },
-  ],
-}
-
-let mockUserMe: UserMe = {
-  profile: {
-    userId: '100',
-    email: 'example@email.com',
-    hasPassword: true,
-    nickname: 'Jinri',
-    username: 'jinri',
-    phoneNumber: '010-0000-0000',
-    birthday: null,
-    profileImgUrl: null,
-    motherLanguage: 'English',
-    proficiencyLevel: 'Intermediate',
-    ageGroup: '18-24',
-    dailyGoalMin: 15,
-    learningGoal: 'Tourism',
-    subscriptionTier: 'FREE',
-    subscriptionPlanId: null,
-    subscriptionExpiresAt: null,
-    isPushNotificationOn: true,
-    isMarketingAgreed: false,
-    isOnboarded: false,
-    createdAt: '2026-03-01T00:00:00.000Z',
-  },
-  stats: {
-    totalStudyMin: 80,
-    currentStreak: 3,
-    bestStreak: 7,
-    totalCompletedLessons: 24,
-  },
-  attendance: {
-    year: 2026,
-    month: 3,
-    activeDays: [1, 2, 3],
-  },
-  recentCourse: {
-    courseId: 1,
-    courseTitle: 'Course 1',
-    lessonId: 105,
-    lessonTitle: 'lesson 5',
-    sectionId: 505,
-    sectionTitle: 'Grammar 3 을까요? 1)',
-    sectionType: 'GRAMMAR',
-    grammarPreview: '동사 + 을까요?',
-    overallProgressPercent: 60,
-  },
-  recentAchievements: mockUserAchievements.badges.filter((achievement) => achievement.isEarned),
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export class UserApiError extends Error {
   readonly code?: string
+  readonly errorCode?: string
   readonly status?: number
 
-  constructor(message: string, code?: string, status?: number) {
+  constructor(message: string, code?: string, errorCode?: string, status?: number) {
     super(message)
     this.name = 'UserApiError'
     this.code = code
+    this.errorCode = errorCode
     this.status = status
   }
 }
 
-function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null
+function buildHeaders(extraHeaders: HeadersInit = {}): HeadersInit {
+  const token = getAuthToken()
+  return {
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extraHeaders,
+  }
+}
 
-  const storedSession = window.localStorage.getItem(AUTH_SESSION_STORAGE_KEY)
+async function readPatchUserResponse(res: Response): Promise<PatchUserResponse | null> {
+  const bodyText = await res.text()
 
-  if (storedSession) {
-    try {
-      const parsed = JSON.parse(storedSession) as { accessToken?: unknown }
-
-      if (typeof parsed.accessToken === 'string' && parsed.accessToken.trim()) {
-        return parsed.accessToken
-      }
-    } catch {
-      // Fall through to legacy token storage.
+  if (!bodyText.trim()) {
+    if (!res.ok) {
+      throw new UserApiError(
+        `Failed to update profile (HTTP ${res.status})`,
+        undefined,
+        undefined,
+        res.status,
+      )
     }
+
+    return null
   }
 
-  return (
-    window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ||
-    (import.meta.env.DEV ? (import.meta.env.VITE_DEV_ACCESS_TOKEN as string | undefined) : undefined) ||
-    null
-  )
+  try {
+    return JSON.parse(bodyText) as PatchUserResponse
+  } catch {
+    throw new UserApiError(
+      `Failed to update profile (HTTP ${res.status})`,
+      undefined,
+      undefined,
+      res.status,
+    )
+  }
 }
 
-function createUrl(path: string): string {
-  return `${API_BASE_URL}${path}`
+async function readUserApiResponse<T>(
+  res: Response,
+  fallbackMessage: string,
+): Promise<ApiResponse<T> | null> {
+  const bodyText = await res.text()
+
+  if (!bodyText.trim()) {
+    if (!res.ok) {
+      throw new UserApiError(fallbackMessage, undefined, undefined, res.status)
+    }
+
+    return null
+  }
+
+  try {
+    return JSON.parse(bodyText) as ApiResponse<T>
+  } catch {
+    throw new UserApiError(fallbackMessage, undefined, undefined, res.status)
+  }
 }
 
-async function parseUserResponse<T>(
-  response: Response,
+async function requestUserApi<T>(
+  path: string,
+  init: RequestInit,
   fallbackMessage: string,
 ): Promise<T | null> {
-  if (!response.ok) {
-    try {
-      const body = (await response.json()) as ApiResponse<T>
-      throw new UserApiError(body.message ?? fallbackMessage, body.code, response.status)
-    } catch (error) {
-      if (error instanceof UserApiError) {
-        throw error
-      }
+  let res: Response
 
-      throw new UserApiError(fallbackMessage, undefined, response.status)
-    }
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: buildHeaders({
+        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+        ...init.headers,
+      }),
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
+    throw new UserApiError(fallbackMessage)
   }
 
-  const body = (await response.json()) as ApiResponse<T>
+  const body = await readUserApiResponse<T>(res, fallbackMessage)
+
+  if (!res.ok) {
+    throw new UserApiError(
+      body?.message ?? `${fallbackMessage} (HTTP ${res.status})`,
+      body?.code,
+      body?.errorCode,
+      res.status,
+    )
+  }
+
+  if (body && !body.isSuccess) {
+    throw new UserApiError(body.message ?? 'Request failed', body.code, body.errorCode, res.status)
+  }
+
+  return body?.data ?? null
+}
+
+export async function fetchUserMe(signal?: AbortSignal): Promise<UserMeData | null> {
+  let res: Response
+
+  try {
+    res = await fetch(`${API_BASE_URL}/user/me`, {
+      method: 'GET',
+      headers: buildHeaders(),
+      signal,
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
+    throw new UserApiError('Failed to fetch profile')
+  }
+
+  let body: UserMeResponse
+  try {
+    body = (await res.json()) as UserMeResponse
+  } catch {
+    throw new UserApiError(`Failed to fetch profile (HTTP ${res.status})`, undefined, undefined, res.status)
+  }
+
+  if (!res.ok) {
+    throw new UserApiError(
+      body.message ?? `Failed to fetch profile (HTTP ${res.status})`,
+      body.code,
+      body.errorCode,
+      res.status,
+    )
+  }
 
   if (!body.isSuccess) {
-    throw new UserApiError(body.message ?? 'Request failed', body.code)
+    throw new UserApiError(body.message ?? 'Request failed', body.code, body.errorCode, res.status)
   }
 
-  return body.data as T | null
+  return body.data
 }
 
-async function requestWithAuth<T>(
-  path: string,
-  init: RequestInit = {},
-  fallbackMessage = 'Request failed',
-): Promise<T | null> {
-  const token = getAuthToken()
+export async function patchUserMe(payload: PatchUserRequest): Promise<PatchUserData | null> {
+  let res: Response
 
-  const response = await fetch(createUrl(path), {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init.headers,
-    },
-  })
-
-  return parseUserResponse<T>(response, fallbackMessage)
-}
-
-// GET /user/me - 내 정보 조회
-export async function fetchUserMe(
-  params?: { year?: number; month?: number },
-  signal?: AbortSignal,
-): Promise<UserMe | null> {
-  if (isMockUserMode) {
-    await wait(mockUserDelayMs)
-    return mockUserMe
-  }
-
-  const searchParams = new URLSearchParams()
-
-  if (params?.year) {
-    searchParams.set('year', String(params.year))
-  }
-
-  if (params?.month) {
-    searchParams.set('month', String(params.month))
-  }
-
-  const query = searchParams.toString()
-
-  return requestWithAuth<UserMe>(
-    `/user/me${query ? `?${query}` : ''}`,
-    { method: 'GET', signal },
-    'Failed to fetch user me',
-  )
-}
-
-// PATCH /user/me - 내 정보 수정 / 온보딩 정보 저장
-export async function updateUserMe(payload: PatchUserPayload): Promise<UpdateUserMeData | null> {
-  if (isMockUserMode) {
-    await wait(mockUserDelayMs)
-    mockUserMe = {
-      ...mockUserMe,
-      profile: {
-        ...mockUserMe.profile,
-        nickname: payload.nickname ?? mockUserMe.profile.nickname,
-        username: payload.username ?? mockUserMe.profile.username,
-        phoneNumber:
-          'phoneNumber' in payload
-            ? payload.phoneNumber ?? mockUserMe.profile.phoneNumber
-            : mockUserMe.profile.phoneNumber,
-        birthday:
-          'birthday' in payload
-            ? payload.birthday ?? mockUserMe.profile.birthday
-            : mockUserMe.profile.birthday,
-        motherLanguage:
-          'motherLanguage' in payload
-            ? payload.motherLanguage ?? mockUserMe.profile.motherLanguage
-            : mockUserMe.profile.motherLanguage,
-        proficiencyLevel:
-          'proficiencyLevel' in payload
-            ? payload.proficiencyLevel ?? mockUserMe.profile.proficiencyLevel
-            : mockUserMe.profile.proficiencyLevel,
-        ageGroup:
-          'ageGroup' in payload ? payload.ageGroup ?? mockUserMe.profile.ageGroup : mockUserMe.profile.ageGroup,
-        dailyGoalMin:
-          payload.dailyGoalMin ?? mockUserMe.profile.dailyGoalMin,
-        learningGoal:
-          'learningGoal' in payload ? payload.learningGoal ?? mockUserMe.profile.learningGoal : mockUserMe.profile.learningGoal,
-        isPushNotificationOn:
-          payload.isPushNotificationOn ?? mockUserMe.profile.isPushNotificationOn,
-        isMarketingAgreed: payload.isMarketingAgreed ?? mockUserMe.profile.isMarketingAgreed,
-        profileImgUrl: payload.profileImgUrl ?? mockUserMe.profile.profileImgUrl,
-        isOnboarded: payload.isOnboarded ?? mockUserMe.profile.isOnboarded,
-      },
-    }
-    return { updated: true }
-  }
-
-  return requestWithAuth<UpdateUserMeData>(
-    '/user/me',
-    {
+  try {
+    res = await fetch(`${API_BASE_URL}/user/me`, {
       method: 'PATCH',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload),
-    },
-    'Failed to update user me',
-  )
-}
-
-// DELETE /user/me - 회원 탈퇴
-export async function deleteUserMe(): Promise<DeleteUserMeData | null> {
-  if (isMockUserMode) {
-    await wait(mockUserDelayMs)
-    return { deleted: true }
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
+    throw new UserApiError('Failed to update profile')
   }
 
-  return requestWithAuth<DeleteUserMeData>(
+  const body = await readPatchUserResponse(res)
+
+  if (!res.ok) {
+    throw new UserApiError(
+      body?.message ?? `Failed to update profile (HTTP ${res.status})`,
+      body?.code,
+      body?.errorCode,
+      res.status,
+    )
+  }
+
+  if (body && !body.isSuccess) {
+    throw new UserApiError(body.message ?? 'Request failed', body.code, body.errorCode, res.status)
+  }
+
+  return body?.data ?? null
+}
+
+export async function deleteUserMe(): Promise<DeleteUserMeData | null> {
+  return requestUserApi<DeleteUserMeData>(
     '/user/me',
-    {
-      method: 'DELETE',
-    },
-    'Failed to delete user me',
+    { method: 'DELETE' },
+    'Failed to delete profile',
   )
 }
 
-// PATCH /user/me/password - 비밀번호 변경 (로그인 상태)
 export async function changeUserPassword(
   payload: ChangePasswordPayload,
 ): Promise<ChangePasswordData | null> {
-  if (isMockUserMode) {
-    await wait(mockUserDelayMs)
-    return { updated: true }
-  }
-
-  return requestWithAuth<ChangePasswordData>(
+  return requestUserApi<ChangePasswordData>(
     '/user/me/password',
     {
       method: 'PATCH',
       body: JSON.stringify(payload),
     },
-    'Failed to change user password',
+    'Failed to change password',
   )
 }
 
-// GET /user/me/achievement - 업적(뱃지) 목록 조회
 export async function fetchUserAchievements(
   signal?: AbortSignal,
 ): Promise<UserAchievementsData | null> {
-  if (isMockUserMode) {
-    await wait(mockUserDelayMs)
-    return mockUserAchievements
-  }
-
-  return requestWithAuth<UserAchievementsData>(
+  return requestUserApi<UserAchievementsData>(
     '/user/me/achievement',
     { method: 'GET', signal },
-    'Failed to fetch user achievements',
+    'Failed to fetch achievements',
   )
 }
 
-// POST /user/me/profileImage/presignedUrl - 프로필 이미지 업로드 URL 발급
 export async function createProfileImagePresignedUrl(
   payload: PresignedProfileImagePayload,
 ): Promise<PresignedProfileImageResult | null> {
-  if (isMockUserMode) {
-    await wait(mockUserDelayMs)
-    return {
-      uploadUrl: '',
-      key: `mock/profile-image.${payload.fileExtension}`,
-      fileUrl: '',
-    }
-  }
-
-  return requestWithAuth<PresignedProfileImageResult>(
+  return requestUserApi<PresignedProfileImageResult>(
     '/user/me/profileImage/presignedUrl',
     {
       method: 'POST',
       body: JSON.stringify(payload),
     },
-    'Failed to create profile image presigned url',
+    'Failed to create profile image upload URL',
   )
 }

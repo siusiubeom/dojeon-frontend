@@ -47,6 +47,44 @@ async function readErrorBody<T extends { message?: string; code?: string; errorC
     }
 }
 
+function isEmptyObject(value: unknown) {
+    return Boolean(
+        value &&
+            typeof value === 'object' &&
+            !Array.isArray(value) &&
+            Object.keys(value).length === 0,
+    )
+}
+
+async function readSuccessBody<T extends {
+    isSuccess: boolean
+    message?: string
+    code?: string
+    errorCode?: string
+    data: unknown
+}>(
+    res: Response,
+    fallbackMessage: string,
+): Promise<T | null> {
+    const bodyText = await res.text()
+
+    if (!bodyText.trim()) {
+        return null
+    }
+
+    try {
+        const body = JSON.parse(bodyText) as unknown
+        return isEmptyObject(body) ? null : body as T
+    } catch {
+        throw new ScrapApiError(
+            `${fallbackMessage} (invalid JSON, HTTP ${res.status})`,
+            undefined,
+            undefined,
+            res.status,
+        )
+    }
+}
+
 /**
  * GET /scrap/dashboard — vocabulary group + grammar previews for the notebook home.
  */
@@ -69,7 +107,11 @@ export async function fetchScrapDashboard(
         )
     }
 
-    const body = (await res.json()) as ScrapDashboardResponse
+    const body = await readSuccessBody<ScrapDashboardResponse>(
+        res,
+        'Failed to fetch scrap dashboard',
+    )
+    if (!body) return null
     if (!body.isSuccess) {
         throw new ScrapApiError(body.message ?? 'Request failed', body.code)
     }
@@ -105,7 +147,11 @@ export async function fetchScrapList(
         )
     }
 
-    const body = (await res.json()) as ScrapListResponse
+    const body = await readSuccessBody<ScrapListResponse>(
+        res,
+        'Failed to fetch scrap list',
+    )
+    if (!body) return null
     if (!body.isSuccess) {
         throw new ScrapApiError(body.message ?? 'Request failed', body.code, body.errorCode)
     }
@@ -134,7 +180,11 @@ export async function createScrap(
         )
     }
 
-    const body = (await res.json()) as CreateScrapResponse
+    const body = await readSuccessBody<CreateScrapResponse>(
+        res,
+        'Failed to create scrap',
+    )
+    if (!body) return null
     if (!body.isSuccess) {
         throw new ScrapApiError(body.message ?? 'Request failed', body.code, body.errorCode)
     }
@@ -160,7 +210,11 @@ export async function deleteScrap(scrapId: string): Promise<DeleteScrapData | nu
         )
     }
 
-    const body = (await res.json()) as DeleteScrapResponse
+    const body = await readSuccessBody<DeleteScrapResponse>(
+        res,
+        'Failed to delete scrap',
+    )
+    if (!body) return null
     if (!body.isSuccess) {
         throw new ScrapApiError(body.message ?? 'Request failed', body.code, body.errorCode)
     }

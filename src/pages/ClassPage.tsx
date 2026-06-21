@@ -6,6 +6,7 @@ import fileIcon from '../assets/file.svg'
 import bookOpenIcon from '../assets/book-open.svg'
 import profileIcon from '../assets/user.svg'
 import { useCoursesDashboard } from '../hooks/useCoursesDashboard.ts'
+import type { DashboardCourse } from '../types/dasboard.types.ts'
 
 const tabs = [
   { icon: homeIcon, label: 'HOME' },
@@ -15,50 +16,119 @@ const tabs = [
   { icon: profileIcon, label: 'PROFILE' },
 ]
 
-const progressDotCount = 5
 const progressDotInset = 10
+const progressDotStopGap = 8
+const minimumCourseCount = 5
+const fallbackProgressPercent = 18
 const trialTargetDays = 7
 const trialLabel = `${trialTargetDays}-day Trial available`
 
+function getClassProgressFillWidth(activeCourseIndex: number, dotCount: number): string {
+  if (activeCourseIndex < 0) return '0%'
+  const targetDotIndex = activeCourseIndex + 1
+  if (targetDotIndex >= dotCount - 1) return '100%'
+
+  return `calc(${progressDotInset}px + ((100% - ${progressDotInset * 2}px) / ${
+    dotCount - 1
+  }) * ${targetDotIndex} - ${progressDotStopGap}px)`
+}
+
+function createFallbackLessons(courseOrder: number): DashboardCourse['lessons'] {
+  return Array.from({ length: 5 }, (_, index) => ({
+    lessonId: -(courseOrder * 100 + index + 1),
+    title: 'Vocabulary',
+    subtitle: null,
+    orderNum: index + 1,
+    sectionCount: 1,
+    completedSectionCount: 1,
+    progressPercent: 100,
+    isCompleted: true,
+  }))
+}
+
+function createFallbackCourse(courseOrder: number): DashboardCourse {
+  return {
+    courseId: -courseOrder,
+    title: `Course ${courseOrder}`,
+    description: '',
+    orderNum: courseOrder,
+    isActive: true,
+    totalSections: 5,
+    completedSections: courseOrder === 1 ? 5 : 0,
+    overallProgressPercent: courseOrder === 1 ? 100 : 0,
+    totalStaySeconds: 0,
+    lessons: createFallbackLessons(courseOrder),
+  }
+}
+
+function getDisplayCourses(apiCourses: DashboardCourse[]): DashboardCourse[] {
+  const coursesByOrder = new Map<number, DashboardCourse>()
+  for (const course of apiCourses) {
+    coursesByOrder.set(course.orderNum || course.courseId, course)
+  }
+
+  return Array.from({ length: Math.max(minimumCourseCount, apiCourses.length) }, (_, index) => {
+    const courseOrder = index + 1
+    return coursesByOrder.get(courseOrder) ?? createFallbackCourse(courseOrder)
+  })
+}
+
 interface ClassPageProps {
+  preferFallbackContent?: boolean
+  defaultOpenCourseOrder?: number
   onOpenHome: () => void
   onOpenPractice: () => void
+  onOpenNotebook: () => void
   onOpenProfile: () => void
-  onOpenCurrentLesson: (sectionId: number, sectionType: string) => void
   onOpenLesson: (courseId: number, lessonId: number) => void
 }
 
 function ClassPage({
+  preferFallbackContent = false,
+  defaultOpenCourseOrder,
   onOpenHome,
   onOpenPractice,
+  onOpenNotebook,
   onOpenProfile,
-  onOpenCurrentLesson,
   onOpenLesson,
 }: ClassPageProps) {
   const { data, loading, error, refetch } = useCoursesDashboard()
-  const [isBottomLessonVisible, setIsBottomLessonVisible] = useState(true)
   const [manuallyToggled, setManuallyToggled] = useState<Map<number, boolean>>(new Map())
 
   const resumeBanner = data?.resumeBanner ?? null
-  const courses = useMemo(() => data?.courses ?? [], [data])
+  const apiCourses = useMemo(() => data?.courses ?? [], [data])
+  const courses = useMemo(() => getDisplayCourses(apiCourses), [apiCourses])
+  const isUsingFallbackCourses = apiCourses.length === 0
 
   const progressPercent = useMemo(() => {
+    if (isUsingFallbackCourses) return fallbackProgressPercent
     if (!resumeBanner) return 0
     const activeCourse = courses.find((c) => c.courseId === resumeBanner.courseId)
     return activeCourse?.overallProgressPercent ?? resumeBanner.overallProgressPercent ?? 0
-  }, [courses, resumeBanner])
+  }, [courses, isUsingFallbackCourses, resumeBanner])
 
-  const progressFillPercent = Math.min(100, progressPercent + 4)
+  const activeCourseIndex = (() => {
+    if (!courses.length) return -1
+    if (isUsingFallbackCourses || !resumeBanner) return 0
+
+    const index = courses.findIndex((course) => course.courseId === resumeBanner.courseId)
+    return index >= 0 ? index : 0
+  })()
+  const classProgressDotCount = Math.max(1, courses.length)
+  const progressFillWidth = getClassProgressFillWidth(activeCourseIndex, classProgressDotCount)
 
   const openCourseIds = useMemo(() => {
     const open = new Set<number>()
-    if (resumeBanner) open.add(resumeBanner.courseId)
+    if (defaultOpenCourseOrder !== undefined && !manuallyToggled.size) {
+      const defaultCourse = courses.find((course) => course.orderNum === defaultOpenCourseOrder)
+      if (defaultCourse) open.add(defaultCourse.courseId)
+    }
     for (const [courseId, isOpen] of manuallyToggled) {
       if (isOpen) open.add(courseId)
       else open.delete(courseId)
     }
     return open
-  }, [resumeBanner, manuallyToggled])
+  }, [courses, defaultOpenCourseOrder, manuallyToggled])
 
   const toggleCourse = (courseId: number) => {
     const currentlyOpen = openCourseIds.has(courseId)
@@ -69,17 +139,17 @@ function ClassPage({
     })
   }
 
-  if (loading) {
+  if (loading && !preferFallbackContent) {
     return (
       <main className="class-screen">
         <section className="class-content">
-          <p className="class-status">Loading…</p>
+          <p className="class-status">Loading...</p>
         </section>
       </main>
     )
   }
 
-  if (error) {
+  if (error && !isUsingFallbackCourses && !preferFallbackContent) {
     return (
       <main className="class-screen">
         <section className="class-content">
@@ -102,18 +172,20 @@ function ClassPage({
             <span className="class-progress-track" aria-hidden="true" />
             <span
               className="class-progress-fill"
-              style={{ width: `${progressFillPercent}%` }}
+              style={{ width: progressFillWidth }}
               aria-hidden="true"
             />
-            {Array.from({ length: progressDotCount }).map((_, index) => (
+            {Array.from({ length: classProgressDotCount }).map((_, index) => (
               <span
                 key={index}
                 className={`class-progress-dot ${
-                  index === 0 ? 'class-progress-dot-past' : 'class-progress-dot-upcoming'
+                  index <= activeCourseIndex
+                    ? 'class-progress-dot-past'
+                    : 'class-progress-dot-upcoming'
                 }`}
                 style={{
                   left: `calc(${progressDotInset}px + ((100% - ${progressDotInset * 2}px) / ${
-                    progressDotCount - 1
+                    classProgressDotCount - 1
                   }) * ${index})`,
                 }}
                 role="listitem"
@@ -125,7 +197,7 @@ function ClassPage({
         <section className="class-course-list" aria-label="courses">
           {courses.map((course) => {
             const isOpen = openCourseIds.has(course.courseId)
-            const courseLabel = course.title
+            const courseLabel = `Course ${course.orderNum || course.courseId}`
 
             return (
               <article key={course.courseId} className="class-course-item">
@@ -167,7 +239,9 @@ function ClassPage({
                         key={`${course.courseId}-${lesson.lessonId}`}
                         type="button"
                         className="class-lesson-card"
-                        onClick={() => onOpenLesson(course.courseId, lesson.lessonId)}
+                        onClick={() => {
+                          onOpenLesson(course.courseId, lesson.lessonId)
+                        }}
                         aria-label={`Open ${courseLabel}, ${lesson.title}`}
                       >
                         <span className="class-lesson-main">
@@ -175,9 +249,9 @@ function ClassPage({
                             className="class-lesson-progress"
                             aria-label={`${lesson.progressPercent}% progress`}
                             style={{
-                              background: `conic-gradient(from 0deg, #5f5f5f 0deg ${
+                              background: `conic-gradient(from 0deg, var(--dojeon-color-primary-300) 0deg ${
                                 lesson.progressPercent * 3.6
-                              }deg, #bdbdbd ${lesson.progressPercent * 3.6}deg 360deg)`,
+                              }deg, var(--dojeon-color-primary-border) ${lesson.progressPercent * 3.6}deg 360deg)`,
                             }}
                           >
                             <span className="class-lesson-progress-text">
@@ -190,7 +264,7 @@ function ClassPage({
 
                           <span className="class-lesson-copy">
                             <span className="class-lesson-chip">
-                              Lesson {lesson.orderNum}
+                              lesson {lesson.orderNum}
                             </span>
                             <span className="class-lesson-title">{lesson.title}</span>
                           </span>
@@ -222,60 +296,9 @@ function ClassPage({
         </section>
       </section>
 
-      {resumeBanner && (
-        <button
-          type="button"
-          className={`class-trial-toggle ${
-            isBottomLessonVisible ? 'class-trial-toggle-expanded' : 'class-trial-toggle-collapsed'
-          }`}
-          onClick={() => setIsBottomLessonVisible((current) => !current)}
-          aria-expanded={isBottomLessonVisible}
-          aria-label={trialLabel}
-        >
-          <span className="class-trial-toggle-text">{trialLabel}</span>
-        </button>
-      )}
-
-      {resumeBanner && isBottomLessonVisible ? (
-        <>
-          <button
-            type="button"
-            className="class-current-lesson-card"
-            onClick={() => onOpenCurrentLesson(resumeBanner.sectionId, resumeBanner.sectionType)}
-            aria-label={`Open ${resumeBanner.courseTitle}, ${resumeBanner.lessonTitle}`}
-          >
-            <span className="class-current-lesson-copy">
-              <span className="class-current-lesson-kicker">
-                {`${resumeBanner.courseTitle}, ${resumeBanner.lessonTitle}`}
-              </span>
-              <span className="class-current-lesson-title">{resumeBanner.sectionTitle}</span>
-            </span>
-            <svg
-              className="class-current-lesson-arrow"
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M7 4L12 9L7 14"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-
-          <div className="class-current-lesson-progress-bar" aria-hidden="true">
-            <span
-              className="class-current-lesson-progress-fill"
-              style={{ width: `${resumeBanner.overallProgressPercent}%` }}
-            />
-          </div>
-        </>
-      ) : null}
+      <div className="class-trial-banner">
+        <span className="class-trial-banner-text">{trialLabel}</span>
+      </div>
 
       <nav className="class-bottom-nav">
         {tabs.map((tab) => (
@@ -286,6 +309,7 @@ function ClassPage({
             onClick={() => {
               if (tab.label === 'HOME') onOpenHome()
               if (tab.label === 'PRACTICE') onOpenPractice()
+              if (tab.label === 'NOTEBOOK') onOpenNotebook()
               if (tab.label === 'PROFILE') onOpenProfile()
             }}
           >
