@@ -15,7 +15,10 @@ export function useSectionMaterials(sectionId: number | null): UseSectionMateria
         SectionApiError
     >({
         queryKey: ['section', sectionId, 'materials'],
-        queryFn: ({ signal }) => fetchSectionMaterials(sectionId as number, signal),
+        queryFn: ({ signal }) => {
+            if (sectionId === null) return null
+            return fetchSectionMaterials(sectionId, signal)
+        },
         enabled: sectionId !== null,
     })
 
@@ -24,6 +27,7 @@ export function useSectionMaterials(sectionId: number | null): UseSectionMateria
         loading: sectionId !== null && (isPending || isFetching),
         error: error ?? null,
         refetch: async () => {
+            if (sectionId === null) return
             await refetch()
         },
     }

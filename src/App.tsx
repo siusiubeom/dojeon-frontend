@@ -234,7 +234,13 @@ function App() {
     const didSwitchAccount = syncLocalAccountOwner(authSession.email)
 
     if (didSwitchAccount) {
-      resetLocalProfileState()
+      const timer = window.setTimeout(() => {
+        resetLocalProfileState()
+      }, 0)
+
+      return () => {
+        window.clearTimeout(timer)
+      }
     }
   }, [authSession?.email])
 
@@ -262,20 +268,26 @@ function App() {
     sectionType: string,
     backScreen: 'class' | 'lesson-detail',
   ) => {
-    setSelectedSectionId(sectionId)
     if (sectionType === 'VOCAB') {
+      setSelectedSectionId(sectionId)
       setVocabularyLessonBackScreen(backScreen)
       setScreen('vocabulary-lesson')
       return
     }
-    setGrammarPracticeBackScreen(backScreen)
+
     if (sectionType === 'GRAMMAR') {
       setGrammarPracticeInitialStep('next-grammar')
     } else if (sectionType === 'READING') {
       setGrammarPracticeInitialStep('reading')
-    } else {
+    } else if (sectionType === 'LISTENING') {
       setGrammarPracticeInitialStep('listening')
+    } else {
+      console.warn(`Unsupported section type: ${sectionType}`)
+      return
     }
+
+    setSelectedSectionId(sectionId)
+    setGrammarPracticeBackScreen(backScreen)
     setScreen('grammar-practice')
   }
 

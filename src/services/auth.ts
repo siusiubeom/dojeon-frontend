@@ -231,6 +231,11 @@ export const getStoredAuthSession = (): AuthSession | null => {
       return null
     }
 
+    if (!isMockMode && parsed.accessToken.startsWith('mock-access')) {
+      removeStorageItem(AUTH_SESSION_KEY)
+      return null
+    }
+
     return parsed
   } catch {
     return null

@@ -56,6 +56,7 @@ function VocabularyLessonPage({
   const [optimisticAdded, setOptimisticAdded] = useState<number[]>([])
   const [optimisticRemoved, setOptimisticRemoved] = useState<number[]>([])
   const [optimisticScrapIds, setOptimisticScrapIds] = useState<Record<number, string>>({})
+  const [pendingScrapWordIds, setPendingScrapWordIds] = useState<number[]>([])
   const [personalListPromptWordId, setPersonalListPromptWordId] = useState<number | null>(null)
   const pointerStartXRef = useRef<number | null>(null)
 
@@ -136,33 +137,40 @@ function VocabularyLessonPage({
   }
 
   const handleTogglePersonalList = async (wordId: number) => {
-    const isSaved = personalListIds.includes(wordId)
+    if (pendingScrapWordIds.includes(wordId)) return
 
-    if (isSaved) {
-      const scrapId = scrapIdByCardId[wordId]
-      if (!scrapId) return
-      setOptimisticRemoved((prev) => [...prev, wordId])
-      setOptimisticAdded((prev) => prev.filter((id) => id !== wordId))
-      try {
-        await deleteScrapMutation.mutateAsync(scrapId)
-      } catch {
-        setOptimisticRemoved((prev) => prev.filter((id) => id !== wordId))
-      }
-    } else {
-      if (sectionId === null) return
-      setOptimisticAdded((prev) => [...prev, wordId])
-      try {
-        const result = await createScrapMutation.mutateAsync({
-          type: 'VOCAB',
-          cardId: wordId,
-          sectionId,
-        })
-        if (result?.id) {
-          setOptimisticScrapIds((prev) => ({ ...prev, [wordId]: result.id }))
-        }
-      } catch {
+    const isSaved = personalListIds.includes(wordId)
+    setPendingScrapWordIds((prev) => [...prev, wordId])
+
+    try {
+      if (isSaved) {
+        const scrapId = scrapIdByCardId[wordId]
+        if (!scrapId) return
+        setOptimisticRemoved((prev) => [...prev, wordId])
         setOptimisticAdded((prev) => prev.filter((id) => id !== wordId))
+        try {
+          await deleteScrapMutation.mutateAsync(scrapId)
+        } catch {
+          setOptimisticRemoved((prev) => prev.filter((id) => id !== wordId))
+        }
+      } else {
+        if (sectionId === null) return
+        setOptimisticAdded((prev) => [...prev, wordId])
+        try {
+          const result = await createScrapMutation.mutateAsync({
+            type: 'VOCAB',
+            cardId: wordId,
+            sectionId,
+          })
+          if (result?.id) {
+            setOptimisticScrapIds((prev) => ({ ...prev, [wordId]: result.id }))
+          }
+        } catch {
+          setOptimisticAdded((prev) => prev.filter((id) => id !== wordId))
+        }
       }
+    } finally {
+      setPendingScrapWordIds((prev) => prev.filter((id) => id !== wordId))
     }
   }
 
@@ -199,6 +207,7 @@ function VocabularyLessonPage({
       ? null
       : vocabularyItems.find((item) => item.id === personalListPromptWordId) ?? null
   const promptWordSaved = promptWord ? personalListIds.includes(promptWord.id) : false
+  const isPromptWordPending = promptWord ? pendingScrapWordIds.includes(promptWord.id) : false
 
   const renderPersonalListIcon = (isSaved: boolean) => {
     if (isSaved) {
@@ -610,7 +619,9 @@ function VocabularyLessonPage({
               <button
                 type="button"
                 className="vocabulary-lesson-modal-button vocabulary-lesson-modal-button-primary"
+                disabled={isPromptWordPending}
                 onClick={() => {
+                  if (isPromptWordPending) return
                   void handleTogglePersonalList(promptWord.id)
                   setPersonalListPromptWordId(null)
                 }}

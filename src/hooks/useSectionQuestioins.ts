@@ -15,7 +15,10 @@ export function useSectionQuestions(sectionId: number | null): UseSectionQuestio
         SectionApiError
     >({
         queryKey: ['section', sectionId, 'questions'],
-        queryFn: ({ signal }) => fetchSectionQuestions(sectionId as number, signal),
+        queryFn: ({ signal }) => {
+            if (sectionId === null) return null
+            return fetchSectionQuestions(sectionId, signal)
+        },
         enabled: sectionId !== null,
     })
 
@@ -24,6 +27,7 @@ export function useSectionQuestions(sectionId: number | null): UseSectionQuestio
         loading: sectionId !== null && (isPending || isFetching),
         error: error ?? null,
         refetch: async () => {
+            if (sectionId === null) return
             await refetch()
         },
     }

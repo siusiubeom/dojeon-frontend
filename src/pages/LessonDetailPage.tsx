@@ -69,16 +69,20 @@ function LessonDetailPage({
     const section = sections.find((s) => s.sectionId === selectedModuleId)
     if (!section) return
 
-    await saveProgress.mutateAsync({
-      sectionId: selectedModuleId,
-      payload: {
-        currentPage: section.totalPages || 1,
-        stayTimeSeconds: 0,
-        forceComplete: true,
-        difficulty: 'NORMAL',
-      },
-    })
-    setSelectedModuleId(null)
+    try {
+      await saveProgress.mutateAsync({
+        sectionId: selectedModuleId,
+        payload: {
+          currentPage: section.totalPages || 1,
+          stayTimeSeconds: 0,
+          forceComplete: true,
+          difficulty: 'NORMAL',
+        },
+      })
+      setSelectedModuleId(null)
+    } catch {
+      // 사용자가 다시 시도할 수 있도록 선택한 모듈 상태를 유지한다.
+    }
   }
 
   if (loading) {
@@ -342,6 +346,11 @@ function LessonDetailPage({
                     />
                   </svg>
                 </button>
+                {saveProgress.error ? (
+                  <p className="lesson-detail-complete-error" role="alert">
+                    {saveProgress.error.message}
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
