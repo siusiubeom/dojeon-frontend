@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const proxyTarget = env.VITE_PROXY_API_TARGET || 'http://localhost:3000'
+  const isVercelBuild = process.env.VERCEL === '1' || process.env.VERCEL === 'true'
+  const basePath = isVercelBuild ? '/' : '/dojeon-frontend/'
   const apiPaths = [
     '/auth',
     '/user',
@@ -18,7 +20,7 @@ export default defineConfig(({ mode }) => {
   ]
 
   return {
-    base: '/dojeon-frontend/',
+    base: basePath,
     plugins: [react()],
     server: {
       proxy: Object.fromEntries(
