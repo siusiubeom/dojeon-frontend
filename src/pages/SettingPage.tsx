@@ -1,10 +1,10 @@
 import './SettingPage.css'
-import accountIcon from '../assets/account_icon.png'
-import preferenceIcon from '../assets/preference_icon.png'
-import notificationIcon from '../assets/notification_icon.png'
-import contactSupportIcon from '../assets/Contact_Support_icon.png'
-import faqIcon from '../assets/FAQ_icon.png'
-import feedbackIcon from '../assets/Feedback_icon.png'
+import accountIcon from '../assets/profile.svg'
+import preferenceIcon from '../assets/preferences.svg'
+import notificationIcon from '../assets/notification.svg'
+import contactSupportIcon from '../assets/support.svg'
+import faqIcon from '../assets/question.svg'
+import feedbackIcon from '../assets/Feedback_icon.svg'
 
 interface SettingPageProps {
   onBack: () => void
@@ -149,16 +149,22 @@ function SettingPage({
           onClick={onSignOut}
           disabled={isSigningOut}
         >
-          {isSigningOut ? 'Signing out...' : 'Sign out'}
+          {isSigningOut ? 'SIGNING OUT...' : 'LOG OUT'}
         </button>
 
         <div className="setting-policy-links">
           <button type="button" className="setting-policy-link">
             Terms and conditions
           </button>
+          <span className="setting-policy-separator" aria-hidden="true">
+            |
+          </span>
           <button type="button" className="setting-policy-link">
             Privacy Policy
           </button>
+          <span className="setting-policy-separator" aria-hidden="true">
+            |
+          </span>
           <button type="button" className="setting-policy-link">
             License
           </button>
