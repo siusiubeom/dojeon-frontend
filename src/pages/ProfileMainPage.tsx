@@ -6,6 +6,7 @@ import fileIcon from '../assets/file.svg'
 import bookOpenIcon from '../assets/book-open.svg'
 import profileIcon from '../assets/user.svg'
 import settingIcon from '../assets/setting_icon.svg'
+import starIcon from '../assets/star.svg'
 import { useUserMe } from '../hooks/useUserMe.ts'
 import SubscriptionBottomSheet from '../components/SubscriptionBottomSheet'
 import type { UserMeData } from '../types/user.types.ts'
@@ -180,17 +181,17 @@ const mapUserMeToProfileData = (data: UserMeData): ProfileMainData => ({
     }
     : null,
   stats: {
-    totalCompletedLessons: data.stats.totalCompletedLessons,
-    totalStudyMin: data.stats.totalStudyMin,
-    currentStreak: data.stats.currentStreak,
-    bestStreak: data.stats.bestStreak,
+    totalCompletedLessons: data.stats?.totalCompletedLessons ?? 0,
+    totalStudyMin: data.stats?.totalStudyMin ?? 0,
+    currentStreak: data.stats?.currentStreak ?? 0,
+    bestStreak: data.stats?.bestStreak ?? 0,
   },
   attendance: {
-    year: data.attendance.year,
-    month: data.attendance.month,
-    activeDays: data.attendance.activeDays,
+    year: data.attendance?.year ?? new Date().getFullYear(),
+    month: data.attendance?.month ?? new Date().getMonth() + 1,
+    activeDays: data.attendance?.activeDays ?? [],
   },
-  recentAchievements: data.recentAchievements.map((achievement) => ({
+  recentAchievements: (data.recentAchievements ?? []).map((achievement) => ({
     badgeId: achievement.badgeId,
     title: achievement.title,
     imageUrl: achievement.imageUrl,
@@ -252,24 +253,6 @@ const formatStudyTime = (totalMinutes: number) => {
   return `${hours}h ${minutes}m`
 }
 
-const formatAchievementDate = (date: string | null) => {
-  if (!date) {
-    return 'Not earned yet'
-  }
-
-  const parsedDate = new Date(date)
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return date
-  }
-
-  return parsedDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
 function ProfileMainPage({
   nickname,
   username,
@@ -294,12 +277,9 @@ function ProfileMainPage({
   const { user, recentCourse, stats, attendance, recentAchievements } = profileData
   const calendarDays = getCalendarDays(attendance.year, attendance.month)
   const calendarTitle = `${monthNames[attendance.month - 1]} ${attendance.year}`
-  const visibleAchievements = recentAchievements.slice(0, 4)
-  const canToggleAchievements = recentAchievements.length > 4
-  const subscriptionCopy =
-    user.subscriptionTier === 'FREE'
-      ? 'Upgrade your plan for more learning features.'
-      : `${user.subscriptionTier} plan is active.`
+  const visibleAchievements = recentAchievements.slice(0, 5)
+  const subscriptionPlanLabel =
+    user.subscriptionTier === 'FREE' ? 'Free Plan' : `${user.subscriptionTier} Plan`
 
   return (
     <main className="profile-main-screen">
@@ -322,12 +302,12 @@ function ProfileMainPage({
             </div>
             <div className="profile-main-copy">
               <h1 className="profile-main-greeting">
-                Hello!
+                안녕하세요!
                 <br />
-                {user.nickname}!
+                <span className="profile-main-nickname">[{user.nickname}]</span>님!
               </h1>
               <p className="profile-main-meta">
-                @{user.username} <span aria-hidden="true">/</span> joined {user.joinedYear}
+                @{user.username} <span aria-hidden="true">•</span> joined {user.joinedYear}
               </p>
             </div>
           </div>
@@ -339,7 +319,10 @@ function ProfileMainPage({
             <p className="profile-main-card-label">Last lesson</p>
             {recentCourse ? (
               <p className="profile-main-last-copy">
-                <span>{`${recentCourse.courseTitle}, ${recentCourse.lessonTitle}`}</span>
+                <span className="profile-main-course-chip">
+                  {recentCourse.courseTitle.toUpperCase()}
+                </span>
+                <span className="profile-main-lesson-pill">{recentCourse.lessonTitle}</span>
                 <strong>{recentCourse.sectionSubtitle}</strong>
               </p>
             ) : (
@@ -373,7 +356,33 @@ function ProfileMainPage({
           </div>
 
           <article className="profile-main-calendar">
-            <h3 className="profile-main-calendar-title">{calendarTitle}</h3>
+            <div className="profile-main-calendar-header">
+              <h3 className="profile-main-calendar-title">{calendarTitle}</h3>
+              <div className="profile-main-calendar-controls">
+                <button type="button" aria-label="Previous month">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M15 18L9 12L15 6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button type="button" aria-label="Next month">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M9 18L15 12L9 6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
             <div className="profile-main-weekdays" aria-hidden="true">
               {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day) => (
                 <span key={day}>{day}</span>
@@ -386,13 +395,19 @@ function ProfileMainPage({
                 }
 
                 return (
-                  <span
-                    key={day}
-                    className={`profile-main-calendar-day ${
-                      attendance.activeDays.includes(day) ? 'profile-main-calendar-day-active' : ''
-                    }`}
-                  >
-                    {day}
+                  <span key={day} className="profile-main-calendar-day">
+                    <span
+                      className={`profile-main-calendar-mark ${
+                        attendance.activeDays.includes(day)
+                          ? 'profile-main-calendar-mark-active'
+                          : ''
+                      }`}
+                    >
+                      {attendance.activeDays.includes(day) ? (
+                        <img src={starIcon} alt="" aria-hidden="true" />
+                      ) : null}
+                    </span>
+                    <span>{day}</span>
                   </span>
                 )
               })}
@@ -403,15 +418,13 @@ function ProfileMainPage({
         <section className="profile-main-section">
           <div className="profile-main-section-header">
             <h2 className="profile-main-section-title">Achievements</h2>
-            {canToggleAchievements ? (
-              <button
-                type="button"
-                className="profile-main-section-link"
-                onClick={onOpenAchievements}
-              >
-                see more
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className="profile-main-section-link"
+              onClick={onOpenAchievements}
+            >
+              see more
+            </button>
           </div>
           <div className="profile-main-achievement-row">
             {visibleAchievements.length > 0 ? (
@@ -426,9 +439,6 @@ function ProfileMainPage({
                       />
                     ) : null}
                   </div>
-                  <p className="profile-main-achievement-date">
-                    {formatAchievementDate(achievement.earnedAt)}
-                  </p>
                   <p className="profile-main-achievement-title">{achievement.title}</p>
                 </article>
               ))
@@ -443,13 +453,13 @@ function ProfileMainPage({
         <section className="profile-main-section profile-main-subscription-section">
           <h2 className="profile-main-section-title">Subscriptions</h2>
           <article className="profile-main-subscription-card">
-            <p className="profile-main-subscription-placeholder">{subscriptionCopy}</p>
+            <p className="profile-main-subscription-placeholder">{subscriptionPlanLabel}</p>
             <button
               type="button"
               className="profile-main-subscribe-button"
               onClick={() => setIsSubscriptionSheetOpen(true)}
             >
-              {user.subscriptionTier === 'FREE' ? 'Subscribe now' : 'Manage subscription'}
+              {user.subscriptionTier === 'FREE' ? 'Upgrade' : 'Manage'}
             </button>
           </article>
         </section>

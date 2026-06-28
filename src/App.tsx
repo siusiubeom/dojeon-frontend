@@ -71,10 +71,6 @@ const removeLocalStorageItem = (key: string) => {
   }
 }
 
-const markOnboardingComplete = () => {
-  writeLocalStorageItem(ONBOARDING_COMPLETED_KEY, 'true')
-}
-
 const getOnboardingUsername = () => {
   const stored = readLocalStorageItem(ONBOARDING_USERNAME_KEY)
   return stored && stored.trim().length > 0 ? stored : 'Jinri'
@@ -303,7 +299,11 @@ function App() {
     'class',
   )
   const [settingBackScreen, setSettingBackScreen] = useState<'home' | 'profile-main'>('home')
-  const { data: userMeData } = useUserMe(Boolean(authSession))
+  const {
+    data: userMeData,
+    loaded: isUserMeLoaded,
+    loading: isUserMeLoading,
+  } = useUserMe(Boolean(authSession))
 
   const currentEmail = authSession?.email ?? pendingSignup?.email ?? ''
   const currentUsername = currentEmail ? currentEmail.split('@')[0] : userName
@@ -330,17 +330,8 @@ function App() {
     queryClient.removeQueries({ queryKey: ['user', 'me', 'achievement'] })
   }, [queryClient])
 
-  const hasCompletedOnboarding =
-    readLocalStorageItem(ONBOARDING_COMPLETED_KEY) === 'true'
-
-  const handleEnterAfterAuth = () => {
-    if (hasCompletedOnboarding) {
-      setScreen('home')
-      return
-    }
-
-    setScreen('onboarding')
-  }
+  const hasCompletedOnboarding = userMeData?.profile.isOnboarded === true
+  const shouldWaitForUserMe = Boolean(authSession) && (!isUserMeLoaded || isUserMeLoading)
 
   const persistAuthSession = (email: string, tokenData: AuthTokenData) => {
     const didSwitchAccount = syncLocalAccountOwner(email)
@@ -362,6 +353,10 @@ function App() {
 
     const timer = window.setTimeout(() => {
       if (authSession) {
+        if (shouldWaitForUserMe) {
+          return
+        }
+
         setScreen(hasCompletedOnboarding ? 'home' : 'onboarding')
         return
       }
@@ -372,7 +367,7 @@ function App() {
     return () => {
       window.clearTimeout(timer)
     }
-  }, [authSession, hasCompletedOnboarding, screen])
+  }, [authSession, hasCompletedOnboarding, screen, shouldWaitForUserMe])
 
   useEffect(() => {
     if (!authSession?.email) {
@@ -535,19 +530,29 @@ function App() {
       ) : screen === 'verify-success' ? (
         <VerifySuccessPage
           onStartLearning={() => {
-            handleEnterAfterAuth()
+            setScreen('splash')
           }}
         />
       ) : screen === 'onboarding' ? (
         <OnboardingPage
           onBack={() => setScreen('login')}
-          onComplete={(values) => {
+          onComplete={async (values) => {
             const savedName = values.name?.trim() || 'Jinri'
             const savedAgeRange = values.ageRange ?? ''
             const savedLanguage = values.motherLanguage ?? ''
             const savedKoreanLevel = values.koreanLevel ?? ''
             const savedDailyGoal = values.dailyStudyTime ?? ''
             const savedKoreanGoal = values.goal ?? ''
+            await updateUserMe.mutateAsync({
+              nickname: savedName,
+              motherLanguage: getOptionalString(savedLanguage),
+              proficiencyLevel: getOptionalString(savedKoreanLevel),
+              dailyGoalMin: getOptionalNumber(savedDailyGoal),
+              learningGoal: getOptionalString(savedKoreanGoal),
+              ...getBirthdayOrAgeGroupPayload(savedAgeRange),
+              isOnboarded: true,
+            })
+
             setUserName(savedName)
             setAgeRange(savedAgeRange)
             setLanguage(savedLanguage)
@@ -560,7 +565,6 @@ function App() {
             writeLocalStorageItem(ACCOUNT_KOREAN_LEVEL_KEY, savedKoreanLevel)
             writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, savedDailyGoal)
             writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, savedKoreanGoal)
-            markOnboardingComplete()
             setScreen('home')
           }}
         />
@@ -826,7 +830,7 @@ function App() {
             const tokenData = await login(credentials)
             persistAuthSession(credentials.email, tokenData)
             setPendingSignup(null)
-            handleEnterAfterAuth()
+            setScreen('splash')
           }}
         />
       )}
