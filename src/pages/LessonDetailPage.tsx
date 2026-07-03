@@ -463,7 +463,7 @@ function LessonDetailPage({
                     )
                   }}
                 >
-                  <h3 className="lesson-detail-module-title">{section.title}</h3>
+                  <h3 className="lesson-detail-module-title">{section.type}</h3>
                   <span className="lesson-detail-module-progress">
                     <span
                       className="lesson-detail-module-progress-fill"
