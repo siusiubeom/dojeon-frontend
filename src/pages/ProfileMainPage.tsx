@@ -7,8 +7,10 @@ import bookOpenIcon from '../assets/book-open.svg'
 import profileIcon from '../assets/user.svg'
 import settingIcon from '../assets/setting_icon.svg'
 import starIcon from '../assets/star.svg'
+import defaultProfileImageSrc from '../assets/1.png'
 import { useUserMe } from '../hooks/useUserMe.ts'
 import SubscriptionBottomSheet from '../components/SubscriptionBottomSheet'
+import ProfileImageBottomSheet from '../components/ProfileImageBottomSheet'
 import type { UserMeData } from '../types/user.types.ts'
 
 const tabs = [
@@ -265,6 +267,7 @@ function ProfileMainPage({
 }: ProfileMainPageProps) {
   const { data: userMeData } = useUserMe()
   const [isSubscriptionSheetOpen, setIsSubscriptionSheetOpen] = useState(false)
+  const [isProfileImageSheetOpen, setIsProfileImageSheetOpen] = useState(false)
   const apiProfileData = userMeData ? mapUserMeToProfileData(userMeData) : null
   const profileData = {
     ...(apiProfileData ?? profileMainMockData),
@@ -280,6 +283,7 @@ function ProfileMainPage({
   const visibleAchievements = recentAchievements.slice(0, 5)
   const subscriptionPlanLabel =
     user.subscriptionTier === 'FREE' ? 'Free Plan' : `${user.subscriptionTier} Plan`
+  const currentProfileImageUrl = user.profileImgUrl || defaultProfileImageSrc
 
   return (
     <main className="profile-main-screen">
@@ -295,10 +299,23 @@ function ProfileMainPage({
           </button>
 
           <div className="profile-main-identity">
-            <div className="profile-main-avatar" aria-hidden="true">
-              {user.profileImgUrl ? (
-                <img className="profile-main-avatar-image" src={user.profileImgUrl} alt="" />
-              ) : null}
+            <div className="profile-main-avatar-wrap">
+              <button
+                type="button"
+                className="profile-main-avatar"
+                onClick={() => setIsProfileImageSheetOpen(true)}
+                aria-label="Edit profile image"
+              >
+                <img className="profile-main-avatar-image" src={currentProfileImageUrl} alt="" />
+              </button>
+              <button
+                type="button"
+                className="profile-main-avatar-edit"
+                onClick={() => setIsProfileImageSheetOpen(true)}
+                aria-label="Edit profile image"
+              >
+                <img src={editIcon} alt="" aria-hidden="true" />
+              </button>
             </div>
             <div className="profile-main-copy">
               <h1 className="profile-main-greeting">
@@ -501,6 +518,12 @@ function ProfileMainPage({
           currentSubscriptionPlanId={user.subscriptionPlanId}
           currentSubscriptionTier={user.subscriptionTier}
           onClose={() => setIsSubscriptionSheetOpen(false)}
+        />
+      ) : null}
+      {isProfileImageSheetOpen ? (
+        <ProfileImageBottomSheet
+          currentImageUrl={user.profileImgUrl}
+          onClose={() => setIsProfileImageSheetOpen(false)}
         />
       ) : null}
     </main>
