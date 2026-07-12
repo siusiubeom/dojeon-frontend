@@ -82,7 +82,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--dojeon-color-gray-900) 4%, transparent);
 }
 
 .setting-account-item {
@@ -173,7 +173,6 @@
   color: var(--dojeon-color-primary-action);
   font: var(--dojeon-type-button-large);
   cursor: pointer;
-  align-self: center;
   text-transform: uppercase;
 }
 

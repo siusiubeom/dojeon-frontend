@@ -21,7 +21,9 @@ interface OnboardingStep {
 
 interface OnboardingPageProps {
   onBack: () => void
-  onComplete: (values: Record<string, string>) => void
+  onComplete: (values: Record<string, string>) => void | Promise<void>
+  isSaving?: boolean
+  saveError?: string | null
 }
 
 const onboardingSteps: OnboardingStep[] = [
@@ -152,7 +154,12 @@ const progressPointCount = 7
 const progressEdgeInsetPercent = 3
 const progressFillGapBeforeNextDotPercent = 1.5
 
-function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
+function OnboardingPage({
+  onBack,
+  onComplete,
+  isSaving = false,
+  saveError = null,
+}: OnboardingPageProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [values, setValues] = useState<Record<string, string>>({})
 
@@ -339,9 +346,15 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                 type="button"
                 className="onboarding-complete-button"
                 onClick={() => onComplete(values)}
+                disabled={isSaving}
               >
-                Start
+                {isSaving ? 'Saving...' : 'Start'}
               </button>
+              {saveError ? (
+                <p className="onboarding-save-error" role="alert">
+                  {saveError}
+                </p>
+              ) : null}
             </div>
           ) : (
             <>
@@ -381,12 +394,17 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                 <button
                   type="button"
                   className={`onboarding-next-btn ${isCurrentStepValid ? '' : 'disabled'}`}
-                  disabled={!isCurrentStepValid}
+                  disabled={!isCurrentStepValid || isSaving}
                   onClick={handleNext}
                 >
-                  Next
+                  {isSaving ? 'Saving...' : 'Next'}
                 </button>
               </div>
+              {saveError ? (
+                <p className="onboarding-save-error" role="alert">
+                  {saveError}
+                </p>
+              ) : null}
             </>
               ) : (
             <div className="onboarding-choice-wrap">
@@ -423,6 +441,7 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                     onClick={() => {
                       handleChoiceSelect(choice.id)
                     }}
+                    disabled={isSaving}
                   >
                     {choice.label}
                   </button>

@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import './SettingPage.css'
 import accountIcon from '../assets/profile.svg'
 import preferenceIcon from '../assets/preferences.svg'
@@ -16,6 +17,8 @@ interface SettingPageProps {
   isSigningOut?: boolean
   isSavingNotification?: boolean
 }
+
+const policyLinks = ['Terms and conditions', 'Privacy Policy', 'License']
 
 function SettingPage({
   onBack,
@@ -153,21 +156,18 @@ function SettingPage({
         </button>
 
         <div className="setting-policy-links">
-          <button type="button" className="setting-policy-link">
-            Terms and conditions
-          </button>
-          <span className="setting-policy-separator" aria-hidden="true">
-            |
-          </span>
-          <button type="button" className="setting-policy-link">
-            Privacy Policy
-          </button>
-          <span className="setting-policy-separator" aria-hidden="true">
-            |
-          </span>
-          <button type="button" className="setting-policy-link">
-            License
-          </button>
+          {policyLinks.map((label, index) => (
+            <Fragment key={label}>
+              {index > 0 ? (
+                <span className="setting-policy-separator" aria-hidden="true">
+                  |
+                </span>
+              ) : null}
+              <button type="button" className="setting-policy-link">
+                {label}
+              </button>
+            </Fragment>
+          ))}
         </div>
       </section>
     </main>

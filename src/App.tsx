@@ -283,6 +283,8 @@ function App() {
   const [dailyGoal, setDailyGoal] = useState(getStoredDailyGoal)
   const [koreanGoal, setKoreanGoal] = useState(getStoredKoreanGoal)
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [minSplashElapsed, setMinSplashElapsed] = useState(false)
+  const [onboardingSaveError, setOnboardingSaveError] = useState('')
   const [selectedLessonNumericId, setSelectedLessonNumericId] = useState<number | null>(
     getInitialLessonId,
   )
@@ -301,6 +303,7 @@ function App() {
   const [settingBackScreen, setSettingBackScreen] = useState<'home' | 'profile-main'>('home')
   const {
     data: userMeData,
+    error: userMeError,
     loaded: isUserMeLoaded,
     loading: isUserMeLoading,
   } = useUserMe(Boolean(authSession))
@@ -330,8 +333,9 @@ function App() {
     queryClient.removeQueries({ queryKey: ['user', 'me', 'achievement'] })
   }, [queryClient])
 
-  const hasCompletedOnboarding = userMeData?.profile.isOnboarded === true
-  const shouldWaitForUserMe = Boolean(authSession) && (!isUserMeLoaded || isUserMeLoading)
+  const hasCompletedOnboarding = isUserMeLoaded && userMeData?.profile.isOnboarded === true
+  const shouldWaitForUserMe =
+    Boolean(authSession) && !userMeError && (!isUserMeLoaded || isUserMeLoading)
 
   const persistAuthSession = (email: string, tokenData: AuthTokenData) => {
     const didSwitchAccount = syncLocalAccountOwner(email)
@@ -348,26 +352,55 @@ function App() {
 
   useEffect(() => {
     if (screen !== 'splash') {
+      setMinSplashElapsed(false)
+      return
+    }
+
+    if (minSplashElapsed) {
       return
     }
 
     const timer = window.setTimeout(() => {
-      if (authSession) {
-        if (shouldWaitForUserMe) {
-          return
-        }
-
-        setScreen(hasCompletedOnboarding ? 'home' : 'onboarding')
-        return
-      }
-
-      setScreen('login')
+      setMinSplashElapsed(true)
     }, 1200)
 
     return () => {
       window.clearTimeout(timer)
     }
-  }, [authSession, hasCompletedOnboarding, screen, shouldWaitForUserMe])
+  }, [minSplashElapsed, screen])
+
+  useEffect(() => {
+    if (screen !== 'splash' || !minSplashElapsed) {
+      return
+    }
+
+    if (!authSession) {
+      setScreen('login')
+      return
+    }
+
+    if (shouldWaitForUserMe) {
+      return
+    }
+
+    if (userMeError) {
+      clearStoredAuthSession()
+      clearAccountScopedQueries()
+      setAuthSession(null)
+      setScreen('login')
+      return
+    }
+
+    setScreen(hasCompletedOnboarding ? 'home' : 'onboarding')
+  }, [
+    authSession,
+    clearAccountScopedQueries,
+    hasCompletedOnboarding,
+    minSplashElapsed,
+    screen,
+    shouldWaitForUserMe,
+    userMeError,
+  ])
 
   useEffect(() => {
     if (!authSession?.email) {
@@ -536,6 +569,8 @@ function App() {
       ) : screen === 'onboarding' ? (
         <OnboardingPage
           onBack={() => setScreen('login')}
+          isSaving={updateUserMe.isPending}
+          saveError={onboardingSaveError}
           onComplete={async (values) => {
             const savedName = values.name?.trim() || 'Jinri'
             const savedAgeRange = values.ageRange ?? ''
@@ -543,15 +578,24 @@ function App() {
             const savedKoreanLevel = values.koreanLevel ?? ''
             const savedDailyGoal = values.dailyStudyTime ?? ''
             const savedKoreanGoal = values.goal ?? ''
-            await updateUserMe.mutateAsync({
-              nickname: savedName,
-              motherLanguage: getOptionalString(savedLanguage),
-              proficiencyLevel: getOptionalString(savedKoreanLevel),
-              dailyGoalMin: getOptionalNumber(savedDailyGoal),
-              learningGoal: getOptionalString(savedKoreanGoal),
-              ...getBirthdayOrAgeGroupPayload(savedAgeRange),
-              isOnboarded: true,
-            })
+            setOnboardingSaveError('')
+
+            try {
+              await updateUserMe.mutateAsync({
+                nickname: savedName,
+                motherLanguage: getOptionalString(savedLanguage),
+                proficiencyLevel: getOptionalString(savedKoreanLevel),
+                dailyGoalMin: getOptionalNumber(savedDailyGoal),
+                learningGoal: getOptionalString(savedKoreanGoal),
+                ...getBirthdayOrAgeGroupPayload(savedAgeRange),
+                isOnboarded: true,
+              })
+            } catch (error) {
+              setOnboardingSaveError(
+                error instanceof Error ? error.message : 'Failed to save onboarding.',
+              )
+              return
+            }
 
             setUserName(savedName)
             setAgeRange(savedAgeRange)
