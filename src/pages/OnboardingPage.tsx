@@ -26,6 +26,18 @@ interface OnboardingPageProps {
   saveError?: string | null
 }
 
+interface OnboardingSaveErrorProps {
+  message?: string | null
+}
+
+function OnboardingSaveError({ message }: OnboardingSaveErrorProps) {
+  return message ? (
+    <p className="onboarding-save-error" role="alert">
+      {message}
+    </p>
+  ) : null
+}
+
 const onboardingSteps: OnboardingStep[] = [
   {
     id: 'name',
@@ -350,11 +362,7 @@ function OnboardingPage({
               >
                 {isSaving ? 'Saving...' : 'Start'}
               </button>
-              {saveError ? (
-                <p className="onboarding-save-error" role="alert">
-                  {saveError}
-                </p>
-              ) : null}
+              <OnboardingSaveError message={saveError} />
             </div>
           ) : (
             <>
@@ -400,11 +408,7 @@ function OnboardingPage({
                   {isSaving ? 'Saving...' : 'Next'}
                 </button>
               </div>
-              {saveError ? (
-                <p className="onboarding-save-error" role="alert">
-                  {saveError}
-                </p>
-              ) : null}
+              <OnboardingSaveError message={saveError} />
             </>
               ) : (
             <div className="onboarding-choice-wrap">

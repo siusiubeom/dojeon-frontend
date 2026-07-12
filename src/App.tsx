@@ -268,6 +268,16 @@ const getDevPreviewLessonModuleOrder = () => {
   return Number.isFinite(module) ? Math.max(1, module) : undefined
 }
 
+interface ProfileSyncValues {
+  name: string
+  phoneNumber?: string
+  ageRange: string
+  language: string
+  koreanLevel: string
+  dailyGoal: string
+  koreanGoal: string
+}
+
 function App() {
   const queryClient = useQueryClient()
   const updateUserMe = useUpdateUserMe()
@@ -336,6 +346,14 @@ function App() {
   const hasCompletedOnboarding = isUserMeLoaded && userMeData?.profile.isOnboarded === true
   const shouldWaitForUserMe =
     Boolean(authSession) && !userMeError && (!isUserMeLoaded || isUserMeLoading)
+  const shouldClearAuthForUserMeError =
+    userMeError?.status === 401 || userMeError?.status === 403
+  const visibleScreen = screen === 'splash' && minSplashElapsed && !authSession ? 'login' : screen
+
+  const showSplash = () => {
+    setMinSplashElapsed(false)
+    setScreen('splash')
+  }
 
   const persistAuthSession = (email: string, tokenData: AuthTokenData) => {
     const didSwitchAccount = syncLocalAccountOwner(email)
@@ -350,9 +368,29 @@ function App() {
     setAuthSession(nextSession)
   }
 
+  const syncProfileState = useCallback((values: ProfileSyncValues) => {
+    saveOnboardingUsername(values.name)
+    writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, values.ageRange)
+    writeLocalStorageItem(ACCOUNT_LANGUAGE_KEY, values.language)
+    writeLocalStorageItem(ACCOUNT_KOREAN_LEVEL_KEY, values.koreanLevel)
+    writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, values.dailyGoal)
+    writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, values.koreanGoal)
+
+    if (values.phoneNumber !== undefined) {
+      writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, values.phoneNumber)
+      setPhoneNumber(values.phoneNumber)
+    }
+
+    setUserName(values.name)
+    setAgeRange(values.ageRange)
+    setLanguage(values.language)
+    setKoreanLevel(values.koreanLevel)
+    setDailyGoal(values.dailyGoal)
+    setKoreanGoal(values.koreanGoal)
+  }, [])
+
   useEffect(() => {
     if (screen !== 'splash') {
-      setMinSplashElapsed(false)
       return
     }
 
@@ -374,20 +412,18 @@ function App() {
       return
     }
 
-    if (!authSession) {
-      setScreen('login')
-      return
-    }
-
     if (shouldWaitForUserMe) {
       return
     }
 
     if (userMeError) {
-      clearStoredAuthSession()
-      clearAccountScopedQueries()
-      setAuthSession(null)
-      setScreen('login')
+      if (shouldClearAuthForUserMeError) {
+        clearStoredAuthSession()
+        clearAccountScopedQueries()
+        setAuthSession(null)
+        setScreen('login')
+      }
+
       return
     }
 
@@ -398,6 +434,7 @@ function App() {
     hasCompletedOnboarding,
     minSplashElapsed,
     screen,
+    shouldClearAuthForUserMeError,
     shouldWaitForUserMe,
     userMeError,
   ])
@@ -434,28 +471,22 @@ function App() {
     const nextDailyGoal = userMeData.profile.dailyGoalMin?.toString() ?? ''
     const nextKoreanGoal = userMeData.profile.learningGoal ?? ''
 
-    saveOnboardingUsername(nextName)
-    writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
-    writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, nextAgeRange)
-    writeLocalStorageItem(ACCOUNT_LANGUAGE_KEY, nextLanguage)
-    writeLocalStorageItem(ACCOUNT_KOREAN_LEVEL_KEY, nextKoreanLevel)
-    writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, nextDailyGoal)
-    writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, nextKoreanGoal)
-
     const timer = window.setTimeout(() => {
-      setUserName(nextName)
-      setPhoneNumber(nextPhoneNumber)
-      setAgeRange(nextAgeRange)
-      setLanguage(nextLanguage)
-      setKoreanLevel(nextKoreanLevel)
-      setDailyGoal(nextDailyGoal)
-      setKoreanGoal(nextKoreanGoal)
+      syncProfileState({
+        name: nextName,
+        phoneNumber: nextPhoneNumber,
+        ageRange: nextAgeRange,
+        language: nextLanguage,
+        koreanLevel: nextKoreanLevel,
+        dailyGoal: nextDailyGoal,
+        koreanGoal: nextKoreanGoal,
+      })
     }, 0)
 
     return () => {
       window.clearTimeout(timer)
     }
-  }, [authSession, userMeData])
+  }, [authSession, syncProfileState, userMeData])
 
   const handleLogout = async () => {
     setIsSigningOut(true)
@@ -531,9 +562,9 @@ function App() {
         </button>
       ) : null}
 
-      {screen === 'splash' ? (
+      {visibleScreen === 'splash' ? (
         <SplashPage />
-      ) : screen === 'signup' ? (
+      ) : visibleScreen === 'signup' ? (
         <SignupPage
           onBack={() => setScreen('login')}
           onSignupSuccess={(payload) => {
@@ -541,7 +572,7 @@ function App() {
             setScreen('verify-email')
           }}
         />
-      ) : screen === 'verify-email' ? (
+      ) : visibleScreen === 'verify-email' ? (
         <VerifyEmailPage
           email={pendingSignup?.email ?? ''}
           onBack={() => setScreen('signup')}
@@ -560,13 +591,13 @@ function App() {
             setScreen('verify-success')
           }}
         />
-      ) : screen === 'verify-success' ? (
+      ) : visibleScreen === 'verify-success' ? (
         <VerifySuccessPage
           onStartLearning={() => {
-            setScreen('splash')
+            showSplash()
           }}
         />
-      ) : screen === 'onboarding' ? (
+      ) : visibleScreen === 'onboarding' ? (
         <OnboardingPage
           onBack={() => setScreen('login')}
           isSaving={updateUserMe.isPending}
@@ -597,22 +628,18 @@ function App() {
               return
             }
 
-            setUserName(savedName)
-            setAgeRange(savedAgeRange)
-            setLanguage(savedLanguage)
-            setKoreanLevel(savedKoreanLevel)
-            setDailyGoal(savedDailyGoal)
-            setKoreanGoal(savedKoreanGoal)
-            saveOnboardingUsername(savedName)
-            writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, savedAgeRange)
-            writeLocalStorageItem(ACCOUNT_LANGUAGE_KEY, savedLanguage)
-            writeLocalStorageItem(ACCOUNT_KOREAN_LEVEL_KEY, savedKoreanLevel)
-            writeLocalStorageItem(ACCOUNT_DAILY_GOAL_KEY, savedDailyGoal)
-            writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, savedKoreanGoal)
+            syncProfileState({
+              name: savedName,
+              ageRange: savedAgeRange,
+              language: savedLanguage,
+              koreanLevel: savedKoreanLevel,
+              dailyGoal: savedDailyGoal,
+              koreanGoal: savedKoreanGoal,
+            })
             setScreen('home')
           }}
         />
-      ) : screen === 'home' ? (
+      ) : visibleScreen === 'home' ? (
         <HomePage
           userName={userName}
           onOpenClass={() => {
@@ -632,7 +659,7 @@ function App() {
             handleOpenSection(lesson.sectionId, lesson.sectionType, 'class')
           }}
         />
-      ) : screen === 'class' ? (
+      ) : visibleScreen === 'class' ? (
         <ClassPage
           preferFallbackContent={isDevPreview}
           defaultOpenCourseOrder={getDevPreviewCourseOrder()}
@@ -653,7 +680,7 @@ function App() {
             setScreen('lesson-detail')
           }}
         />
-      ) : screen === 'lesson-detail' ? (
+      ) : visibleScreen === 'lesson-detail' ? (
         <LessonDetailPage
           key={selectedLessonNumericId ?? 'none'}
           lessonId={selectedLessonNumericId}
@@ -668,7 +695,7 @@ function App() {
             setScreen('class')
           }}
         />
-      ) : screen === 'practice' ? (
+      ) : visibleScreen === 'practice' ? (
         <PracticePage
           onBack={() => {
             setScreen('home')
@@ -686,7 +713,7 @@ function App() {
             setScreen('profile-main')
           }}
         />
-      ) : screen === 'setting' ? (
+      ) : visibleScreen === 'setting' ? (
         <SettingPage
           onBack={() => {
             setScreen(settingBackScreen)
@@ -709,7 +736,7 @@ function App() {
           isSigningOut={isSigningOut}
           isSavingNotification={updateUserMe.isPending}
         />
-      ) : screen === 'account-info' ? (
+      ) : visibleScreen === 'account-info' ? (
         <AccountInfoPage
           email={authSession?.email ?? ''}
           username={currentUsername}
@@ -746,7 +773,7 @@ function App() {
             setScreen('setting')
           }}
         />
-      ) : screen === 'preferences' ? (
+      ) : visibleScreen === 'preferences' ? (
         <PreferencesPage
           language={language}
           koreanLevel={koreanLevel}
@@ -775,7 +802,7 @@ function App() {
             setScreen('setting')
           }}
         />
-      ) : screen === 'notebook' ? (
+      ) : visibleScreen === 'notebook' ? (
         <NotebookPage
           userName={userName}
           onOpenGrammarNotebook={() => {
@@ -797,13 +824,13 @@ function App() {
             setScreen('profile-main')
           }}
         />
-      ) : screen === 'vocabulary' ? (
+      ) : visibleScreen === 'vocabulary' ? (
         <VocabularyPage
           onBack={() => {
             setScreen('notebook')
           }}
         />
-      ) : screen === 'vocabulary-lesson' ? (
+      ) : visibleScreen === 'vocabulary-lesson' ? (
         <VocabularyLessonPage
           sectionId={selectedSectionId}
           initialView={getInitialVocabularyLessonView()}
@@ -822,13 +849,13 @@ function App() {
             setScreen('grammar-practice')
           }}
         />
-      ) : screen === 'notebook-grammar' ? (
+      ) : visibleScreen === 'notebook-grammar' ? (
         <GrammarNotebookPage
           onBack={() => {
             setScreen('notebook')
           }}
         />
-      ) : screen === 'profile-main' ? (
+      ) : visibleScreen === 'profile-main' ? (
         <ProfileMainPage
           nickname={userName}
           username={currentUsername}
@@ -852,13 +879,13 @@ function App() {
             setScreen('profile-achievements')
           }}
         />
-      ) : screen === 'profile-achievements' ? (
+      ) : visibleScreen === 'profile-achievements' ? (
         <ProfileAchievementsPage
           onBack={() => {
             setScreen('profile-main')
           }}
         />
-      ) : screen === 'grammar-practice' ? (
+      ) : visibleScreen === 'grammar-practice' ? (
         <GrammarPracticePage
           initialPracticeStep={grammarPracticeInitialStep}
           language={language}
@@ -874,7 +901,7 @@ function App() {
             const tokenData = await login(credentials)
             persistAuthSession(credentials.email, tokenData)
             setPendingSignup(null)
-            setScreen('splash')
+            showSplash()
           }}
         />
       )}
