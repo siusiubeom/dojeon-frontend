@@ -283,7 +283,7 @@
 }
 
 .setting-signout-sheet-copy {
-  margin: 12px 35px 0;
+  margin: 5px 35px 0;
   color: var(--dojeon-color-gray-800);
   font: var(--dojeon-type-body-large);
   text-align: left;
