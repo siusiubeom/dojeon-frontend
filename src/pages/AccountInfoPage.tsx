@@ -73,6 +73,7 @@ function AccountInfoPage({
   const sheetRef = useRef<HTMLElement | null>(null)
   const initialSheetFocusRef = useRef<HTMLInputElement | null>(null)
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
+  const closeSheetRef = useRef<() => void>(() => {})
   const sheetPointerStartYRef = useRef<number | null>(null)
   const sheetDragYRef = useRef(0)
   const passwordRules = [
@@ -138,6 +139,10 @@ function AccountInfoPage({
     onClearSaveError?.()
     resetSheetDrag()
   }, [isDeletingAccount, isSaving, onClearSaveError])
+
+  useEffect(() => {
+    closeSheetRef.current = closeSheet
+  }, [closeSheet])
 
   const openEditSheet = (field: EditableAccountField) => {
     onClearSaveError?.()
@@ -258,7 +263,7 @@ function AccountInfoPage({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        closeSheet()
+        closeSheetRef.current()
         return
       }
 
@@ -294,7 +299,7 @@ function AccountInfoPage({
       window.removeEventListener('keydown', handleKeyDown)
       previouslyFocusedElementRef.current?.focus()
     }
-  }, [closeSheet, isAnySheetOpen])
+  }, [isAnySheetOpen])
 
   const items = [
     { label: 'Email', value: email || '-' },

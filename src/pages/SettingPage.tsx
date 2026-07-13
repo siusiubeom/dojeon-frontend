@@ -45,6 +45,7 @@ function SettingPage({
   const signOutSheetRef = useRef<HTMLElement | null>(null)
   const signOutSheetCancelButtonRef = useRef<HTMLButtonElement | null>(null)
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
+  const closeSignOutSheetRef = useRef<() => void>(() => {})
   const signOutSheetPointerStartYRef = useRef<number | null>(null)
   const signOutSheetDragYRef = useRef(0)
 
@@ -66,6 +67,10 @@ function SettingPage({
   }
 
   useEffect(() => {
+    closeSignOutSheetRef.current = closeSignOutSheet
+  }, [closeSignOutSheet])
+
+  useEffect(() => {
     if (!isSignOutSheetOpen) return
 
     previouslyFocusedElementRef.current =
@@ -74,7 +79,7 @@ function SettingPage({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        closeSignOutSheet()
+        closeSignOutSheetRef.current()
         return
       }
 
@@ -110,7 +115,7 @@ function SettingPage({
       window.removeEventListener('keydown', handleKeyDown)
       previouslyFocusedElementRef.current?.focus()
     }
-  }, [isSignOutSheetOpen, closeSignOutSheet])
+  }, [isSignOutSheetOpen])
 
   const handleSignOutSheetPointerDown = (event: PointerEvent<HTMLElement>) => {
     if (isSigningOut) return
