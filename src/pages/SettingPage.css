@@ -1,4 +1,5 @@
 .setting-screen {
+  position: relative;
   min-height: 100svh;
   width: min(390px, 100%);
   margin: 0 auto;
@@ -222,4 +223,100 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
+}
+
+.setting-signout-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--dojeon-color-gray-900) 45%, transparent);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.setting-signout-sheet {
+  width: min(390px, 100%);
+  border-radius: 10px 10px 0 0;
+  background: var(--dojeon-color-surface);
+  box-sizing: border-box;
+  padding: 0 0 15px;
+  touch-action: none;
+  transition: transform 160ms ease;
+}
+
+.setting-signout-sheet-dragging {
+  transition: none;
+}
+
+.setting-signout-sheet-drag-area {
+  width: 100%;
+  height: 48px;
+  padding-top: 17px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.setting-signout-sheet-drag-area:active {
+  cursor: grabbing;
+}
+
+.setting-signout-sheet-handle {
+  width: 54px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--dojeon-color-gray-300);
+}
+
+.setting-signout-sheet-body {
+  width: 100%;
+}
+
+.setting-signout-sheet-title {
+  margin: 0 0 0 35px;
+  color: var(--dojeon-color-gray-900);
+  font: var(--dojeon-type-subtitle-large);
+  text-align: left;
+}
+
+.setting-signout-sheet-copy {
+  margin: 12px 35px 0;
+  color: var(--dojeon-color-gray-800);
+  font: var(--dojeon-type-body-large);
+  text-align: left;
+}
+
+.setting-signout-sheet-actions {
+  width: auto;
+  margin: 26px 20px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.setting-signout-sheet-button {
+  min-width: 0;
+  height: 47px;
+  border: 0;
+  border-radius: 8px;
+  font: var(--dojeon-type-subtitle-medium);
+  cursor: pointer;
+}
+
+.setting-signout-sheet-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.setting-signout-sheet-button-cancel {
+  background: var(--dojeon-color-gray-200);
+  color: var(--dojeon-color-gray-600);
+}
+
+.setting-signout-sheet-button-confirm {
+  background: var(--dojeon-color-primary-action);
+  color: var(--dojeon-color-white);
 }
