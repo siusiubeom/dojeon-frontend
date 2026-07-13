@@ -6,6 +6,7 @@ import notificationIcon from '../assets/notification.svg'
 import contactSupportIcon from '../assets/support.svg'
 import faqIcon from '../assets/question.svg'
 import feedbackIcon from '../assets/Feedback_icon.svg'
+import logoutIcon from '../assets/logout.svg'
 
 interface SettingPageProps {
   onBack: () => void
@@ -152,7 +153,8 @@ function SettingPage({
           onClick={onSignOut}
           disabled={isSigningOut}
         >
-          {isSigningOut ? 'SIGNING OUT...' : 'LOG OUT'}
+          <img src={logoutIcon} alt="" className="setting-signout-icon" aria-hidden="true" />
+          <span>{isSigningOut ? 'Signing out...' : 'Log Out'}</span>
         </button>
 
         <div className="setting-policy-links">
