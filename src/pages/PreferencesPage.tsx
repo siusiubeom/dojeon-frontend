@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './PreferencesPage.css'
+import backArrowIcon from '../assets/BackArrow.svg'
 
 interface PreferencesPageProps {
   language: string
@@ -114,22 +115,12 @@ function PreferencesPage({
             onClick={onBack}
             aria-label="Go back"
           >
-            <svg
+            <img
+              src={backArrowIcon}
+              alt=""
               className="preferences-back-icon"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
               aria-hidden="true"
-            >
-              <path
-                d="M15 18L9 12L15 6"
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            />
           </button>
           <h1 className="preferences-title">Preferences</h1>
         </header>

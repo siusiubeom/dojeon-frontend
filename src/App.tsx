@@ -21,6 +21,7 @@ import LessonDetailPage from './pages/LessonDetailPage'
 import VocabularyLessonPage from './pages/VocabularyLessonPage'
 import ProfileMainPage from './pages/ProfileMainPage'
 import ProfileAchievementsPage from './pages/ProfileAchievementsPage'
+import type { PatchUserRequest } from './types/user.types'
 import { useChangeUserPassword } from './hooks/useChangeUserPassword.ts'
 import { useUpdateUserMe } from './hooks/useUpdateUserMe.ts'
 import { useUserMe } from './hooks/useUserMe.ts'
@@ -153,12 +154,16 @@ const getBirthdayOrAgeGroupPayload = (value: string) => {
   const trimmed = value.trim()
   if (!trimmed) return {}
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return { birthday: trimmed }
+  if (/^\d{4}[-.]\d{2}[-.]\d{2}$/.test(trimmed)) {
+    return { birthday: trimmed.replaceAll('.', '-') }
   }
 
   return { ageGroup: trimmed }
 }
+
+const normalizeBirthdayForApi = (value: string) => value.trim().replaceAll('.', '-')
+
+const isBirthdayValue = (value: string) => /^\d{4}[-.]\d{2}[-.]\d{2}$/.test(value.trim())
 
 type Screen =
   | 'splash' | 'login' | 'signup' | 'verify-email' | 'verify-success'
@@ -272,6 +277,8 @@ interface ProfileSyncValues {
   name: string
   phoneNumber?: string
   ageRange: string
+  ageGroup?: string
+  birthday?: string
   language: string
   koreanLevel: string
   dailyGoal: string
@@ -286,7 +293,9 @@ function App() {
   const [authSession, setAuthSession] = useState<AuthSession | null>(getStoredAuthSession)
   const [pendingSignup, setPendingSignup] = useState<SignupSubmission | null>(null)
   const [userName, setUserName] = useState(getOnboardingUsername)
-  const [ageRange, setAgeRange] = useState(getStoredAgeRange)
+  const [, setAgeRange] = useState(getStoredAgeRange)
+  const [accountAgeGroup, setAccountAgeGroup] = useState('')
+  const [accountBirthday, setAccountBirthday] = useState('')
   const [phoneNumber, setPhoneNumber] = useState(getStoredPhoneNumber)
   const [language, setLanguage] = useState(getStoredLanguage)
   const [koreanLevel, setKoreanLevel] = useState(getStoredKoreanLevel)
@@ -319,13 +328,17 @@ function App() {
   } = useUserMe(Boolean(authSession))
 
   const currentEmail = authSession?.email ?? pendingSignup?.email ?? ''
-  const currentUsername = currentEmail ? currentEmail.split('@')[0] : userName
+  const currentUsername =
+    userMeData?.profile.username?.trim() ||
+    (currentEmail ? currentEmail.split('@')[0] : userName)
   const isPushNotificationOn = userMeData?.profile.isPushNotificationOn ?? true
   const isDevPreview = getDevPreviewScreen() !== null
 
   const resetLocalProfileState = () => {
     setUserName('Jinri')
     setAgeRange('')
+    setAccountAgeGroup('')
+    setAccountBirthday('')
     setPhoneNumber('')
     setLanguage('')
     setKoreanLevel('')
@@ -383,6 +396,10 @@ function App() {
 
     setUserName(values.name)
     setAgeRange(values.ageRange)
+    setAccountAgeGroup(
+      values.ageGroup ?? (!values.birthday && !isBirthdayValue(values.ageRange) ? values.ageRange : ''),
+    )
+    setAccountBirthday(values.birthday ?? (isBirthdayValue(values.ageRange) ? values.ageRange : ''))
     setLanguage(values.language)
     setKoreanLevel(values.koreanLevel)
     setDailyGoal(values.dailyGoal)
@@ -465,7 +482,9 @@ function App() {
 
     const nextName = userMeData.profile.nickname?.trim() || getOnboardingUsername()
     const nextPhoneNumber = userMeData.profile.phoneNumber ?? ''
-    const nextAgeRange = userMeData.profile.birthday ?? userMeData.profile.ageGroup ?? ''
+    const nextAgeGroup = userMeData.profile.ageGroup ?? ''
+    const nextBirthday = userMeData.profile.birthday ?? ''
+    const nextAgeRange = nextBirthday || nextAgeGroup
     const nextLanguage = userMeData.profile.motherLanguage ?? ''
     const nextKoreanLevel = userMeData.profile.proficiencyLevel ?? ''
     const nextDailyGoal = userMeData.profile.dailyGoalMin?.toString() ?? ''
@@ -476,6 +495,8 @@ function App() {
         name: nextName,
         phoneNumber: nextPhoneNumber,
         ageRange: nextAgeRange,
+        ageGroup: nextAgeGroup,
+        birthday: nextBirthday,
         language: nextLanguage,
         koreanLevel: nextKoreanLevel,
         dailyGoal: nextDailyGoal,
@@ -507,6 +528,11 @@ function App() {
       setIsSigningOut(false)
     }
   }
+
+  const clearAccountInfoSaveError = useCallback(() => {
+    updateUserMe.reset()
+    changeUserPassword.reset()
+  }, [changeUserPassword, updateUserMe])
 
   const handleOpenSection = (
     sectionId: number,
@@ -631,6 +657,8 @@ function App() {
             syncProfileState({
               name: savedName,
               ageRange: savedAgeRange,
+              ageGroup: isBirthdayValue(savedAgeRange) ? '' : savedAgeRange,
+              birthday: isBirthdayValue(savedAgeRange) ? normalizeBirthdayForApi(savedAgeRange) : '',
               language: savedLanguage,
               koreanLevel: savedKoreanLevel,
               dailyGoal: savedDailyGoal,
@@ -743,25 +771,48 @@ function App() {
           nickname={userName}
           hasPassword={userMeData?.profile.hasPassword ?? true}
           phoneNumber={phoneNumber}
-          ageGroupOrBirthday={ageRange}
+          ageGroup={accountAgeGroup}
+          birthday={accountBirthday}
           onSave={async (values) => {
-            const nextNickname = values.nickname.trim() || 'Jinri'
-            const nextPhoneNumber = values.phoneNumber.trim()
-            const nextAgeGroupOrBirthday = values.ageGroupOrBirthday.trim()
+            const userPatch: PatchUserRequest = {}
 
-            await updateUserMe.mutateAsync({
-              nickname: nextNickname,
-              phoneNumber: getOptionalString(nextPhoneNumber),
-              ...getBirthdayOrAgeGroupPayload(nextAgeGroupOrBirthday),
-            })
+            if (values.nickname !== undefined) {
+              const nextNickname = values.nickname.trim() || 'Jinri'
+              userPatch.nickname = nextNickname
+            }
 
-            setUserName(nextNickname)
-            setPhoneNumber(nextPhoneNumber)
-            setAgeRange(nextAgeGroupOrBirthday)
+            if (values.phoneNumber !== undefined) {
+              const nextPhoneNumber = values.phoneNumber.trim()
+              userPatch.phoneNumber = getOptionalString(nextPhoneNumber)
+            }
 
-            saveOnboardingUsername(nextNickname)
-            writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
-            writeLocalStorageItem(ACCOUNT_AGE_RANGE_KEY, nextAgeGroupOrBirthday)
+            if (values.ageGroup !== undefined) {
+              userPatch.ageGroup = getOptionalString(values.ageGroup.trim())
+            }
+
+            if (values.birthday !== undefined) {
+              userPatch.birthday = getOptionalString(normalizeBirthdayForApi(values.birthday))
+            }
+
+            if (Object.keys(userPatch).length > 0) {
+              await updateUserMe.mutateAsync(userPatch)
+            }
+
+            if (values.nickname !== undefined) {
+              const nextNickname = values.nickname.trim() || 'Jinri'
+              setUserName(nextNickname)
+              saveOnboardingUsername(nextNickname)
+            }
+
+            if (values.phoneNumber !== undefined) {
+              const nextPhoneNumber = values.phoneNumber.trim()
+              setPhoneNumber(nextPhoneNumber)
+              writeLocalStorageItem(ACCOUNT_PHONE_NUMBER_KEY, nextPhoneNumber)
+            }
+
+            if (values.ageGroup !== undefined || values.birthday !== undefined) {
+              await queryClient.invalidateQueries({ queryKey: ['user', 'me'] })
+            }
 
             if (values.passwordChange) {
               await changeUserPassword.mutateAsync(values.passwordChange)
@@ -769,6 +820,7 @@ function App() {
           }}
           isSaving={updateUserMe.isPending || changeUserPassword.isPending}
           saveError={updateUserMe.error?.message ?? changeUserPassword.error?.message ?? null}
+          onClearSaveError={clearAccountInfoSaveError}
           onBack={() => {
             setScreen('setting')
           }}

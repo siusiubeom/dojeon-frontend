@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type PointerEvent } from 'react'
 import './SettingPage.css'
+import backArrowIcon from '../assets/BackArrow.svg'
 import accountIcon from '../assets/profile.svg'
 import preferenceIcon from '../assets/preferences.svg'
 import notificationIcon from '../assets/notification.svg'
@@ -165,22 +166,12 @@ function SettingPage({
             onClick={onBack}
             aria-label="Go back"
           >
-            <svg
+            <img
+              src={backArrowIcon}
+              alt=""
               className="setting-back-icon"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
               aria-hidden="true"
-            >
-              <path
-                d="M15 18L9 12L15 6"
-                stroke="currentColor"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            />
           </button>
           <h1 className="setting-title">Setting</h1>
         </header>
