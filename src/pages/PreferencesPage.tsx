@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import './PreferencesPage.css'
 import backArrowIcon from '../assets/BackArrow.svg'
 import checkIcon from '../assets/check_icon_gray.svg'
@@ -69,7 +70,7 @@ const isSamePreferenceValue = (key: PreferenceKey, firstValue: string, secondVal
 const getFocusableElements = (container: HTMLElement) =>
   Array.from(
     container.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      'button:not([disabled]):not([tabindex="-1"]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
   ).filter((element) => !element.hasAttribute('aria-hidden'))
 
@@ -97,6 +98,11 @@ function PreferencesPage({
 
   const activePreference = preferenceDefinitions.find(({ key }) => key === activePreferenceKey)
   const activeValue = activePreferenceKey ? currentValues[activePreferenceKey] : ''
+  const activeOptionIndex =
+    activePreference?.options.findIndex((option) =>
+      isSamePreferenceValue(activePreference.key, selectedValue, option.id),
+    ) ?? -1
+  const tabbableOptionIndex = activeOptionIndex >= 0 ? activeOptionIndex : 0
   const isSaveDisabled =
     !activePreferenceKey ||
     !selectedValue ||
@@ -220,6 +226,41 @@ function PreferencesPage({
     resetSheetDrag()
   }
 
+  const handleOptionKeyDown = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    optionIndex: number,
+  ) => {
+    if (!activePreference) return
+
+    const lastOptionIndex = activePreference.options.length - 1
+    let nextOptionIndex: number
+
+    switch (event.key) {
+      case 'ArrowDown':
+      case 'ArrowRight':
+        nextOptionIndex = optionIndex === lastOptionIndex ? 0 : optionIndex + 1
+        break
+      case 'ArrowUp':
+      case 'ArrowLeft':
+        nextOptionIndex = optionIndex === 0 ? lastOptionIndex : optionIndex - 1
+        break
+      case 'Home':
+        nextOptionIndex = 0
+        break
+      case 'End':
+        nextOptionIndex = lastOptionIndex
+        break
+      default:
+        return
+    }
+
+    event.preventDefault()
+    setSelectedValue(activePreference.options[nextOptionIndex].id)
+    const optionElements =
+      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+    optionElements?.[nextOptionIndex]?.focus()
+  }
+
   const handleSave = async () => {
     if (!activePreferenceKey || isSaveDisabled) return
 
@@ -316,8 +357,12 @@ function PreferencesPage({
                 {activePreference.label}
               </h2>
 
-              <div className="preferences-sheet-options" role="radiogroup">
-                {activePreference.options.map((option) => {
+              <div
+                className="preferences-sheet-options"
+                role="radiogroup"
+                aria-labelledby="preferences-sheet-title"
+              >
+                {activePreference.options.map((option, optionIndex) => {
                   const isSelected = isSamePreferenceValue(
                     activePreference.key,
                     selectedValue,
@@ -330,8 +375,10 @@ function PreferencesPage({
                       type="button"
                       className={`preferences-sheet-option ${isSelected ? 'selected' : ''}`}
                       onClick={() => setSelectedValue(option.id)}
+                      onKeyDown={(event) => handleOptionKeyDown(event, optionIndex)}
                       role="radio"
                       aria-checked={isSelected}
+                      tabIndex={optionIndex === tabbableOptionIndex ? 0 : -1}
                     >
                       <span>{option.label}</span>
                       <img
