@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './ProfileMainPage.css'
 import homeIcon from '../assets/home.svg'
+import classIcon from '../assets/Class.svg'
 import editIcon from '../assets/edit.svg'
 import fileIcon from '../assets/file.svg'
 import bookOpenIcon from '../assets/book-open.svg'
@@ -15,7 +16,7 @@ import type { UserMeData } from '../types/user.types.ts'
 
 const tabs = [
   { icon: homeIcon, label: 'HOME' },
-  { icon: editIcon, label: 'CLASS' },
+  { icon: classIcon, label: 'CLASS' },
   { icon: fileIcon, label: 'PRACTICE' },
   { icon: bookOpenIcon, label: 'NOTEBOOK' },
   { icon: profileIcon, label: 'PROFILE' },

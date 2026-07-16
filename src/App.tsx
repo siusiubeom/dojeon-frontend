@@ -850,6 +850,7 @@ function App() {
           }}
           isSaving={updateUserMe.isPending}
           saveError={updateUserMe.error?.message ?? null}
+          onClearSaveError={clearAccountInfoSaveError}
           onBack={() => {
             setScreen('setting')
           }}

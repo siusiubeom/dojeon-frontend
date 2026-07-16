@@ -664,6 +664,7 @@
   width: 24px;
   height: 24px;
   object-fit: contain;
+  opacity: 0.38;
 }
 
 .profile-main-tab-label {
@@ -681,6 +682,10 @@
 .profile-main-tab-active .profile-main-tab-label {
   color: var(--dojeon-color-gray-800);
   font-weight: 700;
+}
+
+.profile-main-tab-active .profile-main-tab-icon {
+  opacity: 1;
 }
 
 @media (max-width: 360px) {

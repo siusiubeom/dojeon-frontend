@@ -64,6 +64,7 @@
 }
 
 .account-info-card {
+  position: relative;
   width: 100%;
   min-height: 73px;
   padding: 12px 14px;
@@ -93,6 +94,11 @@
   gap: 12px;
 }
 
+.account-info-card-editable .account-info-value-row {
+  padding-right: 40px;
+  box-sizing: border-box;
+}
+
 .account-info-label {
   margin: 0;
   color: var(--dojeon-color-gray-500);
@@ -101,6 +107,9 @@
 }
 
 .account-info-edit-button {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
   border: 0;
   width: 32px;
   height: 32px;

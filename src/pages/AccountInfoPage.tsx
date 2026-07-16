@@ -376,7 +376,12 @@ function AccountInfoPage({
 
         <section className="account-info-list" aria-label="account details">
           {items.map((item) => (
-            <article key={item.label} className="account-info-card">
+            <article
+              key={item.label}
+              className={`account-info-card ${
+                'editable' in item && item.editable ? 'account-info-card-editable' : ''
+              }`}
+            >
               <div className="account-info-card-header">
                 <p className="account-info-label">{item.label}</p>
               </div>

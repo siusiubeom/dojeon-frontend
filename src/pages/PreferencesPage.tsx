@@ -1,6 +1,15 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react'
 import './PreferencesPage.css'
 import backArrowIcon from '../assets/BackArrow.svg'
+import checkIcon from '../assets/check_icon_gray.svg'
+import editIcon from '../assets/edit.svg'
+import {
+  getOnboardingPreferenceLabel,
+  normalizeOnboardingPreferenceValue,
+  onboardingPreferenceChoices,
+  type OnboardingChoice,
+  type OnboardingPreferenceKey,
+} from '../data/onboardingPreferences'
 
 interface PreferencesPageProps {
   language: string
@@ -15,8 +24,54 @@ interface PreferencesPageProps {
   }) => void | Promise<void>
   isSaving?: boolean
   saveError?: string | null
+  onClearSaveError?: () => void
   onBack: () => void
 }
+
+type PreferenceKey = OnboardingPreferenceKey
+
+interface PreferenceDefinition {
+  key: PreferenceKey
+  label: string
+  options: OnboardingChoice[]
+}
+
+const preferenceDefinitions: PreferenceDefinition[] = [
+  {
+    key: 'language',
+    label: 'Language',
+    options: onboardingPreferenceChoices.language,
+  },
+  {
+    key: 'koreanLevel',
+    label: 'Korean Level',
+    options: onboardingPreferenceChoices.koreanLevel,
+  },
+  {
+    key: 'dailyGoal',
+    label: 'Daily Goal',
+    options: onboardingPreferenceChoices.dailyGoal,
+  },
+  {
+    key: 'koreanGoal',
+    label: 'Korean Goal',
+    options: onboardingPreferenceChoices.koreanGoal,
+  },
+]
+
+const isSamePreferenceValue = (key: PreferenceKey, firstValue: string, secondValue: string) => {
+  return (
+    normalizeOnboardingPreferenceValue(key, firstValue) ===
+    normalizeOnboardingPreferenceValue(key, secondValue)
+  )
+}
+
+const getFocusableElements = (container: HTMLElement) =>
+  Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => !element.hasAttribute('aria-hidden'))
 
 function PreferencesPage({
   language,
@@ -26,84 +81,160 @@ function PreferencesPage({
   onSave,
   isSaving = false,
   saveError = null,
+  onClearSaveError,
   onBack,
 }: PreferencesPageProps) {
-  const koreanGoalOptions = ['Travel', 'Hobby', 'Study Abroad', 'Career']
-  const [draftLanguage, setDraftLanguage] = useState(language)
-  const [draftKoreanLevel, setDraftKoreanLevel] = useState(koreanLevel)
-  const [draftDailyGoal, setDraftDailyGoal] = useState(dailyGoal)
-  const [draftKoreanGoal, setDraftKoreanGoal] = useState(koreanGoal)
-  const [editing, setEditing] = useState({
-    language: false,
-    koreanLevel: false,
-    dailyGoal: false,
-  })
-  const [isKoreanGoalSheetOpen, setIsKoreanGoalSheetOpen] = useState(false)
+  const [activePreferenceKey, setActivePreferenceKey] = useState<PreferenceKey | null>(null)
+  const [selectedValue, setSelectedValue] = useState('')
+  const [sheetDragY, setSheetDragY] = useState(0)
+  const [isSheetDragging, setIsSheetDragging] = useState(false)
+  const sheetRef = useRef<HTMLElement | null>(null)
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
+  const closeSheetRef = useRef<() => void>(() => {})
+  const sheetPointerStartYRef = useRef<number | null>(null)
+  const sheetDragYRef = useRef(0)
+  const currentValues = { language, koreanLevel, dailyGoal, koreanGoal }
 
-  const hasPendingChanges =
-    draftLanguage !== language ||
-    draftKoreanLevel !== koreanLevel ||
-    draftDailyGoal !== dailyGoal ||
-    draftKoreanGoal !== koreanGoal
+  const activePreference = preferenceDefinitions.find(({ key }) => key === activePreferenceKey)
+  const activeValue = activePreferenceKey ? currentValues[activePreferenceKey] : ''
+  const isSaveDisabled =
+    !activePreferenceKey ||
+    !selectedValue ||
+    isSamePreferenceValue(activePreferenceKey, activeValue, selectedValue) ||
+    isSaving
 
-  const toggleEditing = (key: 'language' | 'koreanLevel' | 'dailyGoal') => {
-    setEditing((prev) => ({ ...prev, [key]: !prev[key] }))
+  const resetSheetDrag = useCallback(() => {
+    sheetPointerStartYRef.current = null
+    sheetDragYRef.current = 0
+    setIsSheetDragging(false)
+    setSheetDragY(0)
+  }, [])
+
+  const openEditSheet = (key: PreferenceKey) => {
+    onClearSaveError?.()
+    resetSheetDrag()
+    setActivePreferenceKey(key)
+    setSelectedValue(normalizeOnboardingPreferenceValue(key, currentValues[key]))
+  }
+
+  const closeEditSheet = useCallback(() => {
+    if (isSaving) return
+    setActivePreferenceKey(null)
+    setSelectedValue('')
+    onClearSaveError?.()
+    resetSheetDrag()
+  }, [isSaving, onClearSaveError, resetSheetDrag])
+
+  useEffect(() => {
+    closeSheetRef.current = closeEditSheet
+  }, [closeEditSheet])
+
+  useEffect(() => {
+    if (!activePreferenceKey || !sheetRef.current) return
+
+    previouslyFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+
+    const selectedOption = sheetRef.current.querySelector<HTMLElement>(
+      '[role="radio"][aria-checked="true"]',
+    )
+    const firstOption = sheetRef.current.querySelector<HTMLElement>('[role="radio"]')
+    ;(selectedOption ?? firstOption)?.focus()
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeSheetRef.current()
+        return
+      }
+
+      if (event.key !== 'Tab' || !sheetRef.current) return
+
+      const focusableElements = getFocusableElements(sheetRef.current)
+
+      if (focusableElements.length === 0) {
+        event.preventDefault()
+        return
+      }
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+        return
+      }
+
+      if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      previouslyFocusedElementRef.current?.focus()
+    }
+  }, [activePreferenceKey])
+
+  const handleSheetPointerDown = (event: PointerEvent<HTMLElement>) => {
+    if (isSaving) return
+
+    sheetPointerStartYRef.current = event.clientY
+    setIsSheetDragging(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const handleSheetPointerMove = (event: PointerEvent<HTMLElement>) => {
+    if (sheetPointerStartYRef.current === null || isSaving) return
+
+    const nextDragY = Math.max(0, event.clientY - sheetPointerStartYRef.current)
+    sheetDragYRef.current = nextDragY
+    setSheetDragY(nextDragY)
+  }
+
+  const handleSheetPointerUp = (event: PointerEvent<HTMLElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+
+    sheetPointerStartYRef.current = null
+    setIsSheetDragging(false)
+
+    if (sheetDragYRef.current > 72) {
+      closeEditSheet()
+      return
+    }
+
+    sheetDragYRef.current = 0
+    setSheetDragY(0)
+  }
+
+  const handleSheetPointerCancel = (event: PointerEvent<HTMLElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+
+    resetSheetDrag()
   }
 
   const handleSave = async () => {
+    if (!activePreferenceKey || isSaveDisabled) return
+
+    const nextValues = {
+      ...currentValues,
+      [activePreferenceKey]: selectedValue,
+    }
+
     try {
-      await onSave({
-        language: draftLanguage,
-        koreanLevel: draftKoreanLevel,
-        dailyGoal: draftDailyGoal,
-        koreanGoal: draftKoreanGoal,
-      })
-      setEditing({
-        language: false,
-        koreanLevel: false,
-        dailyGoal: false,
-      })
+      await onSave(nextValues)
+      closeEditSheet()
     } catch {
       // The parent mutation exposes the error message through saveError.
     }
   }
-
-  const items = [
-    {
-      label: 'language',
-      value: draftLanguage || '-',
-      editable: true,
-      isEditing: editing.language,
-      onEdit: () => toggleEditing('language'),
-      onChange: (value: string) => setDraftLanguage(value),
-      inputValue: draftLanguage,
-    },
-    {
-      label: 'Korean Level',
-      value: draftKoreanLevel || '-',
-      editable: true,
-      isEditing: editing.koreanLevel,
-      onEdit: () => toggleEditing('koreanLevel'),
-      onChange: (value: string) => setDraftKoreanLevel(value),
-      inputValue: draftKoreanLevel,
-    },
-    {
-      label: 'Daily Goal',
-      value: draftDailyGoal || '-',
-      editable: true,
-      isEditing: editing.dailyGoal,
-      onEdit: () => toggleEditing('dailyGoal'),
-      onChange: (value: string) => setDraftDailyGoal(value),
-      inputValue: draftDailyGoal,
-    },
-    {
-      label: 'Korean Goal',
-      value: draftKoreanGoal || '-',
-      editable: true,
-      usesBottomSheet: true,
-      onEdit: () => setIsKoreanGoalSheetOpen(true),
-    },
-  ]
 
   return (
     <main className="preferences-screen">
@@ -125,83 +256,108 @@ function PreferencesPage({
           <h1 className="preferences-title">Preferences</h1>
         </header>
 
-        <section className="preferences-list" aria-label="preference details">
-          {items.map((item) => (
-            <article key={item.label} className="preferences-card">
+        <section className="preferences-list" aria-label="Preference details">
+          {preferenceDefinitions.map((preference) => (
+            <article key={preference.key} className="preferences-card">
               <div className="preferences-card-header">
-                <p className="preferences-label">{item.label}</p>
+                <p className="preferences-label">{preference.label}</p>
               </div>
               <div className="preferences-value-row">
-                {'editable' in item && item.editable && item.isEditing ? (
-                  <input
-                    type="text"
-                    className="preferences-input"
-                    value={item.inputValue}
-                    onChange={(e) => item.onChange(e.target.value)}
-                    autoFocus
+                <p className="preferences-value">
+                  {getOnboardingPreferenceLabel(
+                    preference.key,
+                    currentValues[preference.key],
+                  )}
+                </p>
+                <button
+                  type="button"
+                  className="preferences-edit-button"
+                  onClick={() => openEditSheet(preference.key)}
+                  disabled={isSaving}
+                  aria-label={`Change ${preference.label}`}
+                >
+                  <img
+                    src={editIcon}
+                    alt=""
+                    className="preferences-edit-icon"
+                    aria-hidden="true"
                   />
-                ) : (
-                  <p className="preferences-value">{item.value}</p>
-                )}
-                {'editable' in item && item.editable ? (
-                  <button
-                    type="button"
-                    className="preferences-edit-button"
-                    onClick={item.onEdit}
-                  >
-                    EDIT
-                  </button>
-                ) : null}
+                </button>
               </div>
             </article>
           ))}
         </section>
-
-        {hasPendingChanges ? (
-          <>
-            <button
-              type="button"
-              className="preferences-save-button"
-              disabled={isSaving}
-              onClick={() => void handleSave()}
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
-            {saveError ? (
-              <p className="preferences-save-error" role="alert">
-                {saveError}
-              </p>
-            ) : null}
-          </>
-        ) : null}
       </section>
 
-      {isKoreanGoalSheetOpen ? (
-        <div
-          className="preferences-bottom-sheet-overlay"
-          onClick={() => setIsKoreanGoalSheetOpen(false)}
-          aria-hidden="true"
-        >
+      {activePreference ? (
+        <div className="preferences-sheet-backdrop" role="presentation" onClick={closeEditSheet}>
           <section
-            className="preferences-bottom-sheet"
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Korean Goal options"
+            className={`preferences-sheet ${isSheetDragging ? 'preferences-sheet-dragging' : ''}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="preferences-sheet-title"
+            ref={sheetRef}
+            style={{ transform: `translateY(${sheetDragY}px)` }}
+            onClick={(event) => event.stopPropagation()}
           >
-            <h2 className="preferences-bottom-sheet-title">Korean Goal</h2>
-            <div className="preferences-bottom-sheet-options">
-              {koreanGoalOptions.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className="preferences-bottom-sheet-option"
-                  onClick={() => {
-                    setDraftKoreanGoal(option)
-                    setIsKoreanGoalSheetOpen(false)
-                  }}
-                >
-                  {option}
-                </button>
-              ))}
+            <div
+              className="preferences-sheet-drag-area"
+              aria-hidden="true"
+              onPointerDown={handleSheetPointerDown}
+              onPointerMove={handleSheetPointerMove}
+              onPointerUp={handleSheetPointerUp}
+              onPointerCancel={handleSheetPointerCancel}
+            >
+              <span className="preferences-sheet-handle" />
+            </div>
+
+            <div className="preferences-sheet-body">
+              <h2 id="preferences-sheet-title" className="preferences-sheet-title">
+                {activePreference.label}
+              </h2>
+
+              <div className="preferences-sheet-options" role="radiogroup">
+                {activePreference.options.map((option) => {
+                  const isSelected = isSamePreferenceValue(
+                    activePreference.key,
+                    selectedValue,
+                    option.id,
+                  )
+
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`preferences-sheet-option ${isSelected ? 'selected' : ''}`}
+                      onClick={() => setSelectedValue(option.id)}
+                      role="radio"
+                      aria-checked={isSelected}
+                    >
+                      <span>{option.label}</span>
+                      <img
+                        src={checkIcon}
+                        alt=""
+                        className="preferences-sheet-check-icon"
+                        aria-hidden="true"
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                type="button"
+                className="preferences-sheet-save-button"
+                disabled={isSaveDisabled}
+                onClick={() => void handleSave()}
+              >
+                {isSaving ? 'SAVING...' : 'SAVE'}
+              </button>
+              {saveError ? (
+                <p className="preferences-save-error" role="alert">
+                  {saveError}
+                </p>
+              ) : null}
             </div>
           </section>
         </div>
