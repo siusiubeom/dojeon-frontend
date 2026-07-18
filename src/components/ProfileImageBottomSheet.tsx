@@ -3,10 +3,12 @@ import './ProfileImageBottomSheet.css'
 import closeRoundedIcon from '../assets/close-rounded_icon.svg'
 import { defaultProfileImageSrc, profileImageOptions } from '../data/profileImages.ts'
 import { useUpdateUserMe } from '../hooks/useUpdateUserMe.ts'
+import { isUnauthorizedError } from '../services/apiError.ts'
 
 interface ProfileImageBottomSheetProps {
   currentImageUrl: string | null
   onClose: () => void
+  onUnauthorized: () => void
 }
 
 const getProfileImageUrl = (src: string) => {
@@ -27,6 +29,7 @@ const getFocusableElements = (container: HTMLElement) =>
 function ProfileImageBottomSheet({
   currentImageUrl,
   onClose,
+  onUnauthorized,
 }: ProfileImageBottomSheetProps) {
   const updateUserMe = useUpdateUserMe()
   const normalizedCurrentImageUrl = getProfileImageUrl(currentImageUrl || defaultProfileImageSrc)
@@ -104,6 +107,11 @@ function ProfileImageBottomSheet({
       await updateUserMe.mutateAsync({ profileImgUrl: activeProfileImageUrl })
       onClose()
     } catch (error) {
+      if (isUnauthorizedError(error)) {
+        onUnauthorized()
+        return
+      }
+
       setProfileImageError(
         error instanceof Error ? error.message : 'Failed to save profile image.',
       )

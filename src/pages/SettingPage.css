@@ -157,6 +157,13 @@
   justify-content: flex-end;
 }
 
+.setting-notification-error {
+  margin: 10px 4px 0;
+  color: var(--dojeon-color-error-strong);
+  font: var(--dojeon-type-body-small);
+  text-align: left;
+}
+
 .setting-notification-toggle-thumb {
   width: 18px;
   height: 18px;

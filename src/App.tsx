@@ -22,6 +22,7 @@ import VocabularyLessonPage from './pages/VocabularyLessonPage'
 import ProfileMainPage from './pages/ProfileMainPage'
 import ProfileAchievementsPage from './pages/ProfileAchievementsPage'
 import type { PatchUserRequest } from './types/user.types'
+import { isUnauthorizedError } from './services/apiError'
 import { useChangeUserPassword } from './hooks/useChangeUserPassword.ts'
 import { useUpdateUserMe } from './hooks/useUpdateUserMe.ts'
 import { useUserMe } from './hooks/useUserMe.ts'
@@ -359,17 +360,26 @@ function App() {
   const handleUnauthorized = useCallback(() => {
     clearStoredAuthSession()
     clearAccountScopedQueries()
+    updateUserMe.reset()
+    changeUserPassword.reset()
     setAuthSession(null)
     setPendingSignup(null)
     setSettingBackScreen('home')
     setScreen('login')
-  }, [clearAccountScopedQueries])
+  }, [changeUserPassword, clearAccountScopedQueries, updateUserMe])
 
   const hasCompletedOnboarding = isUserMeLoaded && userMeData?.profile.isOnboarded === true
   const shouldWaitForUserMe =
     Boolean(authSession) && !userMeError && (!isUserMeLoaded || isUserMeLoading)
   const shouldClearAuthForUserMeError =
-    userMeError?.status === 401 || userMeError?.status === 403
+    isUnauthorizedError(userMeError)
+  const isSettingScreen =
+    screen === 'setting' || screen === 'account-info' || screen === 'preferences'
+  const settingUnauthorizedError = [
+    userMeError,
+    updateUserMe.error,
+    changeUserPassword.error,
+  ].find(isUnauthorizedError)
   const visibleScreen = screen === 'splash' && minSplashElapsed && !authSession ? 'login' : screen
 
   const showSplash = () => {
@@ -414,6 +424,14 @@ function App() {
     setDailyGoal(values.dailyGoal)
     setKoreanGoal(values.koreanGoal)
   }, [])
+
+  useEffect(() => {
+    if (!authSession || !isSettingScreen || !settingUnauthorizedError) {
+      return
+    }
+
+    handleUnauthorized()
+  }, [authSession, handleUnauthorized, isSettingScreen, settingUnauthorizedError])
 
   useEffect(() => {
     if (screen !== 'splash') {
@@ -765,6 +783,10 @@ function App() {
           }}
           isSigningOut={isSigningOut}
           isSavingNotification={updateUserMe.isPending}
+          notificationError={
+            isUnauthorizedError(updateUserMe.error) ? null : updateUserMe.error?.message ?? null
+          }
+          onClearNotificationError={() => updateUserMe.reset()}
         />
       ) : visibleScreen === 'account-info' ? (
         <AccountInfoPage
@@ -821,7 +843,11 @@ function App() {
             }
           }}
           isSaving={updateUserMe.isPending || changeUserPassword.isPending}
-          saveError={updateUserMe.error?.message ?? changeUserPassword.error?.message ?? null}
+          saveError={
+            isUnauthorizedError(updateUserMe.error) || isUnauthorizedError(changeUserPassword.error)
+              ? null
+              : updateUserMe.error?.message ?? changeUserPassword.error?.message ?? null
+          }
           onClearSaveError={clearAccountInfoSaveError}
           onBack={() => {
             setScreen('setting')
@@ -851,7 +877,7 @@ function App() {
             writeLocalStorageItem(ACCOUNT_KOREAN_GOAL_KEY, values.koreanGoal)
           }}
           isSaving={updateUserMe.isPending}
-          saveError={updateUserMe.error?.message ?? null}
+          saveError={isUnauthorizedError(updateUserMe.error) ? null : updateUserMe.error?.message ?? null}
           onClearSaveError={clearAccountInfoSaveError}
           onBack={() => {
             setScreen('setting')
@@ -912,6 +938,7 @@ function App() {
         />
       ) : visibleScreen === 'profile-main' ? (
         <ProfileMainPage
+          preferFallbackContent={isDevPreview}
           nickname={userName}
           username={currentUsername}
           onOpenHome={() => {
@@ -927,18 +954,21 @@ function App() {
             setScreen('notebook')
           }}
           onOpenSetting={() => {
+            clearAccountInfoSaveError()
             setSettingBackScreen('profile-main')
             setScreen('setting')
           }}
           onOpenAchievements={() => {
             setScreen('profile-achievements')
           }}
+          onUnauthorized={handleUnauthorized}
         />
       ) : visibleScreen === 'profile-achievements' ? (
         <ProfileAchievementsPage
           onBack={() => {
             setScreen('profile-main')
           }}
+          onUnauthorized={handleUnauthorized}
         />
       ) : visibleScreen === 'grammar-practice' ? (
         <GrammarPracticePage

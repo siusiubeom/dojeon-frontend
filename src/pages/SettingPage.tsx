@@ -18,6 +18,8 @@ interface SettingPageProps {
   onSignOut: () => void
   isSigningOut?: boolean
   isSavingNotification?: boolean
+  notificationError?: string | null
+  onClearNotificationError?: () => void
 }
 
 const policyLinks = ['Terms and conditions', 'Privacy Policy', 'License']
@@ -38,6 +40,8 @@ function SettingPage({
   onSignOut,
   isSigningOut = false,
   isSavingNotification = false,
+  notificationError = null,
+  onClearNotificationError,
 }: SettingPageProps) {
   const [isSignOutSheetOpen, setIsSignOutSheetOpen] = useState(false)
   const [isSignOutSheetDragging, setIsSignOutSheetDragging] = useState(false)
@@ -48,6 +52,16 @@ function SettingPage({
   const closeSignOutSheetRef = useRef<() => void>(() => {})
   const signOutSheetPointerStartYRef = useRef<number | null>(null)
   const signOutSheetDragYRef = useRef(0)
+
+  const handleTogglePushNotifications = async () => {
+    onClearNotificationError?.()
+
+    try {
+      await onTogglePushNotifications()
+    } catch {
+      // The parent mutation exposes non-authentication failures through notificationError.
+    }
+  }
 
   const openSignOutSheet = () => {
     setIsSignOutSheetOpen(true)
@@ -218,7 +232,7 @@ function SettingPage({
               role="listitem"
               aria-pressed={isPushNotificationOn}
               disabled={isSavingNotification}
-              onClick={() => void onTogglePushNotifications()}
+              onClick={() => void handleTogglePushNotifications()}
             >
               <img
                 src={notificationIcon}
@@ -237,6 +251,11 @@ function SettingPage({
               </span>
             </button>
           </div>
+          {notificationError ? (
+            <p className="setting-notification-error" role="alert">
+              {notificationError}
+            </p>
+          ) : null}
         </section>
 
         <section className="setting-section setting-section-support">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './ProfileMainPage.css'
 import homeIcon from '../assets/home.svg'
 import classIcon from '../assets/Class.svg'
@@ -13,6 +13,7 @@ import { useUserMe } from '../hooks/useUserMe.ts'
 import SubscriptionBottomSheet from '../components/SubscriptionBottomSheet'
 import ProfileImageBottomSheet from '../components/ProfileImageBottomSheet'
 import type { UserMeData } from '../types/user.types.ts'
+import { isUnauthorizedError } from '../services/apiError.ts'
 
 const tabs = [
   { icon: homeIcon, label: 'HOME' },
@@ -231,6 +232,7 @@ const getCalendarDays = (year: number, month: number) => {
 }
 
 interface ProfileMainPageProps {
+  preferFallbackContent?: boolean
   nickname: string
   username: string
   onOpenHome: () => void
@@ -239,6 +241,7 @@ interface ProfileMainPageProps {
   onOpenNotebook: () => void
   onOpenSetting: () => void
   onOpenAchievements: () => void
+  onUnauthorized: () => void
 }
 
 const formatStudyTime = (totalMinutes: number) => {
@@ -257,6 +260,7 @@ const formatStudyTime = (totalMinutes: number) => {
 }
 
 function ProfileMainPage({
+  preferFallbackContent = false,
   nickname,
   username,
   onOpenHome,
@@ -265,10 +269,48 @@ function ProfileMainPage({
   onOpenNotebook,
   onOpenSetting,
   onOpenAchievements,
+  onUnauthorized,
 }: ProfileMainPageProps) {
-  const { data: userMeData } = useUserMe()
+  const { data: userMeData, loading, error, refetch } = useUserMe()
   const [isSubscriptionSheetOpen, setIsSubscriptionSheetOpen] = useState(false)
   const [isProfileImageSheetOpen, setIsProfileImageSheetOpen] = useState(false)
+  const isUnauthorized = isUnauthorizedError(error)
+
+  useEffect(() => {
+    if (isUnauthorized) onUnauthorized()
+  }, [isUnauthorized, onUnauthorized])
+
+  if (isUnauthorized) return null
+
+  if (loading && !preferFallbackContent) {
+    return (
+      <main className="profile-main-screen">
+        <section className="profile-main-status-panel" role="status">
+          <p className="profile-main-status-text">Loading profile...</p>
+        </section>
+      </main>
+    )
+  }
+
+  if ((error || !userMeData) && !preferFallbackContent) {
+    return (
+      <main className="profile-main-screen">
+        <section className="profile-main-status-panel" role="alert">
+          <p className="profile-main-status-text">
+            {error?.message ?? 'Unable to load profile.'}
+          </p>
+          <button
+            type="button"
+            className="profile-main-status-button"
+            onClick={() => void refetch()}
+          >
+            Retry
+          </button>
+        </section>
+      </main>
+    )
+  }
+
   const apiProfileData = userMeData ? mapUserMeToProfileData(userMeData) : null
   const profileData = {
     ...(apiProfileData ?? profileMainMockData),
@@ -519,12 +561,14 @@ function ProfileMainPage({
           currentSubscriptionPlanId={user.subscriptionPlanId}
           currentSubscriptionTier={user.subscriptionTier}
           onClose={() => setIsSubscriptionSheetOpen(false)}
+          onUnauthorized={onUnauthorized}
         />
       ) : null}
       {isProfileImageSheetOpen ? (
         <ProfileImageBottomSheet
           currentImageUrl={user.profileImgUrl}
           onClose={() => setIsProfileImageSheetOpen(false)}
+          onUnauthorized={onUnauthorized}
         />
       ) : null}
     </main>
