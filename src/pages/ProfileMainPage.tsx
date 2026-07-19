@@ -322,7 +322,7 @@ function ProfileMainPage({
             </div>
             <div className="profile-main-copy">
               <h1 className="profile-main-greeting">
-                Hello!
+                Hello, Jinli!
                 <br />
                 {user.nickname}!
               </h1>
