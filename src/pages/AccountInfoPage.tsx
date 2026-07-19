@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './AccountInfoPage.css'
+import { AGE_RANGE_OPTIONS } from '../data/ageRanges'
 
 interface AccountInfoPageProps {
   email: string
@@ -155,13 +156,13 @@ function AccountInfoPage({
       inputValue: draftPhoneNumber,
     },
     {
-      label: 'Age group / Birthday',
+      label: 'Age',
       value: draftAgeGroupOrBirthday || '-',
       editable: true,
       isEditing: editing.ageGroupOrBirthday,
       onEdit: () => toggleEditing('ageGroupOrBirthday'),
       onChange: (value: string) => setDraftAgeGroupOrBirthday(value),
-      inputType: 'text',
+      usesAgeChoices: true,
       inputValue: draftAgeGroupOrBirthday,
     },
   ]
@@ -204,7 +205,31 @@ function AccountInfoPage({
               </div>
               <div className="account-info-value-row">
                 {'editable' in item && item.editable && item.isEditing ? (
-                  'usesPasswordFields' in item && item.usesPasswordFields ? (
+                  'usesAgeChoices' in item && item.usesAgeChoices ? (
+                    <div className="account-info-age-choices" role="radiogroup" aria-label="Age">
+                      {AGE_RANGE_OPTIONS.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={item.inputValue === option.id}
+                          className={`account-info-age-choice ${
+                            item.inputValue === option.id
+                              ? 'account-info-age-choice-selected'
+                              : ''
+                          }`}
+                          onClick={() => {
+                            if (item.onChange) {
+                              item.onChange(option.id)
+                            }
+                            item.onEdit()
+                          }}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : 'usesPasswordFields' in item && item.usesPasswordFields ? (
                     <div className="account-info-password-fields">
                       <input
                         type="password"
