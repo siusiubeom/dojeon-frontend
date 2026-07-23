@@ -1,6 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type PointerEvent } from 'react'
 import './AccountInfoPage.css'
-import { AGE_RANGE_OPTIONS } from '../data/ageRanges'
 import backArrowIcon from '../assets/BackArrow.svg'
 import editIcon from '../assets/edit.svg'
 import trashIcon from '../assets/trash.svg'
@@ -325,13 +324,9 @@ function AccountInfoPage({
     },
     {
       label: 'Age',
-      value: draftAgeGroupOrBirthday || '-',
+      value: displayedAgeGroupOrBirthday || '-',
       editable: true,
-      isEditing: editing.ageGroupOrBirthday,
-      onEdit: () => toggleEditing('ageGroupOrBirthday'),
-      onChange: (value: string) => setDraftAgeGroupOrBirthday(value),
-      usesAgeChoices: true,
-      inputValue: draftAgeGroupOrBirthday,
+      editField: 'ageGroupOrBirthday' as const,
     },
   ]
 
@@ -391,78 +386,7 @@ function AccountInfoPage({
                 <p className="account-info-label">{item.label}</p>
               </div>
               <div className="account-info-value-row">
-                {'editable' in item && item.editable && item.isEditing ? (
-                  'usesAgeChoices' in item && item.usesAgeChoices ? (
-                    <div className="account-info-age-choices" role="radiogroup" aria-label="Age">
-                      {AGE_RANGE_OPTIONS.map((option) => (
-                        <button
-                          key={option.id}
-                          type="button"
-                          role="radio"
-                          aria-checked={item.inputValue === option.id}
-                          className={`account-info-age-choice ${
-                            item.inputValue === option.id
-                              ? 'account-info-age-choice-selected'
-                              : ''
-                          }`}
-                          onClick={() => {
-                            if (item.onChange) {
-                              item.onChange(option.id)
-                            }
-                            item.onEdit()
-                          }}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  ) : 'usesPasswordFields' in item && item.usesPasswordFields ? (
-                    <div className="account-info-password-fields">
-                      <input
-                        type="password"
-                        className="account-info-input"
-                        value={newPassword}
-                        onChange={(e) => {
-                          setNewPassword(e.target.value)
-                          setPasswordMessage('')
-                        }}
-                        placeholder="New password"
-                        autoFocus
-                      />
-                      <ul className="account-info-password-requirements" aria-label="비밀번호 조건">
-                        {passwordRules.map((rule) => (
-                          <li
-                            key={rule.id}
-                            className={`account-info-password-requirement ${
-                              rule.isSatisfied
-                                ? 'account-info-password-requirement-satisfied'
-                                : 'account-info-password-requirement-unsatisfied'
-                            }`}
-                          >
-                            <span className="account-info-password-requirement-icon">
-                              {rule.isSatisfied ? '✓' : '×'}
-                            </span>
-                            <span>{rule.message}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : (
-                    <input
-                      type={item.inputType ?? 'text'}
-                      className="account-info-input"
-                      value={item.inputValue}
-                      onChange={(e) => {
-                        if (item.onChange) {
-                          item.onChange(e.target.value)
-                        }
-                      }}
-                      autoFocus
-                    />
-                  )
-                ) : (
-                  <p className="account-info-value">{item.value}</p>
-                )}
+                <p className="account-info-value">{item.value}</p>
                 {'editable' in item && item.editable ? (
                   <button
                     type="button"
