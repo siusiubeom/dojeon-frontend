@@ -97,9 +97,11 @@ function GrammarPracticePage({
     return questionsData?.questions.find((q) => q.type === 'MCQ') ?? null
   }, [questionsData])
 
-  const grammarMaterialId = useMemo(() => {
-    return materialsData?.materials.find((m) => m.type === 'GRAMMAR_TABLE')?.id ?? null
+  const grammarMaterial = useMemo(() => {
+    return materialsData?.materials.find((m) => m.type === 'GRAMMAR_TABLE') ?? null
   }, [materialsData])
+  const grammarMaterialId = grammarMaterial?.id ?? null
+  const grammarContent = grammarMaterial?.contentText ?? null
 
   const fallbackChoicePrompt = '준호씨가 커피를'
   const fallbackChoiceOptions = ['마시다', '먹다', '보다', '가다']
@@ -122,7 +124,7 @@ function GrammarPracticePage({
   const [makeSentenceAnswer, setMakeSentenceAnswer] = useState('')
   const [submittedMakeSentenceAnswer, setSubmittedMakeSentenceAnswer] = useState('')
   const [history, setHistory] = useState<PracticeStateSnapshot[]>([])
-  const [showGrammar, setShowGrammar] = useState(true)
+  const [showGrammar, setShowGrammar] = useState(false)
   const [showVocab, setShowVocab] = useState(false)
   const [readingQuestionIndex, setReadingQuestionIndex] = useState(0)
   const [readingAnswers, setReadingAnswers] = useState<Record<number, string>>({})
@@ -234,6 +236,21 @@ function GrammarPracticePage({
   const progressDotPositions = [3, 21.8, 40.6, 59.4, 78.2, 97]
   const normalizedLanguage = language.trim().toLowerCase()
   const isTranslationRtl = normalizedLanguage === 'hebrew'
+  const explanationLangCode = isTranslationRtl ? 'he' : 'en'
+  const fallbackGrammarExplanationLines = [
+    'הזמנה לפעולה.',
+    '"שנעשה (משהו)?"',
+    'זו צורת דיבור בלבד בפנייה לאדם כלשהו, עם',
+    'כוונה להציע לעשות משהו יחד.',
+  ]
+  const grammarExplanationLines = (
+    grammarContent?.explanations.find((explanation) => explanation.lang === explanationLangCode)?.text ??
+    grammarContent?.explanations[0]?.text ??
+    null
+  )
+    ?.split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0) ?? fallbackGrammarExplanationLines
   const nextGrammarExamples: NextGrammarExampleMessage[] = [
     {
       id: 'proposal',
@@ -828,11 +845,12 @@ function GrammarPracticePage({
 
             <section className="grammar-practice-next-grammar-section" ref={nextGrammarLessonRef}>
               <h2 className="grammar-practice-next-grammar-heading">Grammar explanation</h2>
-              <div className="grammar-practice-next-grammar-description" dir="rtl">
-                <p className="grammar-practice-next-grammar-description-line">הזמנה לפעולה.</p>
-                <p className="grammar-practice-next-grammar-description-line">"שנעשה (משהו)?"</p>
-                <p className="grammar-practice-next-grammar-description-line">זו צורת דיבור בלבד בפנייה לאדם כלשהו, עם</p>
-                <p className="grammar-practice-next-grammar-description-line">כוונה להציע לעשות משהו יחד.</p>
+              <div className="grammar-practice-next-grammar-description" dir={isTranslationRtl ? 'rtl' : 'ltr'}>
+                {grammarExplanationLines.map((line, index) => (
+                  <p key={index} className="grammar-practice-next-grammar-description-line">
+                    {line}
+                  </p>
+                ))}
               </div>
               <div className="grammar-practice-next-grammar-grid" aria-hidden="true">
                 {nextGrammarGridItems.map((item, index) => (
