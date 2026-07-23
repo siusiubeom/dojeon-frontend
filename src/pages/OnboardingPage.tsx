@@ -2,6 +2,13 @@ import { useMemo, useState } from 'react'
 import './OnboardingPage.css'
 import onboardingCharacter from '../assets/9.png'
 import onboardingCompleteCharacter from '../assets/6.png'
+import {
+  dailyStudyTimeChoices,
+  koreanLevelChoices,
+  learningGoalChoices,
+  motherLanguageChoices,
+  type OnboardingChoice,
+} from '../data/onboardingPreferences'
 
 interface OnboardingStep {
   id: string
@@ -12,16 +19,27 @@ interface OnboardingStep {
   choiceStyle?: 'default' | 'compact' | 'short' | 'time' | 'goal'
   progressStyle?: 'default' | 'compact' | 'medium' | 'time' | 'goal'
   progressStep: number
-  choices?: {
-    id: string
-    label: string
-  }[]
+  choices?: OnboardingChoice[]
   validator: (value: string) => boolean
 }
 
 interface OnboardingPageProps {
   onBack: () => void
-  onComplete: (values: Record<string, string>) => void
+  onComplete: (values: Record<string, string>) => void | Promise<void>
+  isSaving?: boolean
+  saveError?: string | null
+}
+
+interface OnboardingSaveErrorProps {
+  message?: string | null
+}
+
+function OnboardingSaveError({ message }: OnboardingSaveErrorProps) {
+  return message ? (
+    <p className="onboarding-save-error" role="alert">
+      {message}
+    </p>
+  ) : null
 }
 
 const onboardingSteps: OnboardingStep[] = [
@@ -42,11 +60,8 @@ const onboardingSteps: OnboardingStep[] = [
     choiceStyle: 'default',
     progressStyle: 'default',
     progressStep: 2,
-    choices: [
-      { id: 'Hebrew', label: 'Hebrew' },
-      { id: 'English', label: 'English' },
-    ],
-    validator: (value) => value === 'Hebrew' || value === 'English',
+    choices: motherLanguageChoices,
+    validator: (value) => motherLanguageChoices.some(({ id }) => id === value),
   },
   {
     id: 'koreanLevel',
@@ -56,17 +71,8 @@ const onboardingSteps: OnboardingStep[] = [
     choiceStyle: 'compact',
     progressStyle: 'compact',
     progressStep: 3,
-    choices: [
-      { id: 'Nothing', label: 'Nothing' },
-      { id: 'Only hangul', label: 'Only hangul' },
-      { id: 'Intermediate', label: 'Intermediate' },
-      { id: 'Advanced', label: 'Advanced' },
-    ],
-    validator: (value) =>
-      value === 'Nothing' ||
-      value === 'Only hangul' ||
-      value === 'Intermediate' ||
-      value === 'Advanced',
+    choices: koreanLevelChoices,
+    validator: (value) => koreanLevelChoices.some(({ id }) => id === value),
   },
   {
     id: 'ageRange',
@@ -102,17 +108,8 @@ const onboardingSteps: OnboardingStep[] = [
     choiceStyle: 'time',
     progressStyle: 'time',
     progressStep: 5,
-    choices: [
-      { id: '5-min', label: '5 min' },
-      { id: '15-min', label: '15 min' },
-      { id: '30-min', label: '30 min' },
-      { id: '60-min', label: '60 min' },
-    ],
-    validator: (value) =>
-      value === '5-min' ||
-      value === '15-min' ||
-      value === '30-min' ||
-      value === '60-min',
+    choices: dailyStudyTimeChoices,
+    validator: (value) => dailyStudyTimeChoices.some(({ id }) => id === value),
   },
   {
     id: 'goal',
@@ -122,21 +119,8 @@ const onboardingSteps: OnboardingStep[] = [
     choiceStyle: 'goal',
     progressStyle: 'goal',
     progressStep: 6,
-    choices: [
-      { id: 'Fun', label: 'Fun' },
-      { id: 'Tourism', label: 'Tourism' },
-      { id: 'Understanding Korean content', label: 'Understanding\nKorean content' },
-      { id: 'Study in Korea', label: 'Study in Korea' },
-      { id: 'Work in Korea', label: 'Work in Korea' },
-      { id: 'Others', label: 'Others' },
-    ],
-    validator: (value) =>
-      value === 'Fun' ||
-      value === 'Tourism' ||
-      value === 'Understanding Korean content' ||
-      value === 'Study in Korea' ||
-      value === 'Work in Korea' ||
-      value === 'Others',
+    choices: learningGoalChoices,
+    validator: (value) => learningGoalChoices.some(({ id }) => id === value),
   },
   {
     id: 'complete',
@@ -152,7 +136,12 @@ const progressPointCount = 7
 const progressEdgeInsetPercent = 3
 const progressFillGapBeforeNextDotPercent = 1.5
 
-function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
+function OnboardingPage({
+  onBack,
+  onComplete,
+  isSaving = false,
+  saveError = null,
+}: OnboardingPageProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [values, setValues] = useState<Record<string, string>>({})
 
@@ -339,9 +328,11 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                 type="button"
                 className="onboarding-complete-button"
                 onClick={() => onComplete(values)}
+                disabled={isSaving}
               >
-                Start
+                {isSaving ? 'Saving...' : 'Start'}
               </button>
+              <OnboardingSaveError message={saveError} />
             </div>
           ) : (
             <>
@@ -381,12 +372,13 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                 <button
                   type="button"
                   className={`onboarding-next-btn ${isCurrentStepValid ? '' : 'disabled'}`}
-                  disabled={!isCurrentStepValid}
+                  disabled={!isCurrentStepValid || isSaving}
                   onClick={handleNext}
                 >
-                  Next
+                  {isSaving ? 'Saving...' : 'Next'}
                 </button>
               </div>
+              <OnboardingSaveError message={saveError} />
             </>
               ) : (
             <div className="onboarding-choice-wrap">
@@ -423,6 +415,7 @@ function OnboardingPage({ onBack, onComplete }: OnboardingPageProps) {
                     onClick={() => {
                       handleChoiceSelect(choice.id)
                     }}
+                    disabled={isSaving}
                   >
                     {choice.label}
                   </button>
